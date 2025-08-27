@@ -1,319 +1,341 @@
-import React, { useState } from 'react';
-import { CheckSquare, Square, Play, Calendar, TrendingUp, Target, Clock } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Gym Workout Tracker</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide-react@0.263.1/dist/umd/lucide-react.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
 
-const WorkoutDashboard = () => {
-  const [currentPhase, setCurrentPhase] = useState(1);
-  const [currentWeek, setCurrentWeek] = useState(1);
-  const [currentDay, setCurrentDay] = useState(1);
-  const [completedExercises, setCompletedExercises] = useState({});
-  const [workoutData, setWorkoutData] = useState({});
+    <script type="text/babel">
+        const { useState } = React;
+        const { CheckSquare, Square, Play, Calendar, TrendingUp, Target, Clock } = LucideReact;
 
-  // Video links for each exercise
-  const exerciseVideos = {
-    'Glute Bridge': 'https://www.youtube.com/watch?v=OUgsJ8-Vi0E',
-    'Goblet Squat': 'https://www.youtube.com/watch?v=EkSAynpQxuo',
-    'DB Bench Press (feet elevated)': 'https://www.youtube.com/watch?v=QsYre__-aro',
-    'DB Bench Press (neutral grip)': 'https://www.youtube.com/watch?v=KeUF3cx1n_o',
-    'Ring Rows': 'https://www.youtube.com/watch?v=hXTc1mDnZCw',
-    'Single Leg Glute Bridge': 'https://www.youtube.com/watch?v=AVAXhy6pl7o',
-    'Reverse Lunge': 'https://www.youtube.com/watch?v=Q2k3kYbtOcI',
-    'DB Overhead Press': 'https://www.youtube.com/watch?v=qEwKCR5JCog',
-    'DB Bent Over Row': 'https://www.youtube.com/watch?v=pYcpY20QaE8',
-    'Dead Bug': 'https://www.youtube.com/watch?v=hGeKSiZReiE',
-    'Band Pull-Apart': 'https://www.youtube.com/watch?v=JTCBVbeWYP4',
-    'Side Lying Lateral Leg Raise': 'https://www.youtube.com/watch?v=v7VmrcipWGk',
-    'Standing Lateral Leg Raise': 'https://www.youtube.com/watch?v=rW5yoJqclEg',
-    'Bulgarian Split Squat': 'https://www.youtube.com/watch?v=2C-uNgKwPLE',
-    'Romanian Deadlift': 'https://www.youtube.com/watch?v=jEy_czb3RKA',
-    'Single Arm DB Press': 'https://www.youtube.com/watch?v=B-aVuyhvLHU',
-    'Single Arm DB Row': 'https://www.youtube.com/watch?v=dFzUjzfih7k'
-  };
+        const WorkoutDashboard = () => {
+            const [currentPhase, setCurrentPhase] = useState(1);
+            const [currentWeek, setCurrentWeek] = useState(1);
+            const [currentDay, setCurrentDay] = useState(1);
+            const [completedExercises, setCompletedExercises] = useState({});
+            const [workoutData, setWorkoutData] = useState({});
 
-  const phase1Workouts = {
-    1: {
-      name: "Week 1 - Day 1",
-      exercises: [
-        { name: "Glute Bridge", type: "Warm-Up", sets: 2, reps: "12-15", tempo: "3010", rest: "—", note: "Keep chin tucked, control lower back movement" },
-        { name: "Goblet Squat", type: "Block A", sets: 2, reps: "8-12", tempo: "4010", rest: "120-180", note: "Hold at chest, squat to comfortable depth" },
-        { name: "DB Bench Press (feet elevated)", type: "Block B", sets: 2, reps: "8-12", tempo: "3010", rest: "30", note: "Control on the way down" },
-        { name: "Ring Rows", type: "Block B", sets: 2, reps: "8-12", tempo: "3010", rest: "90", note: "Start easy angle, pull chest to rings" },
-        { name: "Single Leg Glute Bridge", type: "Block C", sets: 2, reps: "10-12/leg", tempo: "3011", rest: "30", note: "Non-working leg extended straight" },
-        { name: "Reverse Lunge", type: "Block C", sets: 2, reps: "10/leg", tempo: "3010", rest: "90", note: "Step back, knee to 90°, drive through front heel" },
-        { name: "DB Overhead Press", type: "Block D", sets: 2, reps: "8-12", tempo: "3010", rest: "30", note: "Back supported against wall if possible" },
-        { name: "DB Bent Over Row", type: "Block D", sets: 2, reps: "8-12", tempo: "3011", rest: "90", note: "Hinge at hips, pull to lower ribs" },
-        { name: "Dead Bug", type: "Block E", sets: 2, reps: "12-15/side", tempo: "3011", rest: "0", note: "Keep lower back pressed to floor" },
-        { name: "Band Pull-Apart", type: "Block E", sets: 2, reps: "12-15", tempo: "3011", rest: "0", note: "Arms straight, squeeze shoulder blades" },
-        { name: "Side Lying Lateral Leg Raise", type: "Block E", sets: 2, reps: "15-20", tempo: "2010", rest: "0", note: "Keep front slightly behind body, lead with heel" }
-      ]
-    }
-  };
+            // Video links for each exercise
+            const exerciseVideos = {
+                'Glute Bridge': 'https://www.youtube.com/watch?v=OUgsJ8-Vi0E',
+                'Goblet Squat': 'https://www.youtube.com/watch?v=EkSAynpQxuo',
+                'DB Bench Press (feet elevated)': 'https://www.youtube.com/watch?v=QsYre__-aro',
+                'DB Bench Press (neutral grip)': 'https://www.youtube.com/watch?v=KeUF3cx1n_o',
+                'Ring Rows': 'https://www.youtube.com/watch?v=hXTc1mDnZCw',
+                'Single Leg Glute Bridge': 'https://www.youtube.com/watch?v=AVAXhy6pl7o',
+                'Reverse Lunge': 'https://www.youtube.com/watch?v=Q2k3kYbtOcI',
+                'DB Overhead Press': 'https://www.youtube.com/watch?v=qEwKCR5JCog',
+                'DB Bent Over Row': 'https://www.youtube.com/watch?v=pYcpY20QaE8',
+                'Dead Bug': 'https://www.youtube.com/watch?v=hGeKSiZReiE',
+                'Band Pull-Apart': 'https://www.youtube.com/watch?v=JTCBVbeWYP4',
+                'Side Lying Lateral Leg Raise': 'https://www.youtube.com/watch?v=v7VmrcipWGk',
+                'Standing Lateral Leg Raise': 'https://www.youtube.com/watch?v=rW5yoJqclEg',
+                'Bulgarian Split Squat': 'https://www.youtube.com/watch?v=2C-uNgKwPLE',
+                'Romanian Deadlift': 'https://www.youtube.com/watch?v=jEy_czb3RKA',
+                'Single Arm DB Press': 'https://www.youtube.com/watch?v=B-aVuyhvLHU',
+                'Single Arm DB Row': 'https://www.youtube.com/watch?v=dFzUjzfih7k'
+            };
 
-  const phase2Workouts = {
-    1: {
-      name: "Week 3 - Day 1",
-      exercises: [
-        { name: "Glute Bridge", type: "Warm-Up", sets: 2, reps: "12-15", tempo: "3010", rest: "—", note: "Keep chin tucked, control lower back movement" },
-        { name: "Bulgarian Split Squat", type: "Block A", sets: 3, reps: "5-8/leg", tempo: "4010", rest: "120-180", note: "Rear foot on bench, front leg does work" },
-        { name: "DB Bench Press (neutral grip)", type: "Block B", sets: 3, reps: "5-8", tempo: "3010", rest: "30", note: "Palms face each other" },
-        { name: "Ring Rows", type: "Block B", sets: 3, reps: "5-8", tempo: "3010", rest: "90", note: "Harder angle for strength focus" },
-        { name: "Single Leg Glute Bridge", type: "Block C", sets: 3, reps: "8-12/leg", tempo: "3011", rest: "30", note: "Add weight for progression" },
-        { name: "Romanian Deadlift", type: "Block C", sets: 3, reps: "8-12", tempo: "3010", rest: "90", note: "Hinge at hips, feel hamstring stretch" },
-        { name: "Single Arm DB Press", type: "Block D", sets: 3, reps: "8-12/arm", tempo: "3010", rest: "30", note: "Engage core for stability" },
-        { name: "Single Arm DB Row", type: "Block D", sets: 3, reps: "8-12/arm", tempo: "3011", rest: "90", note: "Opposite hand/knee on bench" },
-        { name: "Dead Bug", type: "Block E", sets: 2, reps: "12-15/side", tempo: "3011", rest: "0", note: "Keep lower back pressed to floor" },
-        { name: "Band Pull-Apart", type: "Block E", sets: 2, reps: "12-15", tempo: "3011", rest: "0", note: "Arms straight, squeeze shoulder blades" },
-        { name: "Standing Lateral Leg Raise", type: "Block E", sets: 2, reps: "15-20", tempo: "2010", rest: "0", note: "Knee bent, squeeze at top"" }
-      ]
-    }
-  };
+            const phase1Workouts = {
+                1: {
+                    name: "Week 1 - Day 1",
+                    exercises: [
+                        { name: "Glute Bridge", type: "Warm-Up", sets: 2, reps: "12-15", tempo: "3010", rest: "—", note: "Keep chin tucked, control lower back movement" },
+                        { name: "Goblet Squat", type: "Block A", sets: 2, reps: "8-12", tempo: "4010", rest: "120-180", note: "Hold at chest, squat to comfortable depth" },
+                        { name: "DB Bench Press (feet elevated)", type: "Block B", sets: 2, reps: "8-12", tempo: "3010", rest: "30", note: "Control on the way down" },
+                        { name: "Ring Rows", type: "Block B", sets: 2, reps: "8-12", tempo: "3010", rest: "90", note: "Start easy angle, pull chest to rings" },
+                        { name: "Single Leg Glute Bridge", type: "Block C", sets: 2, reps: "10-12/leg", tempo: "3011", rest: "30", note: "Non-working leg extended straight" },
+                        { name: "Reverse Lunge", type: "Block C", sets: 2, reps: "10/leg", tempo: "3010", rest: "90", note: "Step back, knee to 90°, drive through front heel" },
+                        { name: "DB Overhead Press", type: "Block D", sets: 2, reps: "8-12", tempo: "3010", rest: "30", note: "Back supported against wall if possible" },
+                        { name: "DB Bent Over Row", type: "Block D", sets: 2, reps: "8-12", tempo: "3011", rest: "90", note: "Hinge at hips, pull to lower ribs" },
+                        { name: "Dead Bug", type: "Block E", sets: 2, reps: "12-15/side", tempo: "3011", rest: "0", note: "Keep lower back pressed to floor" },
+                        { name: "Band Pull-Apart", type: "Block E", sets: 2, reps: "12-15", tempo: "3011", rest: "0", note: "Arms straight, squeeze shoulder blades" },
+                        { name: "Side Lying Lateral Leg Raise", type: "Block E", sets: 2, reps: "15-20", tempo: "2010", rest: "0", note: "Keep front slightly behind body, lead with heel" }
+                    ]
+                }
+            };
 
-  const toggleExerciseComplete = (exerciseIndex) => {
-    const key = `${currentPhase}-${currentWeek}-${currentDay}-${exerciseIndex}`;
-    setCompletedExercises(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
-  };
+            const phase2Workouts = {
+                1: {
+                    name: "Week 3 - Day 1",
+                    exercises: [
+                        { name: "Glute Bridge", type: "Warm-Up", sets: 2, reps: "12-15", tempo: "3010", rest: "—", note: "Keep chin tucked, control lower back movement" },
+                        { name: "Bulgarian Split Squat", type: "Block A", sets: 3, reps: "5-8/leg", tempo: "4010", rest: "120-180", note: "Rear foot on bench, front leg does work" },
+                        { name: "DB Bench Press (neutral grip)", type: "Block B", sets: 3, reps: "5-8", tempo: "3010", rest: "30", note: "Palms face each other" },
+                        { name: "Ring Rows", type: "Block B", sets: 3, reps: "5-8", tempo: "3010", rest: "90", note: "Harder angle for strength focus" },
+                        { name: "Single Leg Glute Bridge", type: "Block C", sets: 3, reps: "8-12/leg", tempo: "3011", rest: "30", note: "Add weight for progression" },
+                        { name: "Romanian Deadlift", type: "Block C", sets: 3, reps: "8-12", tempo: "3010", rest: "90", note: "Hinge at hips, feel hamstring stretch" },
+                        { name: "Single Arm DB Press", type: "Block D", sets: 3, reps: "8-12/arm", tempo: "3010", rest: "30", note: "Engage core for stability" },
+                        { name: "Single Arm DB Row", type: "Block D", sets: 3, reps: "8-12/arm", tempo: "3011", rest: "90", note: "Opposite hand/knee on bench" },
+                        { name: "Dead Bug", type: "Block E", sets: 2, reps: "12-15/side", tempo: "3011", rest: "0", note: "Keep lower back pressed to floor" },
+                        { name: "Band Pull-Apart", type: "Block E", sets: 2, reps: "12-15", tempo: "3011", rest: "0", note: "Arms straight, squeeze shoulder blades" },
+                        { name: "Standing Lateral Leg Raise", type: "Block E", sets: 2, reps: "15-20", tempo: "2010", rest: "0", note: "Knee bent, squeeze at top" }
+                    ]
+                }
+            };
 
-  const updateWeight = (exerciseIndex, setIndex, value) => {
-    const key = `${currentPhase}-${currentWeek}-${currentDay}-${exerciseIndex}-${setIndex}-weight`;
-    setWorkoutData(prev => ({
-      ...prev,
-      [key]: value
-    }));
-  };
+            const toggleExerciseComplete = (exerciseIndex) => {
+                const key = `${currentPhase}-${currentWeek}-${currentDay}-${exerciseIndex}`;
+                setCompletedExercises(prev => ({
+                    ...prev,
+                    [key]: !prev[key]
+                }));
+            };
 
-  const updateReps = (exerciseIndex, setIndex, value) => {
-    const key = `${currentPhase}-${currentWeek}-${currentDay}-${exerciseIndex}-${setIndex}-reps`;
-    setWorkoutData(prev => ({
-      ...prev,
-      [key]: value
-    }));
-  };
+            const updateWeight = (exerciseIndex, setIndex, value) => {
+                const key = `${currentPhase}-${currentWeek}-${currentDay}-${exerciseIndex}-${setIndex}-weight`;
+                setWorkoutData(prev => ({
+                    ...prev,
+                    [key]: value
+                }));
+            };
 
-  const getCurrentWorkout = () => {
-    if (currentPhase === 1) {
-      return phase1Workouts[currentDay] || phase1Workouts[1];
-    } else {
-      return phase2Workouts[currentDay] || phase2Workouts[1];
-    }
-  };
+            const updateReps = (exerciseIndex, setIndex, value) => {
+                const key = `${currentPhase}-${currentWeek}-${currentDay}-${exerciseIndex}-${setIndex}-reps`;
+                setWorkoutData(prev => ({
+                    ...prev,
+                    [key]: value
+                }));
+            };
 
-  const getPhaseInfo = () => {
-    if (currentPhase === 1) {
-      return {
-        name: "Phase 1 - Accumulation",
-        frequency: "2x/week",
-        duration: "2 weeks",
-        loadTarget: "65-75% 1RM",
-        repFocus: "Hypertrophy range (8-12 for compounds, 10-15 for isolation)"
-      };
-    } else {
-      return {
-        name: "Phase 2 - Intensification",
-        frequency: "3x/week", 
-        duration: "2 weeks",
-        loadTarget: "75-85% 1RM",
-        repFocus: "Strength-hypertrophy crossover (5-8 for compounds, 8-12 for isolation)"
-      };
-    }
-  };
+            const getCurrentWorkout = () => {
+                if (currentPhase === 1) {
+                    return phase1Workouts[currentDay] || phase1Workouts[1];
+                } else {
+                    return phase2Workouts[currentDay] || phase2Workouts[1];
+                }
+            };
 
-  const workout = getCurrentWorkout();
-  const phaseInfo = getPhaseInfo();
+            const getPhaseInfo = () => {
+                if (currentPhase === 1) {
+                    return {
+                        name: "Phase 1 - Accumulation",
+                        frequency: "2x/week",
+                        duration: "2 weeks",
+                        loadTarget: "65-75% 1RM",
+                        repFocus: "Hypertrophy range (8-12 for compounds, 10-15 for isolation)"
+                    };
+                } else {
+                    return {
+                        name: "Phase 2 - Intensification",
+                        frequency: "3x/week", 
+                        duration: "2 weeks",
+                        loadTarget: "75-85% 1RM",
+                        repFocus: "Strength-hypertrophy crossover (5-8 for compounds, 8-12 for isolation)"
+                    };
+                }
+            };
 
-  return (
-    <div className="max-w-6xl mx-auto p-6 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Home Gym Workout Tracker</h1>
-        <p className="text-gray-600">Beginner Hypertrophy Program - 4 Week Progression</p>
-        
-        {/* Phase Navigation */}
-        <div className="flex flex-wrap gap-4 mt-4">
-          <div className="flex items-center gap-2">
-            <Target className="w-5 h-5 text-blue-500" />
-            <span className="font-semibold">Phase:</span>
-            <select 
-              value={currentPhase} 
-              onChange={(e) => setCurrentPhase(Number(e.target.value))}
-              className="border rounded px-2 py-1"
-            >
-              <option value={1}>Phase 1 - Accumulation</option>
-              <option value={2}>Phase 2 - Intensification</option>
-            </select>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-green-500" />
-            <span className="font-semibold">Week:</span>
-            <select 
-              value={currentWeek} 
-              onChange={(e) => setCurrentWeek(Number(e.target.value))}
-              className="border rounded px-2 py-1"
-            >
-              <option value={1}>Week 1</option>
-              <option value={2}>Week 2</option>
-            </select>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-purple-500" />
-            <span className="font-semibold">Day:</span>
-            <select 
-              value={currentDay} 
-              onChange={(e) => setCurrentDay(Number(e.target.value))}
-              className="border rounded px-2 py-1"
-            >
-              <option value={1}>Day 1</option>
-              <option value={2}>Day 2</option>
-            </select>
-          </div>
-        </div>
-      </div>
+            const workout = getCurrentWorkout();
+            const phaseInfo = getPhaseInfo();
 
-      {/* Phase Info */}
-      <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-blue-500" />
-          {phaseInfo.name}
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-blue-50 p-3 rounded">
-            <div className="font-semibold text-blue-800">Frequency</div>
-            <div className="text-blue-600">{phaseInfo.frequency}</div>
-          </div>
-          <div className="bg-green-50 p-3 rounded">
-            <div className="font-semibold text-green-800">Duration</div>
-            <div className="text-green-600">{phaseInfo.duration}</div>
-          </div>
-          <div className="bg-purple-50 p-3 rounded">
-            <div className="font-semibold text-purple-800">Load Target</div>
-            <div className="text-purple-600">{phaseInfo.loadTarget}</div>
-          </div>
-          <div className="bg-orange-50 p-3 rounded">
-            <div className="font-semibold text-orange-800">Rep Focus</div>
-            <div className="text-orange-600">{phaseInfo.repFocus}</div>
-          </div>
-        </div>
-      </div>
+            return React.createElement('div', { className: "max-w-6xl mx-auto p-6 bg-gray-50 min-h-screen" }, [
+                // Header
+                React.createElement('div', { key: 'header', className: "bg-white rounded-lg shadow-lg p-6 mb-6" }, [
+                    React.createElement('h1', { key: 'title', className: "text-3xl font-bold text-gray-800 mb-2" }, "Home Gym Workout Tracker"),
+                    React.createElement('p', { key: 'subtitle', className: "text-gray-600" }, "Beginner Hypertrophy Program - 4 Week Progression"),
+                    
+                    // Phase Navigation
+                    React.createElement('div', { key: 'navigation', className: "flex flex-wrap gap-4 mt-4" }, [
+                        React.createElement('div', { key: 'phase-nav', className: "flex items-center gap-2" }, [
+                            React.createElement(Target, { key: 'phase-icon', className: "w-5 h-5 text-blue-500" }),
+                            React.createElement('span', { key: 'phase-label', className: "font-semibold" }, "Phase:"),
+                            React.createElement('select', {
+                                key: 'phase-select',
+                                value: currentPhase,
+                                onChange: (e) => setCurrentPhase(Number(e.target.value)),
+                                className: "border rounded px-2 py-1"
+                            }, [
+                                React.createElement('option', { key: 'phase-1', value: 1 }, "Phase 1 - Accumulation"),
+                                React.createElement('option', { key: 'phase-2', value: 2 }, "Phase 2 - Intensification")
+                            ])
+                        ]),
+                        
+                        React.createElement('div', { key: 'week-nav', className: "flex items-center gap-2" }, [
+                            React.createElement(Calendar, { key: 'week-icon', className: "w-5 h-5 text-green-500" }),
+                            React.createElement('span', { key: 'week-label', className: "font-semibold" }, "Week:"),
+                            React.createElement('select', {
+                                key: 'week-select',
+                                value: currentWeek,
+                                onChange: (e) => setCurrentWeek(Number(e.target.value)),
+                                className: "border rounded px-2 py-1"
+                            }, [
+                                React.createElement('option', { key: 'week-1', value: 1 }, "Week 1"),
+                                React.createElement('option', { key: 'week-2', value: 2 }, "Week 2")
+                            ])
+                        ]),
+                        
+                        React.createElement('div', { key: 'day-nav', className: "flex items-center gap-2" }, [
+                            React.createElement(Clock, { key: 'day-icon', className: "w-5 h-5 text-purple-500" }),
+                            React.createElement('span', { key: 'day-label', className: "font-semibold" }, "Day:"),
+                            React.createElement('select', {
+                                key: 'day-select',
+                                value: currentDay,
+                                onChange: (e) => setCurrentDay(Number(e.target.value)),
+                                className: "border rounded px-2 py-1"
+                            }, [
+                                React.createElement('option', { key: 'day-1', value: 1 }, "Day 1"),
+                                React.createElement('option', { key: 'day-2', value: 2 }, "Day 2")
+                            ])
+                        ])
+                    ])
+                ]),
 
-      {/* Workout */}
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">{workout.name}</h2>
-        
-        <div className="space-y-6">
-          {workout.exercises.map((exercise, exerciseIndex) => {
-            const isCompleted = completedExercises[`${currentPhase}-${currentWeek}-${currentDay}-${exerciseIndex}`];
-            const videoUrl = exerciseVideos[exercise.name] || exerciseVideos[exercise.name.split(' (')[0]];
-            
-            return (
-              <div key={exerciseIndex} className={`border rounded-lg p-4 ${isCompleted ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <button 
-                      onClick={() => toggleExerciseComplete(exerciseIndex)}
-                      className="text-green-600 hover:text-green-700"
-                    >
-                      {isCompleted ? <CheckSquare className="w-6 h-6" /> : <Square className="w-6 h-6" />}
-                    </button>
-                    <div>
-                      <h3 className="font-bold text-lg">{exercise.name}</h3>
-                      <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
-                        exercise.type === 'Warm-Up' ? 'bg-yellow-100 text-yellow-800' :
-                        exercise.type === 'Block A' ? 'bg-red-100 text-red-800' :
-                        exercise.type === 'Block B' ? 'bg-blue-100 text-blue-800' :
-                        exercise.type === 'Block C' ? 'bg-green-100 text-green-800' :
-                        exercise.type === 'Block D' ? 'bg-purple-100 text-purple-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {exercise.type}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {videoUrl && (
-                    <a 
-                      href={videoUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600 transition-colors"
-                    >
-                      <Play className="w-4 h-4" />
-                      Watch Video
-                    </a>
-                  )}
-                </div>
-                
-                <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-3 text-sm">
-                  <div><span className="font-semibold">Sets:</span> {exercise.sets}</div>
-                  <div><span className="font-semibold">Reps:</span> {exercise.reps}</div>
-                  <div><span className="font-semibold">Tempo:</span> {exercise.tempo}</div>
-                  <div><span className="font-semibold">Rest:</span> {exercise.rest}</div>
-                </div>
-                
-                <div className="text-sm text-gray-600 mb-4">
-                  <span className="font-semibold">Note:</span> {exercise.note}
-                </div>
-                
-                {/* Set Tracking */}
-                <div className="space-y-2">
-                  <div className="font-semibold text-sm">Set Tracking:</div>
-                  <div className="grid gap-2">
-                    {[...Array(exercise.sets)].map((_, setIndex) => (
-                      <div key={setIndex} className="flex items-center gap-4 bg-white p-2 rounded border">
-                        <div className="font-medium text-sm w-12">Set {setIndex + 1}:</div>
-                        <div className="flex items-center gap-2">
-                          <label className="text-sm">Weight:</label>
-                          <input
-                            type="number"
-                            placeholder="lbs"
-                            className="w-16 px-2 py-1 border rounded text-sm"
-                            value={workoutData[`${currentPhase}-${currentWeek}-${currentDay}-${exerciseIndex}-${setIndex}-weight`] || ''}
-                            onChange={(e) => updateWeight(exerciseIndex, setIndex, e.target.value)}
-                          />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <label className="text-sm">Reps:</label>
-                          <input
-                            type="number"
-                            placeholder="reps"
-                            className="w-16 px-2 py-1 border rounded text-sm"
-                            value={workoutData[`${currentPhase}-${currentWeek}-${currentDay}-${exerciseIndex}-${setIndex}-reps`] || ''}
-                            onChange={(e) => updateReps(exerciseIndex, setIndex, e.target.value)}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+                // Phase Info
+                React.createElement('div', { key: 'phase-info', className: "bg-white rounded-lg shadow-lg p-6 mb-6" }, [
+                    React.createElement('h2', { key: 'phase-title', className: "text-xl font-bold text-gray-800 mb-4 flex items-center gap-2" }, [
+                        React.createElement(TrendingUp, { key: 'trend-icon', className: "w-5 h-5 text-blue-500" }),
+                        phaseInfo.name
+                    ]),
+                    React.createElement('div', { key: 'phase-grid', className: "grid grid-cols-1 md:grid-cols-4 gap-4" }, [
+                        React.createElement('div', { key: 'freq-card', className: "bg-blue-50 p-3 rounded" }, [
+                            React.createElement('div', { key: 'freq-label', className: "font-semibold text-blue-800" }, "Frequency"),
+                            React.createElement('div', { key: 'freq-value', className: "text-blue-600" }, phaseInfo.frequency)
+                        ]),
+                        React.createElement('div', { key: 'duration-card', className: "bg-green-50 p-3 rounded" }, [
+                            React.createElement('div', { key: 'duration-label', className: "font-semibold text-green-800" }, "Duration"),
+                            React.createElement('div', { key: 'duration-value', className: "text-green-600" }, phaseInfo.duration)
+                        ]),
+                        React.createElement('div', { key: 'load-card', className: "bg-purple-50 p-3 rounded" }, [
+                            React.createElement('div', { key: 'load-label', className: "font-semibold text-purple-800" }, "Load Target"),
+                            React.createElement('div', { key: 'load-value', className: "text-purple-600" }, phaseInfo.loadTarget)
+                        ]),
+                        React.createElement('div', { key: 'rep-card', className: "bg-orange-50 p-3 rounded" }, [
+                            React.createElement('div', { key: 'rep-label', className: "font-semibold text-orange-800" }, "Rep Focus"),
+                            React.createElement('div', { key: 'rep-value', className: "text-orange-600" }, phaseInfo.repFocus)
+                        ])
+                    ])
+                ]),
 
-      {/* Progression Notes */}
-      <div className="bg-white rounded-lg shadow-lg p-6 mt-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-4">Progression Notes</h3>
-        {currentPhase === 1 ? (
-          <ul className="list-disc list-inside space-y-2 text-gray-600">
-            <li><strong>Day 2:</strong> Increase all working sets by +1 from Day 1</li>
-            <li><strong>Week 2 Day 3:</strong> Increase all working sets by +1 from Week 1 Day 2 (up to 4 sets)</li>
-            <li><strong>Week 2 Day 4:</strong> Keep main lifts at 4 sets, accessories at 3 sets (taper)</li>
-          </ul>
-        ) : (
-          <ul className="list-disc list-inside space-y-2 text-gray-600">
-            <li><strong>Day 2:</strong> Increase main lifts to 4 sets, accessories remain at 3 sets</li>
-            <li><strong>Day 3:</strong> Increase accessories to 4 sets, keep core at 2-3 sets</li>
-            <li><strong>Week 4 Day 4:</strong> Maintain 4 sets for all except core (2-3 sets)</li>
-            <li><strong>Week 4 Day 5:</strong> Peak compounds at 5 sets, accessories at 4 sets</li>
-            <li><strong>Week 4 Day 6:</strong> Taper isolation and accessories to 3 sets, compounds to 4 sets</li>
-          </ul>
-        )}
-      </div>
-    </div>
-  );
-};
+                // Workout
+                React.createElement('div', { key: 'workout', className: "bg-white rounded-lg shadow-lg p-6" }, [
+                    React.createElement('h2', { key: 'workout-title', className: "text-2xl font-bold text-gray-800 mb-6" }, workout.name),
+                    
+                    React.createElement('div', { key: 'exercises', className: "space-y-6" }, 
+                        workout.exercises.map((exercise, exerciseIndex) => {
+                            const isCompleted = completedExercises[`${currentPhase}-${currentWeek}-${currentDay}-${exerciseIndex}`];
+                            const videoUrl = exerciseVideos[exercise.name] || exerciseVideos[exercise.name.split(' (')[0]];
+                            
+                            return React.createElement('div', {
+                                key: exerciseIndex,
+                                className: `border rounded-lg p-4 ${isCompleted ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`
+                            }, [
+                                React.createElement('div', { key: 'exercise-header', className: "flex items-center justify-between mb-3" }, [
+                                    React.createElement('div', { key: 'exercise-info', className: "flex items-center gap-3" }, [
+                                        React.createElement('button', {
+                                            key: 'complete-btn',
+                                            onClick: () => toggleExerciseComplete(exerciseIndex),
+                                            className: "text-green-600 hover:text-green-700"
+                                        }, isCompleted ? React.createElement(CheckSquare, { className: "w-6 h-6" }) : React.createElement(Square, { className: "w-6 h-6" })),
+                                        React.createElement('div', { key: 'exercise-details' }, [
+                                            React.createElement('h3', { key: 'exercise-name', className: "font-bold text-lg" }, exercise.name),
+                                            React.createElement('span', {
+                                                key: 'exercise-type',
+                                                className: `inline-block px-2 py-1 rounded text-xs font-semibold ${
+                                                    exercise.type === 'Warm-Up' ? 'bg-yellow-100 text-yellow-800' :
+                                                    exercise.type === 'Block A' ? 'bg-red-100 text-red-800' :
+                                                    exercise.type === 'Block B' ? 'bg-blue-100 text-blue-800' :
+                                                    exercise.type === 'Block C' ? 'bg-green-100 text-green-800' :
+                                                    exercise.type === 'Block D' ? 'bg-purple-100 text-purple-800' :
+                                                    'bg-gray-100 text-gray-800'
+                                                }`
+                                            }, exercise.type)
+                                        ])
+                                    ]),
+                                    
+                                    videoUrl && React.createElement('a', {
+                                        key: 'video-link',
+                                        href: videoUrl,
+                                        target: "_blank",
+                                        rel: "noopener noreferrer",
+                                        className: "flex items-center gap-2 bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600 transition-colors"
+                                    }, [
+                                        React.createElement(Play, { key: 'play-icon', className: "w-4 h-4" }),
+                                        "Watch Video"
+                                    ])
+                                ]),
+                                
+                                React.createElement('div', { key: 'exercise-specs', className: "grid grid-cols-2 md:grid-cols-6 gap-4 mb-3 text-sm" }, [
+                                    React.createElement('div', { key: 'sets' }, [React.createElement('span', { className: "font-semibold" }, "Sets: "), exercise.sets]),
+                                    React.createElement('div', { key: 'reps' }, [React.createElement('span', { className: "font-semibold" }, "Reps: "), exercise.reps]),
+                                    React.createElement('div', { key: 'tempo' }, [React.createElement('span', { className: "font-semibold" }, "Tempo: "), exercise.tempo]),
+                                    React.createElement('div', { key: 'rest' }, [React.createElement('span', { className: "font-semibold" }, "Rest: "), exercise.rest])
+                                ]),
+                                
+                                React.createElement('div', { key: 'exercise-note', className: "text-sm text-gray-600 mb-4" }, [
+                                    React.createElement('span', { className: "font-semibold" }, "Note: "),
+                                    exercise.note
+                                ]),
+                                
+                                // Set Tracking
+                                React.createElement('div', { key: 'set-tracking', className: "space-y-2" }, [
+                                    React.createElement('div', { key: 'tracking-title', className: "font-semibold text-sm" }, "Set Tracking:"),
+                                    React.createElement('div', { key: 'tracking-grid', className: "grid gap-2" },
+                                        [...Array(exercise.sets)].map((_, setIndex) =>
+                                            React.createElement('div', {
+                                                key: setIndex,
+                                                className: "flex items-center gap-4 bg-white p-2 rounded border"
+                                            }, [
+                                                React.createElement('div', { key: 'set-label', className: "font-medium text-sm w-12" }, `Set ${setIndex + 1}:`),
+                                                React.createElement('div', { key: 'weight-input', className: "flex items-center gap-2" }, [
+                                                    React.createElement('label', { className: "text-sm" }, "Weight:"),
+                                                    React.createElement('input', {
+                                                        type: "number",
+                                                        placeholder: "lbs",
+                                                        className: "w-16 px-2 py-1 border rounded text-sm",
+                                                        value: workoutData[`${currentPhase}-${currentWeek}-${currentDay}-${exerciseIndex}-${setIndex}-weight`] || '',
+                                                        onChange: (e) => updateWeight(exerciseIndex, setIndex, e.target.value)
+                                                    })
+                                                ]),
+                                                React.createElement('div', { key: 'reps-input', className: "flex items-center gap-2" }, [
+                                                    React.createElement('label', { className: "text-sm" }, "Reps:"),
+                                                    React.createElement('input', {
+                                                        type: "number",
+                                                        placeholder: "reps",
+                                                        className: "w-16 px-2 py-1 border rounded text-sm",
+                                                        value: workoutData[`${currentPhase}-${currentWeek}-${currentDay}-${exerciseIndex}-${setIndex}-reps`] || '',
+                                                        onChange: (e) => updateReps(exerciseIndex, setIndex, e.target.value)
+                                                    })
+                                                ])
+                                            ])
+                                        )
+                                    )
+                                ])
+                            ]);
+                        })
+                    )
+                ]),
 
-export default WorkoutDashboard;
+                // Progression Notes
+                React.createElement('div', { key: 'progression', className: "bg-white rounded-lg shadow-lg p-6 mt-6" }, [
+                    React.createElement('h3', { key: 'progression-title', className: "text-xl font-bold text-gray-800 mb-4" }, "Progression Notes"),
+                    currentPhase === 1 ? 
+                        React.createElement('ul', { key: 'phase1-notes', className: "list-disc list-inside space-y-2 text-gray-600" }, [
+                            React.createElement('li', { key: 'note1' }, [React.createElement('strong', {}, "Day 2: "), "Increase all working sets by +1 from Day 1"]),
+                            React.createElement('li', { key: 'note2' }, [React.createElement('strong', {}, "Week 2 Day 3: "), "Increase all working sets by +1 from Week 1 Day 2 (up to 4 sets)"]),
+                            React.createElement('li', { key: 'note3' }, [React.createElement('strong', {}, "Week 2 Day 4: "), "Keep main lifts at 4 sets, accessories at 3 sets (taper)"])
+                        ]) :
+                        React.createElement('ul', { key: 'phase2-notes', className: "list-disc list-inside space-y-2 text-gray-600" }, [
+                            React.createElement('li', { key: 'note1' }, [React.createElement('strong', {}, "Day 2: "), "Increase main lifts to 4 sets, accessories remain at 3 sets"]),
+                            React.createElement('li', { key: 'note2' }, [React.createElement('strong', {}, "Day 3: "), "Increase accessories to 4 sets, keep core at 2-3 sets"]),
+                            React.createElement('li', { key: 'note3' }, [React.createElement('strong', {}, "Week 4 Day 4: "), "Maintain 4 sets for all except core (2-3 sets)"]),
+                            React.createElement('li', { key: 'note4' }, [React.createElement('strong', {}, "Week 4 Day 5: "), "Peak compounds at 5 sets, accessories at 4 sets"]),
+                            React.createElement('li', { key: 'note5' }, [React.createElement('strong', {}, "Week 4 Day 6: "), "Taper isolation and accessories to 3 sets, compounds to 4 sets"])
+                        ])
+                ])
+            ]);
+        };
+
+        ReactDOM.render(React.createElement(WorkoutDashboard), document.getElementById('root'));
+    </script>
+</body>
+</html>
