@@ -4,889 +4,914 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home Gym Workout Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+
+        :root {
+            --text:    #37352f;
+            --text2:   #787774;
+            --text3:   #9b9a97;
+            --bg:      #ffffff;
+            --sb-bg:   #f7f6f3;
+            --bd:      rgba(55,53,47,.09);
+            --bd2:     rgba(55,53,47,.18);
+            --hov:     rgba(55,53,47,.06);
+            --blue:    #2383e2;
+            --blue-bg: rgba(35,131,226,.12);
+            --green:   #0f7b6c;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
-            color: #333;
-        }
-        
-        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
-        
-        .hero {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 24px;
-            padding: 40px;
-            margin-bottom: 30px;
-            text-align: center;
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-        
-        .hero h1 {
-            font-size: 3rem;
-            font-weight: 900;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 15px;
-        }
-        
-        .hero p {
-            font-size: 1.2rem;
-            color: #666;
-            margin-bottom: 30px;
-        }
-        
-        .session-info {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 30px;
-            flex-wrap: wrap;
-            margin-bottom: 25px;
-        }
-        
-        .phase-selector {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 15px 25px;
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        .phase-selector select {
-            background: transparent;
-            border: none;
-            color: #333;
-            font-weight: bold;
-            font-size: 1.1rem;
-        }
-        
-        .session-counter {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-            color: white;
-            padding: 15px 30px;
-            border-radius: 16px;
-            font-weight: bold;
-            font-size: 1.2rem;
-            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
-        }
-        
-        .session-nav {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .session-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            color: black;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-        
-        .session-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-        
-        .session-btn.active {
-            background: white;
-            color: #333;
-            border-color: white;
-        }
-        
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 350px;
-            gap: 30px;
-            align-items: start;
-        }
-        
-        .workout-section {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 24px;
-            padding: 30px;
-            backdrop-filter: blur(20px);
-        }
-        
-        .sidebar {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 24px;
-            padding: 25px;
-            backdrop-filter: blur(20px);
-            position: sticky;
-            top: 20px;
-        }
-        
-        .workout-title {
-            font-size: 2rem;
-            font-weight: 800;
-            text-align: center;
-            margin-bottom: 30px;
-            color: #333;
-        }
-        
-        .session-progress {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 20px;
-            border-radius: 16px;
-            margin-bottom: 25px;
-            text-align: center;
-        }
-        
-        .session-progress h3 {
-            font-size: 1.3rem;
-            margin-bottom: 10px;
-        }
-        
-        .progress-details {
-            font-size: 0.9rem;
-            opacity: 0.9;
-            line-height: 1.4;
-        }
-        
-        .last-session {
-            margin-bottom: 25px;
-        }
-        
-        .last-session h4 {
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 15px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #e2e8f0;
-        }
-        
-        .last-session-item {
-            background: #f8fafc;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-        }
-        
-        .exercise-name-small {
-            font-weight: bold;
-            color: #475569;
-        }
-        
-        .last-performance {
-            color: #666;
-            font-size: 0.8rem;
-        }
-        
-        .progression-tips {
-            background: linear-gradient(135deg, #1dd1a1, #26d0ce);
-            color: white;
-            padding: 20px;
-            border-radius: 16px;
-            margin-bottom: 25px;
-        }
-        
-        .progression-tips h4 {
-            font-size: 1.1rem;
-            margin-bottom: 12px;
-        }
-        
-        .progression-tips ul {
-            list-style: none;
-            font-size: 0.9rem;
+            font-size: 14px;
             line-height: 1.5;
         }
-        
-        .progression-tips li {
-            margin-bottom: 8px;
-            padding-left: 15px;
-            position: relative;
-        }
-        
-        .progression-tips li::before {
-            content: "→";
-            position: absolute;
-            left: 0;
-            font-weight: bold;
-        }
-        
-        .exercise-card {
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 20px;
-            padding: 25px;
-            margin-bottom: 25px;
-            border: 2px solid #e5e7eb;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-        
-        .exercise-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
-        
-        .exercise-card.completed {
-            border-color: #1dd1a1;
-            background: rgba(29, 209, 161, 0.1);
-        }
-        
-        .exercise-card.completed::before {
-            content: '';
-            position: absolute;
+
+        .app { display: flex; min-height: 100vh; }
+
+        /* ──────────────────── SIDEBAR ──────────────────── */
+        .sidebar {
+            width: 240px;
+            min-width: 240px;
+            background: var(--sb-bg);
+            border-right: 1px solid var(--bd);
+            height: 100vh;
+            position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #1dd1a1, #26d0ce);
-            border-radius: 20px 20px 0 0;
-        }
-        
-        .exercise-header {
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sb-top {
+            padding: 8px;
+            border-bottom: 1px solid var(--bd);
+            flex-shrink: 0;
+        }
+
+        .workspace {
+            display: flex;
             align-items: center;
+            gap: 8px;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: default;
+            transition: background .1s;
+        }
+        .workspace:hover { background: var(--hov); }
+
+        .ws-icon {
+            width: 28px; height: 28px;
+            border-radius: 6px;
+            background: var(--text);
+            color: white;
+            font-size: 15px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .ws-name { font-size: 14px; font-weight: 600; color: var(--text); }
+
+        .sb-body { padding: 6px 4px 16px; flex: 1; }
+
+        .sec-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            padding: 10px 8px 4px;
+        }
+
+        .phase-toggle {
+            display: flex;
+            background: rgba(55,53,47,.08);
+            border-radius: 6px;
+            padding: 3px;
+            margin: 0 4px 6px;
+        }
+
+        .phase-btn {
+            flex: 1;
+            padding: 5px 6px;
+            border: none;
+            background: transparent;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text2);
+            cursor: pointer;
+            font-family: inherit;
+            white-space: nowrap;
+            text-align: center;
+            transition: all .15s;
+        }
+        .phase-btn.active {
+            background: white;
+            color: var(--text);
+            box-shadow: 0 1px 3px rgba(0,0,0,.12);
+        }
+
+        .session-list { padding: 0 4px; }
+
+        .sess-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 8px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text2);
+            margin-bottom: 1px;
+            transition: background .1s, color .1s;
+        }
+        .sess-item:hover { background: var(--hov); color: var(--text); }
+        .sess-item.active { background: var(--blue-bg); color: var(--blue); font-weight: 500; }
+
+        .sess-icon { font-size: 13px; width: 18px; text-align: center; flex-shrink: 0; }
+
+        .sb-card {
+            margin: 8px 6px;
+            padding: 12px;
+            background: white;
+            border: 1px solid var(--bd);
+            border-radius: 8px;
+        }
+
+        .sb-card-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            margin-bottom: 8px;
+        }
+
+        .prog-bar-bg {
+            height: 4px;
+            background: var(--bd);
+            border-radius: 2px;
+            margin-bottom: 6px;
+            overflow: hidden;
+        }
+        .prog-bar-fill {
+            height: 4px;
+            background: var(--blue);
+            border-radius: 2px;
+            width: 0%;
+            transition: width .3s ease;
+        }
+        .prog-text { font-size: 12px; color: var(--text2); }
+
+        .sess-note {
+            font-size: 12px;
+            color: var(--text2);
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--bd);
+            line-height: 1.5;
+        }
+
+        .prev-item {
+            padding: 6px 8px;
+            background: var(--sb-bg);
+            border-radius: 5px;
+            margin-bottom: 4px;
+        }
+        .prev-item:last-child { margin-bottom: 0; }
+        .prev-name { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 1px; }
+        .prev-data { font-size: 11px; color: var(--text2); }
+
+        .guide-item {
+            font-size: 12px;
+            color: var(--text2);
+            padding-left: 12px;
+            position: relative;
+            line-height: 1.5;
+            margin-bottom: 4px;
+        }
+        .guide-item:last-child { margin-bottom: 0; }
+        .guide-item::before { content: "·"; position: absolute; left: 3px; color: var(--text3); }
+
+        /* ──────────────────── MAIN ──────────────────── */
+        .main { margin-left: 240px; flex: 1; min-height: 100vh; }
+
+        .page {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 0 96px 80px;
+        }
+
+        .pg-emoji {
+            padding-top: 60px;
+            font-size: 56px;
+            line-height: 1;
+            margin-bottom: 12px;
+        }
+
+        .pg-title {
+            font-size: 38px;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1.2;
+            margin-bottom: 4px;
+        }
+
+        .pg-subtitle {
+            font-size: 15px;
+            color: var(--text2);
             margin-bottom: 20px;
         }
-        
-        .exercise-info {
+
+        /* Notion-style database properties */
+        .pg-props {
+            border-top: 1px solid var(--bd);
+            margin-bottom: 28px;
+        }
+
+        .prop-row {
             display: flex;
             align-items: center;
-            gap: 15px;
+            min-height: 34px;
+            border-bottom: 1px solid var(--bd);
+            transition: background .1s;
         }
-        
-        .complete-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            border: 2px solid #ddd;
+        .prop-row:hover { background: var(--hov); }
+
+        .prop-key {
+            width: 160px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--text2);
+            padding: 4px 8px;
+            flex-shrink: 0;
+        }
+
+        .prop-val {
+            font-size: 13px;
+            color: var(--text);
+            padding: 4px 8px;
+            flex: 1;
+        }
+
+        .prop-tag {
+            display: inline-flex;
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            background: var(--blue-bg);
+            color: var(--blue);
+        }
+
+        /* Block section headings */
+        .blk-heading {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            padding: 18px 0 6px;
+            border-bottom: 1px solid var(--bd);
+            margin-bottom: 4px;
+        }
+
+        /* Exercise block (toggle) */
+        .ex-block { border-radius: 6px; margin-bottom: 2px; }
+
+        .ex-row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 4px;
+            border-radius: 6px;
+            cursor: default;
+            transition: background .1s;
+        }
+        .ex-row:hover { background: var(--hov); }
+
+        .ex-toggle {
+            width: 22px; height: 22px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text3);
+            font-size: 9px;
+            cursor: pointer;
+            border-radius: 3px;
+            flex-shrink: 0;
+            transition: all .1s;
+        }
+        .ex-toggle:hover { background: rgba(55,53,47,.1); color: var(--text); }
+        .ex-toggle .arr { display: inline-block; transition: transform .15s; }
+        .ex-toggle.open .arr { transform: rotate(90deg); }
+
+        .ex-check {
+            width: 18px; height: 18px;
+            border: 1.5px solid rgba(55,53,47,.25);
+            border-radius: 3px;
             background: white;
             cursor: pointer;
-            transition: all 0.3s ease;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            font-size: 11px;
+            transition: all .15s;
+        }
+        .ex-check:hover { border-color: var(--blue); background: var(--blue-bg); }
+        .ex-check.done { background: var(--blue); border-color: var(--blue); color: white; }
+
+        .ex-title {
+            flex: 1;
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 20px;
+            gap: 8px;
+            min-width: 0;
         }
-        
-        .complete-btn:hover {
-            border-color: #1dd1a1;
-            background: #f0fdf4;
+
+        .ex-name { font-size: 14px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ex-name.done { color: var(--text3); text-decoration: line-through; text-decoration-color: var(--text3); }
+
+        .ex-tag {
+            font-size: 11px;
+            font-weight: 500;
+            padding: 1px 7px;
+            border-radius: 3px;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
-        
-        .complete-btn.completed {
-            background: #1dd1a1;
-            border-color: #1dd1a1;
-            color: white;
+        .tag-warmup { background: #fef3c7; color: #92400e; }
+        .tag-a      { background: #fee2e2; color: #991b1b; }
+        .tag-b      { background: #dbeafe; color: #1e40af; }
+        .tag-c      { background: #d1fae5; color: #065f46; }
+        .tag-d      { background: #ede9fe; color: #5b21b6; }
+        .tag-e      { background: #f3f4f6; color: #4b5563; }
+
+        .ex-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+            opacity: 0;
+            transition: opacity .1s;
         }
-        
-        .exercise-name {
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: #333;
-        }
-        
-        .exercise-type {
+        .ex-block:hover .ex-actions { opacity: 1; }
+
+        .vid-btn {
             display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--text2);
+            text-decoration: none;
+            transition: background .1s, color .1s;
+        }
+        .vid-btn:hover { background: rgba(55,53,47,.1); color: var(--text); }
+
+        /* Block body */
+        .ex-body { padding: 4px 4px 14px 44px; }
+        .ex-body.hidden { display: none; }
+
+        .ex-props {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 10px;
+            padding-top: 4px;
+        }
+
+        .xprop {
+            display: flex;
             align-items: center;
             gap: 5px;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            color: white;
+            background: var(--sb-bg);
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            border: 1px solid var(--bd);
         }
-        
-        .type-warmup { background: linear-gradient(135deg, #feca57, #ff9ff3); }
-        .type-a { background: linear-gradient(135deg, #ff6b6b, #ee5a24); }
-        .type-b { background: linear-gradient(135deg, #667eea, #764ba2); }
-        .type-c { background: linear-gradient(135deg, #1dd1a1, #26d0ce); }
-        .type-d { background: linear-gradient(135deg, #a55eea, #8b5cf6); }
-        .type-e { background: linear-gradient(135deg, #778ca3, #2c2c54); }
-        
-        .video-btn {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 12px;
-            text-decoration: none;
-            font-weight: bold;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-        }
-        
-        .video-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
-        }
-        
-        .specs-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-        
-        .spec-item {
-            text-align: center;
-            padding: 15px;
-            border-radius: 12px;
-            color: white;
-            font-weight: bold;
-        }
-        
-        .spec-item.sets { background: linear-gradient(135deg, #667eea, #764ba2); }
-        .spec-item.reps { background: linear-gradient(135deg, #1dd1a1, #26d0ce); }
-        .spec-item.tempo { background: linear-gradient(135deg, #ff6b6b, #ee5a24); }
-        .spec-item.rest { background: linear-gradient(135deg, #a55eea, #8b5cf6); }
-        
-        .spec-value {
-            font-size: 1.3rem;
-            margin-bottom: 5px;
-        }
-        
-        .spec-label {
-            font-size: 0.8rem;
-            opacity: 0.9;
-        }
-        
-        .note-box {
-            background: #dbeafe;
-            border-left: 4px solid #3b82f6;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-        
-        .note-box .note-label {
-            font-weight: bold;
-            color: #1e40af;
-            margin-bottom: 5px;
-        }
-        
-        .note-text {
-            color: #1e40af;
-            line-height: 1.4;
-        }
-        
-        .tracking-section {
-            margin-top: 25px;
-        }
-        
-        .tracking-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #333;
-        }
-        
-        .set-row {
-            display: grid;
-            grid-template-columns: 80px 1fr 1fr 120px;
-            align-items: center;
-            gap: 15px;
-            padding: 15px;
-            background: #f8fafc;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            border: 1px solid #e2e8f0;
-        }
-        
-        .set-label {
-            font-weight: bold;
-            color: #475569;
-        }
-        
-        .input-group {
+        .xprop-lbl { color: var(--text3); }
+        .xprop-val { font-weight: 600; color: var(--text); }
+
+        .callout {
             display: flex;
-            align-items: center;
             gap: 8px;
+            padding: 8px 12px;
+            background: #f7f6f3;
+            border-radius: 5px;
+            margin-bottom: 12px;
+            border: 1px solid var(--bd);
         }
-        
-        .input-group label {
+        .callout-ico { font-size: 15px; flex-shrink: 0; line-height: 1.5; }
+        .callout-txt { font-size: 13px; color: var(--text2); line-height: 1.5; }
+
+        .sets-lbl {
+            font-size: 11px;
             font-weight: 600;
-            color: #475569;
-            min-width: 45px;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            margin-bottom: 6px;
         }
-        
-        .input-group input {
-            width: 70px;
-            padding: 8px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
+
+        .sets-tbl { width: 100%; border-collapse: collapse; }
+
+        .sets-tbl th {
+            text-align: left;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text3);
+            padding: 4px 10px 4px 0;
+            border-bottom: 1px solid var(--bd);
+        }
+
+        .sets-tbl td {
+            padding: 5px 10px 5px 0;
+            border-bottom: 1px solid var(--bd);
+            vertical-align: middle;
+        }
+        .sets-tbl tr:last-child td { border-bottom: none; }
+
+        .set-lbl { font-size: 12px; font-weight: 500; color: var(--text2); width: 52px; }
+
+        .num-inp {
+            width: 64px;
+            padding: 4px 8px;
+            border: 1px solid var(--bd);
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: inherit;
+            color: var(--text);
+            background: white;
             text-align: center;
-            font-weight: bold;
-            transition: border-color 0.3s ease;
-        }
-        
-        .input-group input:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 10px rgba(102, 126, 234, 0.2);
+            transition: border-color .15s, box-shadow .15s;
         }
-        
-        .last-time {
-            font-size: 0.8rem;
-            color: #666;
-            font-style: italic;
+        .num-inp:hover { border-color: var(--bd2); }
+        .num-inp:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 2px rgba(35,131,226,.18);
         }
-        
-        .suggestion {
-            font-size: 0.8rem;
-            color: #059669;
-            font-weight: bold;
+
+        .prev-td  { font-size: 12px; color: var(--text3); white-space: nowrap; }
+        .sugg-td  { font-size: 12px; color: var(--green); font-weight: 500; }
+
+        /* ──────────────────── RESPONSIVE ──────────────────── */
+        @media (max-width: 1024px) {
+            .page { padding: 0 48px 80px; }
         }
-        
-        @media (max-width: 1200px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-            .sidebar {
-                position: static;
-            }
-        }
-        
+
         @media (max-width: 768px) {
-            .hero h1 { font-size: 2rem; }
-            .session-info { flex-direction: column; gap: 15px; }
-            .exercise-header { flex-direction: column; gap: 15px; }
-            .video-btn { align-self: stretch; text-align: center; }
-            .set-row { 
-                grid-template-columns: 1fr; 
-                gap: 10px; 
-                text-align: center; 
+            .sidebar {
+                width: 100%;
+                min-width: unset;
+                height: auto;
+                position: static;
+                border-right: none;
+                border-bottom: 1px solid var(--bd);
             }
+            .app { flex-direction: column; }
+            .main { margin-left: 0; }
+            .page { padding: 0 20px 60px; }
+            .pg-emoji { padding-top: 28px; font-size: 44px; }
+            .pg-title { font-size: 26px; }
+            .prop-key { width: 120px; }
+            .ex-actions { opacity: 1; }
+            .sets-tbl { display: block; overflow-x: auto; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Hero Section -->
-        <div class="hero">
-            <h1>Home Gym Tracker</h1>
-            <p>Session-Based Progression Tracking</p>
-            
-            <div class="session-info">
-                <div class="phase-selector">
-                    <label style="color: #333; font-weight: bold;">Phase: </label>
-                    <select id="phaseSelect" onchange="updateWorkout()">
-                        <option value="1">Phase 1 - Accumulation (2x/week)</option>
-                        <option value="2">Phase 2 - Intensification (3x/week)</option>
-                    </select>
-                </div>
-                
-                <div class="session-counter" id="sessionCounter">
-                    Session 1 of 4
-                </div>
-                
-                <div class="session-nav">
-                    <button class="session-btn" onclick="changeSession(-1)">← Prev</button>
-                    <button class="session-btn" onclick="changeSession(1)">Next →</button>
-                </div>
+<div class="app">
+
+    <!-- ════════════════ SIDEBAR ════════════════ -->
+    <aside class="sidebar">
+        <div class="sb-top">
+            <div class="workspace">
+                <div class="ws-icon">🏋️</div>
+                <span class="ws-name">Workout Tracker</span>
             </div>
         </div>
 
-        <div class="main-content">
-            <!-- Main Workout -->
-            <div class="workout-section">
-                <h2 class="workout-title" id="workoutTitle">Phase 1 - Accumulation</h2>
-                
-                <div id="exerciseContainer">
-                    <!-- Exercises will be populated by JavaScript -->
+        <div class="sb-body">
+            <div class="sec-label">Phase</div>
+            <div class="phase-toggle">
+                <button class="phase-btn active" onclick="selectPhase(1)">Phase 1</button>
+                <button class="phase-btn" onclick="selectPhase(2)">Phase 2</button>
+            </div>
+
+            <div class="sec-label">Sessions</div>
+            <div id="sessionNav" class="session-list"></div>
+
+            <div class="sb-card">
+                <div class="sb-card-label">Progress</div>
+                <div class="prog-bar-bg">
+                    <div class="prog-bar-fill" id="progressFill"></div>
+                </div>
+                <div class="prog-text" id="progressText">0 of 11 complete</div>
+                <div class="sess-note" id="sessionNote"></div>
+            </div>
+
+            <div class="sb-card">
+                <div class="sb-card-label">Previous Session</div>
+                <div id="prevContent">
+                    <p style="font-size:12px;color:var(--text3);font-style:italic;">No previous session data</p>
                 </div>
             </div>
 
-            <!-- Sidebar -->
-            <div class="sidebar">
-                <div class="session-progress">
-                    <h3 id="progressTitle">Session Progress</h3>
-                    <div class="progress-details" id="progressDetails">
-                        Complete all exercises to unlock next session
-                    </div>
-                </div>
-                
-                <div class="last-session">
-                    <h4>Previous Session Data</h4>
-                    <div id="lastSessionData">
-                        <div class="last-session-item">
-                            <div style="color: #666; font-style: italic;">No previous session data</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="progression-tips">
-                    <h4>Progression Guidelines</h4>
-                    <ul id="progressionTips">
-                        <li>Increase weight by 2.5-5lbs when possible</li>
-                        <li>If you can't add weight, add 1-2 reps</li>
-                        <li>Focus on form over heavy weight</li>
-                        <li>Rest 2-3 minutes between sets</li>
-                    </ul>
-                </div>
+            <div class="sb-card">
+                <div class="sb-card-label">Guidelines</div>
+                <div class="guide-item">Increase weight by 2.5–5 lbs when possible</div>
+                <div class="guide-item">If you can't add weight, add 1–2 reps</div>
+                <div class="guide-item">Focus on form over heavy weight</div>
+                <div class="guide-item">Rest 2–3 minutes between sets</div>
             </div>
         </div>
-    </div>
+    </aside>
 
-    <script>
-        // Session-based workout data
-        const workoutData = {
-            1: {
-                name: "Phase 1 - Accumulation",
-                frequency: "2x per week for 2 weeks",
-                totalSessions: 4,
-                progression: [
-                    { session: 1, note: "Baseline - Learn the movements" },
-                    { session: 2, note: "Add +1 set to all exercises" },
-                    { session: 3, note: "Add +1 more set (up to 4 sets main lifts)" },
-                    { session: 4, note: "Taper - Keep mains at 4 sets, accessories at 3" }
-                ],
-                exercises: [
-                    { name: "Glute Bridge", type: "Warm-Up", sets: 2, reps: "12-15", tempo: "3010", rest: "—", note: "Keep chin tucked, control lower back movement" },
-                    { name: "Goblet Squat", type: "Block A", sets: 2, reps: "8-12", tempo: "4010", rest: "120-180", note: "Hold at chest, squat to comfortable depth" },
-                    { name: "DB Bench Press", type: "Block A", sets: 2, reps: "8-12", tempo: "3010", rest: "30", note: "Control on the way down" },
-                    { name: "Ring Rows", type: "Block B", sets: 2, reps: "8-12", tempo: "3010", rest: "90", note: "Start easy angle, pull chest to rings" },
-                    { name: "Elevated Single Leg Glute Bridge", type: "Block B", sets: 2, reps: "10-12/leg", tempo: "3011", rest: "30", note: "Shoulders on Bench. Non-working leg extended straight" },
-                    { name: "Reverse Lunge", type: "Block C", sets: 2, reps: "10/leg", tempo: "3010", rest: "90", note: "Step back, knee to 90°, drive through front heel" },
-                    { name: "DB Overhead Press", type: "Block C", sets: 2, reps: "8-12", tempo: "3010", rest: "30", note: "Back supported against wall if possible" },
-                    { name: "DB RDL + Row", type: "Block C", sets: 2, reps: "8-12", tempo: "3011", rest: "90", note: "Hinge at hips, pull to lower ribs" },
-                    { name: "Sit Up", type: "Block D", sets: 2, reps: "12-15/side", tempo: "3011", rest: "0", note: "Keep lower back pressed to floor" },
-                    { name: "Band Pull-Apart", type: "Block E", sets: 2, reps: "12-15", tempo: "3011", rest: "0", note: "Arms straight, squeeze shoulder blades" },
-                    { name: "Side Lying Lateral Leg Raise", type: "Block E", sets: 2, reps: "15-20", tempo: "2010", rest: "0", note: "Keep front slightly behind body, lead with heel" }
-                ]
-            },
-            2: {
-                name: "Phase 2 - Intensification",
-                frequency: "3x per week for 2 weeks",
-                totalSessions: 6,
-                progression: [
-                    { session: 1, note: "Introduction to higher intensity" },
-                    { session: 2, note: "Main lifts to 4 sets, accessories stay at 3" },
-                    { session: 3, note: "Accessories to 4 sets, core stays 2-3" },
-                    { session: 4, note: "Maintain 4 sets all except core" },
-                    { session: 5, note: "Peak - compounds to 5 sets, accessories 4" },
-                    { session: 6, note: "Taper - accessories to 3, compounds to 4" }
-                ],
-                exercises: [
-                    { name: "Glute Bridge", type: "Warm-Up", sets: 2, reps: "12-15", tempo: "3010", rest: "—", note: "Keep chin tucked, control lower back movement" },
-                    { name: "Bulgarian Split Squat", type: "Block A", sets: 3, reps: "5-8/leg", tempo: "4010", rest: "120-180", note: "Rear foot on bench, front leg does work" },
-                    { name: "DB Bench Press (neutral grip)", type: "Block B", sets: 3, reps: "5-8", tempo: "3010", rest: "30", note: "Palms face each other" },
-                    { name: "Ring Rows", type: "Block B", sets: 3, reps: "5-8", tempo: "3010", rest: "90", note: "Harder angle for strength focus" },
-                    { name: "Single Leg Glute Bridge", type: "Block C", sets: 3, reps: "8-12/leg", tempo: "3011", rest: "30", note: "Add weight for progression" },
-                    { name: "Romanian Deadlift", type: "Block C", sets: 3, reps: "8-12", tempo: "3010", rest: "90", note: "Hinge at hips, feel hamstring stretch" },
-                    { name: "Single Arm DB Press", type: "Block D", sets: 3, reps: "8-12/arm", tempo: "3010", rest: "30", note: "Engage core for stability" },
-                    { name: "Single Arm DB Row", type: "Block D", sets: 3, reps: "8-12/arm", tempo: "3011", rest: "90", note: "Opposite hand/knee on bench" },
-                    { name: "Dead Bug", type: "Block E", sets: 2, reps: "12-15/side", tempo: "3011", rest: "0", note: "Keep lower back pressed to floor" },
-                    { name: "Band Pull-Apart", type: "Block E", sets: 2, reps: "12-15", tempo: "3011", rest: "0", note: "Arms straight, squeeze shoulder blades" },
-                    { name: "Standing Lateral Leg Raise", type: "Block E", sets: 2, reps: "15-20", tempo: "2010", rest: "0", note: "Knee bent, squeeze at top" }
-                ]
-            }
-        };
+    <!-- ════════════════ MAIN CONTENT ════════════════ -->
+    <main class="main">
+        <div class="page">
+            <div class="pg-emoji">🏋️</div>
+            <h1 class="pg-title" id="pageTitle">Phase 1 — Accumulation</h1>
+            <p class="pg-subtitle" id="pageSubtitle">2x per week for 2 weeks</p>
 
-        const exerciseVideos = {
-            'Glute Bridge': 'https://www.youtube.com/watch?v=OUgsJ8-Vi0E',
-            'Goblet Squat': 'https://www.youtube.com/watch?v=EkSAynpQxuo',
-            'DB Bench Press (feet elevated)': 'https://www.youtube.com/watch?v=QsYre__-aro',
-            'DB Bench Press (neutral grip)': 'https://www.youtube.com/watch?v=KeUF3cx1n_o',
-            'Ring Rows': 'https://www.youtube.com/watch?v=hXTc1mDnZCw',
-            'Single Leg Glute Bridge': 'https://www.youtube.com/watch?v=AVAXhy6pl7o',
-            'Reverse Lunge': 'https://www.youtube.com/watch?v=Q2k3kYbtOcI',
-            'DB Overhead Press': 'https://www.youtube.com/watch?v=qEwKCR5JCog',
-            'DB Bent Over Row': 'https://www.youtube.com/watch?v=pYcpY20QaE8',
-            'Dead Bug': 'https://www.youtube.com/watch?v=hGeKSiZReiE',
-            'Band Pull-Apart': 'https://www.youtube.com/watch?v=JTCBVbeWYP4',
-            'Side Lying Lateral Leg Raise': 'https://www.youtube.com/watch?v=v7VmrcipWGk',
-            'Standing Lateral Leg Raise': 'https://www.youtube.com/watch?v=rW5yoJqclEg',
-            'Bulgarian Split Squat': 'https://www.youtube.com/watch?v=2C-uNgKwPLE',
-            'Romanian Deadlift': 'https://www.youtube.com/watch?v=jEy_czb3RKA',
-            'Single Arm DB Press': 'https://www.youtube.com/watch?v=B-aVuyhvLHU',
-            'Single Arm DB Row': 'https://www.youtube.com/watch?v=dFzUjzfih7k'
-        };
+            <div class="pg-props">
+                <div class="prop-row">
+                    <div class="prop-key">📅 Session</div>
+                    <div class="prop-val" id="propSession"><span class="prop-tag">Session 1 of 4</span></div>
+                </div>
+                <div class="prop-row">
+                    <div class="prop-key">🎯 Focus</div>
+                    <div class="prop-val" id="propFocus">Baseline — Learn the movements</div>
+                </div>
+            </div>
 
-        let currentPhase = 1;
-        let currentSession = 1;
-        let completedExercises = {};
-        let sessionData = {}; // Store all session tracking data
+            <div id="exerciseList"></div>
+        </div>
+    </main>
 
-        function getSessionKey() {
-            return `${currentPhase}-${currentSession}`;
+</div>
+
+<script>
+    /* ════════════════ DATA ════════════════ */
+    const workoutData = {
+        1: {
+            name: "Phase 1 — Accumulation",
+            frequency: "2x per week for 2 weeks",
+            totalSessions: 4,
+            progression: [
+                { session: 1, note: "Baseline — Learn the movements" },
+                { session: 2, note: "Add +1 set to all exercises" },
+                { session: 3, note: "Add +1 more set (up to 4 sets main lifts)" },
+                { session: 4, note: "Taper — Keep mains at 4 sets, accessories at 3" }
+            ],
+            exercises: [
+                { name: "Glute Bridge",                      type: "Warm-Up", sets: 2, reps: "12-15",    tempo: "3010", rest: "—",       note: "Keep chin tucked, control lower back movement" },
+                { name: "Goblet Squat",                      type: "Block A",  sets: 2, reps: "8-12",     tempo: "4010", rest: "120-180", note: "Hold at chest, squat to comfortable depth" },
+                { name: "DB Bench Press",                    type: "Block A",  sets: 2, reps: "8-12",     tempo: "3010", rest: "30",      note: "Control on the way down" },
+                { name: "Ring Rows",                         type: "Block B",  sets: 2, reps: "8-12",     tempo: "3010", rest: "90",      note: "Start easy angle, pull chest to rings" },
+                { name: "Elevated Single Leg Glute Bridge",  type: "Block B",  sets: 2, reps: "10-12/leg",tempo: "3011", rest: "30",      note: "Shoulders on Bench. Non-working leg extended straight" },
+                { name: "Reverse Lunge",                     type: "Block C",  sets: 2, reps: "10/leg",   tempo: "3010", rest: "90",      note: "Step back, knee to 90°, drive through front heel" },
+                { name: "DB Overhead Press",                 type: "Block C",  sets: 2, reps: "8-12",     tempo: "3010", rest: "30",      note: "Back supported against wall if possible" },
+                { name: "DB RDL + Row",                      type: "Block C",  sets: 2, reps: "8-12",     tempo: "3011", rest: "90",      note: "Hinge at hips, pull to lower ribs" },
+                { name: "Sit Up",                            type: "Block D",  sets: 2, reps: "12-15/side",tempo: "3011", rest: "0",      note: "Keep lower back pressed to floor" },
+                { name: "Band Pull-Apart",                   type: "Block E",  sets: 2, reps: "12-15",    tempo: "3011", rest: "0",       note: "Arms straight, squeeze shoulder blades" },
+                { name: "Side Lying Lateral Leg Raise",      type: "Block E",  sets: 2, reps: "15-20",    tempo: "2010", rest: "0",       note: "Keep front slightly behind body, lead with heel" }
+            ]
+        },
+        2: {
+            name: "Phase 2 — Intensification",
+            frequency: "3x per week for 2 weeks",
+            totalSessions: 6,
+            progression: [
+                { session: 1, note: "Introduction to higher intensity" },
+                { session: 2, note: "Main lifts to 4 sets, accessories stay at 3" },
+                { session: 3, note: "Accessories to 4 sets, core stays 2-3" },
+                { session: 4, note: "Maintain 4 sets all except core" },
+                { session: 5, note: "Peak — compounds to 5 sets, accessories 4" },
+                { session: 6, note: "Taper — accessories to 3, compounds to 4" }
+            ],
+            exercises: [
+                { name: "Glute Bridge",               type: "Warm-Up", sets: 2, reps: "12-15",   tempo: "3010", rest: "—",       note: "Keep chin tucked, control lower back movement" },
+                { name: "Bulgarian Split Squat",       type: "Block A",  sets: 3, reps: "5-8/leg", tempo: "4010", rest: "120-180", note: "Rear foot on bench, front leg does work" },
+                { name: "DB Bench Press (neutral grip)",type: "Block B", sets: 3, reps: "5-8",     tempo: "3010", rest: "30",      note: "Palms face each other" },
+                { name: "Ring Rows",                   type: "Block B",  sets: 3, reps: "5-8",     tempo: "3010", rest: "90",      note: "Harder angle for strength focus" },
+                { name: "Single Leg Glute Bridge",     type: "Block C",  sets: 3, reps: "8-12/leg",tempo: "3011", rest: "30",      note: "Add weight for progression" },
+                { name: "Romanian Deadlift",           type: "Block C",  sets: 3, reps: "8-12",    tempo: "3010", rest: "90",      note: "Hinge at hips, feel hamstring stretch" },
+                { name: "Single Arm DB Press",         type: "Block D",  sets: 3, reps: "8-12/arm",tempo: "3010", rest: "30",      note: "Engage core for stability" },
+                { name: "Single Arm DB Row",           type: "Block D",  sets: 3, reps: "8-12/arm",tempo: "3011", rest: "90",      note: "Opposite hand/knee on bench" },
+                { name: "Dead Bug",                    type: "Block E",  sets: 2, reps: "12-15/side",tempo: "3011",rest: "0",      note: "Keep lower back pressed to floor" },
+                { name: "Band Pull-Apart",             type: "Block E",  sets: 2, reps: "12-15",   tempo: "3011", rest: "0",       note: "Arms straight, squeeze shoulder blades" },
+                { name: "Standing Lateral Leg Raise",  type: "Block E",  sets: 2, reps: "15-20",   tempo: "2010", rest: "0",       note: "Knee bent, squeeze at top" }
+            ]
         }
+    };
 
-        function getExerciseKey(exerciseIndex) {
-            return `${getSessionKey()}-${exerciseIndex}`;
-        }
+    const exerciseVideos = {
+        'Glute Bridge':                     'https://www.youtube.com/watch?v=OUgsJ8-Vi0E',
+        'Goblet Squat':                     'https://www.youtube.com/watch?v=EkSAynpQxuo',
+        'DB Bench Press (feet elevated)':   'https://www.youtube.com/watch?v=QsYre__-aro',
+        'DB Bench Press (neutral grip)':    'https://www.youtube.com/watch?v=KeUF3cx1n_o',
+        'Ring Rows':                        'https://www.youtube.com/watch?v=hXTc1mDnZCw',
+        'Single Leg Glute Bridge':          'https://www.youtube.com/watch?v=AVAXhy6pl7o',
+        'Reverse Lunge':                    'https://www.youtube.com/watch?v=Q2k3kYbtOcI',
+        'DB Overhead Press':                'https://www.youtube.com/watch?v=qEwKCR5JCog',
+        'DB Bent Over Row':                 'https://www.youtube.com/watch?v=pYcpY20QaE8',
+        'Dead Bug':                         'https://www.youtube.com/watch?v=hGeKSiZReiE',
+        'Band Pull-Apart':                  'https://www.youtube.com/watch?v=JTCBVbeWYP4',
+        'Side Lying Lateral Leg Raise':     'https://www.youtube.com/watch?v=v7VmrcipWGk',
+        'Standing Lateral Leg Raise':       'https://www.youtube.com/watch?v=rW5yoJqclEg',
+        'Bulgarian Split Squat':            'https://www.youtube.com/watch?v=2C-uNgKwPLE',
+        'Romanian Deadlift':                'https://www.youtube.com/watch?v=jEy_czb3RKA',
+        'Single Arm DB Press':              'https://www.youtube.com/watch?v=B-aVuyhvLHU',
+        'Single Arm DB Row':                'https://www.youtube.com/watch?v=dFzUjzfih7k'
+    };
 
-        function getTypeClass(type) {
-            const typeMap = {
-                'Warm-Up': 'type-warmup',
-                'Block A': 'type-a',
-                'Block B': 'type-b',
-                'Block C': 'type-c',
-                'Block D': 'type-d',
-                'Block E': 'type-e'
-            };
-            return typeMap[type] || 'type-e';
-        }
+    /* ════════════════ STATE ════════════════ */
+    let currentPhase    = 1;
+    let currentSession  = 1;
+    let completedExercises = {};
+    let sessionData        = {};
+    let cardCollapsed      = {};
 
-        function changeSession(direction) {
-            const data = workoutData[currentPhase];
-            const newSession = currentSession + direction;
-            
-            if (newSession >= 1 && newSession <= data.totalSessions) {
-                currentSession = newSession;
-                updateWorkout();
-            }
-        }
+    /* ════════════════ HELPERS ════════════════ */
+    function getSessionKey()       { return `${currentPhase}-${currentSession}`; }
+    function getExerciseKey(i)     { return `${getSessionKey()}-${i}`; }
 
-        function toggleExercise(exerciseIndex) {
-            const key = getExerciseKey(exerciseIndex);
-            completedExercises[key] = !completedExercises[key];
-            
-            const btn = document.getElementById(`complete-${exerciseIndex}`);
-            const card = document.getElementById(`card-${exerciseIndex}`);
-            
-            if (completedExercises[key]) {
-                btn.classList.add('completed');
-                btn.innerHTML = '✓';
-                card.classList.add('completed');
-            } else {
-                btn.classList.remove('completed');
-                btn.innerHTML = '☐';
-                card.classList.remove('completed');
-            }
-        }
+    function getTagClass(type) {
+        const map = { 'Warm-Up': 'tag-warmup', 'Block A': 'tag-a', 'Block B': 'tag-b',
+                      'Block C': 'tag-c', 'Block D': 'tag-d', 'Block E': 'tag-e' };
+        return map[type] || 'tag-e';
+    }
 
-        function updateWeight(exerciseIndex, setIndex, value) {
-            const sessionKey = getSessionKey();
-            const key = `${sessionKey}-${exerciseIndex}-${setIndex}-weight`;
-            
-            if (!sessionData[sessionKey]) sessionData[sessionKey] = {};
-            sessionData[sessionKey][key] = value;
-        }
+    function getPrevData(exIdx, setIdx) {
+        if (currentSession < 2) return null;
+        const prevKey  = `${currentPhase}-${currentSession - 1}`;
+        const prevData = sessionData[prevKey];
+        if (!prevData) return null;
+        const w = prevData[`${prevKey}-${exIdx}-${setIdx}-weight`];
+        const r = prevData[`${prevKey}-${exIdx}-${setIdx}-reps`];
+        return (w || r) ? { weight: w || '—', reps: r || '—' } : null;
+    }
 
-        function updateReps(exerciseIndex, setIndex, value) {
-            const sessionKey = getSessionKey();
-            const key = `${sessionKey}-${exerciseIndex}-${setIndex}-reps`;
-            
-            if (!sessionData[sessionKey]) sessionData[sessionKey] = {};
-            sessionData[sessionKey][key] = value;
-        }
+    function getSuggestion(exIdx, setIdx) {
+        const prev = getPrevData(exIdx, setIdx);
+        if (!prev || prev.weight === '—' || prev.reps === '—') return 'Start comfortable';
+        const w = parseFloat(prev.weight);
+        const r = parseInt(prev.reps);
+        if (isNaN(w) || isNaN(r)) return 'Use previous as baseline';
+        return `Try ${w + 2.5} lbs × ${r} or ${w} lbs × ${r + 1}`;
+    }
 
-        function getPreviousSessionData(exerciseIndex, setIndex) {
-            const prevSession = currentSession - 1;
-            if (prevSession < 1) return null;
-            
-            const prevSessionKey = `${currentPhase}-${prevSession}`;
-            const prevData = sessionData[prevSessionKey];
-            if (!prevData) return null;
-            
-            const weightKey = `${prevSessionKey}-${exerciseIndex}-${setIndex}-weight`;
-            const repsKey = `${prevSessionKey}-${exerciseIndex}-${setIndex}-reps`;
-            
-            const weight = prevData[weightKey];
-            const reps = prevData[repsKey];
-            
-            if (weight || reps) {
-                return { weight: weight || '—', reps: reps || '—' };
-            }
-            return null;
-        }
-
-        function generateSuggestion(exerciseIndex, setIndex) {
-            const prevData = getPreviousSessionData(exerciseIndex, setIndex);
-            if (!prevData || prevData.weight === '—' || prevData.reps === '—') {
-                return "Start with comfortable weight";
-            }
-            
-            const prevWeight = parseFloat(prevData.weight);
-            const prevReps = parseInt(prevData.reps);
-            
-            if (isNaN(prevWeight) || isNaN(prevReps)) {
-                return "Use previous session as baseline";
-            }
-            
-            // Simple progression logic
-            const suggestedWeight = prevWeight + 2.5;
-            const suggestedReps = prevReps + 1;
-            
-            return `Try: ${suggestedWeight}lbs x ${prevReps} or ${prevWeight}lbs x ${suggestedReps}`;
-        }
-
-        function updateSidebar() {
-            const data = workoutData[currentPhase];
-            const progressInfo = data.progression[currentSession - 1];
-            
-            // Update session counter
-            document.getElementById('sessionCounter').textContent = `Session ${currentSession} of ${data.totalSessions}`;
-            
-            // Update progress details
-            document.getElementById('progressDetails').textContent = progressInfo.note;
-            
-            // Update previous session data
-            const lastSessionContainer = document.getElementById('lastSessionData');
-            lastSessionContainer.innerHTML = '';
-            
-            if (currentSession === 1) {
-                lastSessionContainer.innerHTML = `
-                    <div class="last-session-item">
-                        <div style="color: #666; font-style: italic;">First session - establish baseline</div>
-                    </div>
-                `;
-            } else {
-                const prevSessionKey = `${currentPhase}-${currentSession - 1}`;
-                const prevData = sessionData[prevSessionKey];
-                
-                if (prevData && Object.keys(prevData).length > 0) {
-                    data.exercises.slice(0, 5).forEach((exercise, idx) => { // Show top 5 exercises
-                        const weightKey = `${prevSessionKey}-${idx}-0-weight`;
-                        const repsKey = `${prevSessionKey}-${idx}-0-reps`;
-                        const weight = prevData[weightKey] || '—';
-                        const reps = prevData[repsKey] || '—';
-                        
-                        if (weight !== '—' || reps !== '—') {
-                            lastSessionContainer.innerHTML += `
-                                <div class="last-session-item">
-                                    <div class="exercise-name-small">${exercise.name}</div>
-                                    <div class="last-performance">Set 1: ${weight}lbs × ${reps} reps</div>
-                                </div>
-                            `;
-                        }
-                    });
-                } else {
-                    lastSessionContainer.innerHTML = `
-                        <div class="last-session-item">
-                            <div style="color: #666; font-style: italic;">No data from previous session</div>
-                        </div>
-                    `;
-                }
-            }
-        }
-
-        function updateWorkout() {
-            currentPhase = parseInt(document.getElementById('phaseSelect').value);
-            const data = workoutData[currentPhase];
-            
-            // Reset session to 1 when changing phases
-            if (currentSession > data.totalSessions) {
-                currentSession = 1;
-            }
-            
-            document.getElementById('workoutTitle').textContent = data.name;
-            
-            // Update exercises
-            const container = document.getElementById('exerciseContainer');
-            container.innerHTML = '';
-            
-            data.exercises.forEach((exercise, exerciseIndex) => {
-                const isCompleted = completedExercises[getExerciseKey(exerciseIndex)];
-                const videoUrl = exerciseVideos[exercise.name];
-                const sessionKey = getSessionKey();
-                
-                const exerciseCard = document.createElement('div');
-                exerciseCard.className = `exercise-card ${isCompleted ? 'completed' : ''}`;
-                exerciseCard.id = `card-${exerciseIndex}`;
-                
-                let setInputs = '';
-                for (let setIndex = 0; setIndex < exercise.sets; setIndex++) {
-                    const weightKey = `${sessionKey}-${exerciseIndex}-${setIndex}-weight`;
-                    const repsKey = `${sessionKey}-${exerciseIndex}-${setIndex}-reps`;
-                    const currentData = sessionData[sessionKey];
-                    const weightValue = currentData ? (currentData[weightKey] || '') : '';
-                    const repsValue = currentData ? (currentData[repsKey] || '') : '';
-                    
-                    const prevData = getPreviousSessionData(exerciseIndex, setIndex);
-                    const suggestion = generateSuggestion(exerciseIndex, setIndex);
-                    
-                    setInputs += `
-                        <div class="set-row">
-                            <div class="set-label">Set ${setIndex + 1}</div>
-                            <div class="input-group">
-                                <label>Weight:</label>
-                                <input type="number" placeholder="lbs" value="${weightValue}" 
-                                       onchange="updateWeight(${exerciseIndex}, ${setIndex}, this.value)">
-                            </div>
-                            <div class="input-group">
-                                <label>Reps:</label>
-                                <input type="number" placeholder="reps" value="${repsValue}"
-                                       onchange="updateReps(${exerciseIndex}, ${setIndex}, this.value)">
-                            </div>
-                            <div>
-                                ${prevData ? `<div class="last-time">Last: ${prevData.weight}lbs × ${prevData.reps}</div>` : ''}
-                                <div class="suggestion">${suggestion}</div>
-                            </div>
-                        </div>
-                    `;
-                }
-                
-                exerciseCard.innerHTML = `
-                    <div class="exercise-header">
-                        <div class="exercise-info">
-                            <button class="complete-btn ${isCompleted ? 'completed' : ''}" 
-                                    id="complete-${exerciseIndex}" 
-                                    onclick="toggleExercise(${exerciseIndex})">
-                                ${isCompleted ? '✓' : '☐'}
-                            </button>
-                            <div>
-                                <div class="exercise-name">${exercise.name}</div>
-                                <div class="exercise-type ${getTypeClass(exercise.type)}">
-                                    ${exercise.type}
-                                </div>
-                            </div>
-                        </div>
-                        ${videoUrl ? `
-                            <a href="${videoUrl}" target="_blank" class="video-btn">
-                                ▶ Watch Video
-                            </a>
-                        ` : ''}
-                    </div>
-                    
-                    <div class="specs-grid">
-                        <div class="spec-item sets">
-                            <div class="spec-value">${exercise.sets}</div>
-                            <div class="spec-label">Sets</div>
-                        </div>
-                        <div class="spec-item reps">
-                            <div class="spec-value">${exercise.reps}</div>
-                            <div class="spec-label">Reps</div>
-                        </div>
-                        <div class="spec-item tempo">
-                            <div class="spec-value">${exercise.tempo}</div>
-                            <div class="spec-label">Tempo</div>
-                        </div>
-                        <div class="spec-item rest">
-                            <div class="spec-value">${exercise.rest}</div>
-                            <div class="spec-label">Rest (sec)</div>
-                        </div>
-                    </div>
-                    
-                    <div class="note-box">
-                        <div class="note-label">Form Note:</div>
-                        <div class="note-text">${exercise.note}</div>
-                    </div>
-                    
-                    <div class="tracking-section">
-                        <div class="tracking-title">Set Tracking:</div>
-                        ${setInputs}
-                    </div>
-                `;
-                
-                container.appendChild(exerciseCard);
-            });
-            
-            updateSidebar();
-        }
-
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            updateWorkout();
+    /* ════════════════ ACTIONS ════════════════ */
+    function selectPhase(phase) {
+        currentPhase   = phase;
+        currentSession = 1;
+        cardCollapsed  = {};
+        document.querySelectorAll('.phase-btn').forEach((btn, i) => {
+            btn.classList.toggle('active', (i + 1) === phase);
         });
-    </script>
+        updateWorkout();
+    }
+
+    function selectSession(session) {
+        currentSession = session;
+        cardCollapsed  = {};
+        updateWorkout();
+    }
+
+    function toggleCard(idx) {
+        cardCollapsed[idx] = !cardCollapsed[idx];
+        const body   = document.getElementById(`body-${idx}`);
+        const toggle = document.getElementById(`toggle-${idx}`);
+        if (body)   body.classList.toggle('hidden', cardCollapsed[idx]);
+        if (toggle) toggle.classList.toggle('open', !cardCollapsed[idx]);
+    }
+
+    function toggleExercise(idx) {
+        const key  = getExerciseKey(idx);
+        completedExercises[key] = !completedExercises[key];
+        const done  = completedExercises[key];
+
+        const check = document.getElementById(`check-${idx}`);
+        const name  = document.getElementById(`name-${idx}`);
+        const block = document.getElementById(`block-${idx}`);
+
+        if (check) { check.classList.toggle('done', done); check.innerHTML = done ? '✓' : ''; }
+        if (name)  { name.classList.toggle('done', done); }
+        if (block) { block.style.opacity = done ? '0.65' : ''; }
+
+        updateCompletionProgress();
+    }
+
+    function updateWeight(exIdx, setIdx, value) {
+        const sk = getSessionKey();
+        if (!sessionData[sk]) sessionData[sk] = {};
+        sessionData[sk][`${sk}-${exIdx}-${setIdx}-weight`] = value;
+    }
+
+    function updateReps(exIdx, setIdx, value) {
+        const sk = getSessionKey();
+        if (!sessionData[sk]) sessionData[sk] = {};
+        sessionData[sk][`${sk}-${exIdx}-${setIdx}-reps`] = value;
+    }
+
+    /* ════════════════ PROGRESS ════════════════ */
+    function updateCompletionProgress() {
+        const data  = workoutData[currentPhase];
+        const total = data.exercises.length;
+        let done = 0;
+        data.exercises.forEach((_, i) => {
+            if (completedExercises[getExerciseKey(i)]) done++;
+        });
+        const pct  = total > 0 ? (done / total) * 100 : 0;
+        const fill = document.getElementById('progressFill');
+        const text = document.getElementById('progressText');
+        if (fill) fill.style.width = pct + '%';
+        if (text) text.textContent = `${done} of ${total} complete`;
+    }
+
+    /* ════════════════ SIDEBAR ════════════════ */
+    function renderSessionNav() {
+        const data = workoutData[currentPhase];
+        const nav  = document.getElementById('sessionNav');
+        if (!nav) return;
+        nav.innerHTML = '';
+        for (let s = 1; s <= data.totalSessions; s++) {
+            const item = document.createElement('div');
+            item.className = `sess-item${s === currentSession ? ' active' : ''}`;
+            item.innerHTML = `
+                <span class="sess-icon">${s === currentSession ? '📋' : '📄'}</span>
+                <span>Session ${s}</span>
+            `;
+            item.onclick = () => selectSession(s);
+            nav.appendChild(item);
+        }
+    }
+
+    function updateSidebar() {
+        const data    = workoutData[currentPhase];
+        const prog    = data.progression[currentSession - 1];
+
+        // Session note
+        const noteEl = document.getElementById('sessionNote');
+        if (noteEl) noteEl.textContent = prog.note;
+
+        renderSessionNav();
+        updateCompletionProgress();
+
+        // Previous session data
+        const prevContainer = document.getElementById('prevContent');
+        if (!prevContainer) return;
+
+        if (currentSession === 1) {
+            prevContainer.innerHTML = `<p style="font-size:12px;color:var(--text3);font-style:italic;">First session — establish baseline</p>`;
+        } else {
+            const prevKey  = `${currentPhase}-${currentSession - 1}`;
+            const prevData = sessionData[prevKey];
+            let html = '';
+
+            if (prevData && Object.keys(prevData).length > 0) {
+                data.exercises.slice(0, 5).forEach((ex, idx) => {
+                    const w = prevData[`${prevKey}-${idx}-0-weight`] || '—';
+                    const r = prevData[`${prevKey}-${idx}-0-reps`]   || '—';
+                    if (w !== '—' || r !== '—') {
+                        html += `
+                            <div class="prev-item">
+                                <div class="prev-name">${ex.name}</div>
+                                <div class="prev-data">Set 1: ${w} lbs × ${r} reps</div>
+                            </div>
+                        `;
+                    }
+                });
+            }
+
+            prevContainer.innerHTML = html ||
+                `<p style="font-size:12px;color:var(--text3);font-style:italic;">No data from previous session</p>`;
+        }
+    }
+
+    /* ════════════════ MAIN RENDER ════════════════ */
+    function updateWorkout() {
+        const data = workoutData[currentPhase];
+
+        // Page header
+        document.getElementById('pageTitle').textContent    = data.name;
+        document.getElementById('pageSubtitle').textContent = data.frequency;
+
+        // Properties
+        const prog = data.progression[currentSession - 1];
+        document.getElementById('propSession').innerHTML =
+            `<span class="prop-tag">Session ${currentSession} of ${data.totalSessions}</span>`;
+        document.getElementById('propFocus').textContent = prog.note;
+
+        // Exercise list
+        const list = document.getElementById('exerciseList');
+        list.innerHTML = '';
+
+        let lastType = null;
+
+        data.exercises.forEach((ex, idx) => {
+            const sk        = getSessionKey();
+            const isDone    = !!completedExercises[getExerciseKey(idx)];
+            const isOpen    = !cardCollapsed[idx];           // default: expanded
+            const videoUrl  = exerciseVideos[ex.name];
+
+            // Section heading when block type changes
+            if (ex.type !== lastType) {
+                const heading = document.createElement('div');
+                heading.className   = 'blk-heading';
+                heading.textContent = ex.type;
+                list.appendChild(heading);
+                lastType = ex.type;
+            }
+
+            // Build set rows
+            let setRowsHtml = '';
+            for (let s = 0; s < ex.sets; s++) {
+                const wKey   = `${sk}-${idx}-${s}-weight`;
+                const rKey   = `${sk}-${idx}-${s}-reps`;
+                const curData = sessionData[sk] || {};
+                const wVal   = curData[wKey] || '';
+                const rVal   = curData[rKey] || '';
+                const prev   = getPrevData(idx, s);
+                const sugg   = getSuggestion(idx, s);
+
+                setRowsHtml += `
+                    <tr>
+                        <td class="set-lbl">Set ${s + 1}</td>
+                        <td><input class="num-inp" type="number" placeholder="lbs" value="${wVal}"
+                                   onchange="updateWeight(${idx}, ${s}, this.value)"></td>
+                        <td><input class="num-inp" type="number" placeholder="reps" value="${rVal}"
+                                   onchange="updateReps(${idx}, ${s}, this.value)"></td>
+                        <td class="prev-td">${prev ? `${prev.weight} × ${prev.reps}` : '—'}</td>
+                        <td class="sugg-td">${sugg}</td>
+                    </tr>
+                `;
+            }
+
+            const block = document.createElement('div');
+            block.className  = 'ex-block';
+            block.id         = `block-${idx}`;
+            if (isDone) block.style.opacity = '0.65';
+
+            block.innerHTML = `
+                <div class="ex-row">
+                    <div class="ex-toggle${isOpen ? ' open' : ''}" id="toggle-${idx}" onclick="toggleCard(${idx})">
+                        <span class="arr">▶</span>
+                    </div>
+                    <div class="ex-check${isDone ? ' done' : ''}" id="check-${idx}" onclick="toggleExercise(${idx})">${isDone ? '✓' : ''}</div>
+                    <div class="ex-title">
+                        <span class="ex-name${isDone ? ' done' : ''}" id="name-${idx}">${ex.name}</span>
+                        <span class="ex-tag ${getTagClass(ex.type)}">${ex.type}</span>
+                    </div>
+                    <div class="ex-actions">
+                        ${videoUrl ? `<a href="${videoUrl}" target="_blank" class="vid-btn">▶ Video</a>` : ''}
+                    </div>
+                </div>
+                <div class="ex-body${isOpen ? '' : ' hidden'}" id="body-${idx}">
+                    <div class="ex-props">
+                        <div class="xprop"><span class="xprop-lbl">Sets</span><span class="xprop-val">${ex.sets}</span></div>
+                        <div class="xprop"><span class="xprop-lbl">Reps</span><span class="xprop-val">${ex.reps}</span></div>
+                        <div class="xprop"><span class="xprop-lbl">Tempo</span><span class="xprop-val">${ex.tempo}</span></div>
+                        <div class="xprop"><span class="xprop-lbl">Rest</span><span class="xprop-val">${ex.rest}</span></div>
+                    </div>
+                    <div class="callout">
+                        <span class="callout-ico">💡</span>
+                        <span class="callout-txt">${ex.note}</span>
+                    </div>
+                    <div class="sets-lbl">Set Tracking</div>
+                    <table class="sets-tbl">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>Weight</th>
+                                <th>Reps</th>
+                                <th>Previous</th>
+                                <th>Suggestion</th>
+                            </tr>
+                        </thead>
+                        <tbody>${setRowsHtml}</tbody>
+                    </table>
+                </div>
+            `;
+
+            list.appendChild(block);
+        });
+
+        updateSidebar();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => updateWorkout());
+</script>
 </body>
 </html>
