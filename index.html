@@ -230,7 +230,6 @@
             margin-bottom: 20px;
         }
 
-        /* Notion-style database properties */
         .pg-props {
             border-top: 1px solid var(--bd);
             margin-bottom: 28px;
@@ -273,7 +272,6 @@
             color: var(--blue);
         }
 
-        /* Block section headings */
         .blk-heading {
             font-size: 11px;
             font-weight: 600;
@@ -285,7 +283,7 @@
             margin-bottom: 4px;
         }
 
-        /* Exercise block (toggle) */
+        /* Exercise block */
         .ex-block { border-radius: 6px; margin-bottom: 2px; }
 
         .ex-row {
@@ -376,7 +374,6 @@
         }
         .vid-btn:hover { background: rgba(55,53,47,.1); color: var(--text); }
 
-        /* Block body */
         .ex-body { padding: 4px 4px 14px 44px; }
         .ex-body.hidden { display: none; }
 
@@ -400,6 +397,17 @@
         }
         .xprop-lbl { color: var(--text3); }
         .xprop-val { font-weight: 600; color: var(--text); }
+
+        /* Sets changed badge */
+        .sets-changed {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--blue);
+            background: var(--blue-bg);
+            padding: 1px 6px;
+            border-radius: 3px;
+            margin-left: 2px;
+        }
 
         .callout {
             display: flex;
@@ -464,6 +472,92 @@
         .prev-td  { font-size: 12px; color: var(--text3); white-space: nowrap; }
         .sugg-td  { font-size: 12px; color: var(--green); font-weight: 500; }
 
+        /* ──────────────────── REST TIMER ──────────────────── */
+        .rest-btn {
+            padding: 3px 8px;
+            border: 1px solid var(--bd);
+            border-radius: 4px;
+            background: transparent;
+            color: var(--text3);
+            font-size: 11px;
+            cursor: pointer;
+            font-family: inherit;
+            white-space: nowrap;
+            transition: all .1s;
+        }
+        .rest-btn:hover {
+            background: var(--hov);
+            border-color: var(--bd2);
+            color: var(--text2);
+        }
+
+        .rest-timer {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            background: var(--text);
+            color: white;
+            border-radius: 10px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 4px 24px rgba(0,0,0,.2), 0 1px 4px rgba(0,0,0,.1);
+            transition: background .3s;
+            min-width: 180px;
+        }
+        .rest-timer.hidden { display: none; }
+        .rest-timer.done { background: var(--green); }
+
+        .rest-timer-info {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+        .rest-time {
+            font-size: 28px;
+            font-weight: 700;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.5px;
+        }
+        .rest-sublabel {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: rgba(255,255,255,.55);
+            margin-top: 3px;
+        }
+        .rest-bar-bg {
+            width: 100%;
+            height: 3px;
+            background: rgba(255,255,255,.2);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        .rest-bar-fill {
+            height: 3px;
+            background: white;
+            border-radius: 2px;
+            transition: width 1s linear;
+        }
+        .rest-dismiss {
+            width: 24px; height: 24px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,.15);
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            transition: background .1s;
+        }
+        .rest-dismiss:hover { background: rgba(255,255,255,.25); }
+
         /* ──────────────────── RESPONSIVE ──────────────────── */
         @media (max-width: 1024px) {
             .page { padding: 0 48px 80px; }
@@ -486,6 +580,7 @@
             .prop-key { width: 120px; }
             .ex-actions { opacity: 1; }
             .sets-tbl { display: block; overflow-x: auto; }
+            .rest-timer { bottom: 16px; right: 16px; left: 16px; min-width: unset; }
         }
     </style>
 </head>
@@ -558,7 +653,18 @@
             <div id="exerciseList"></div>
         </div>
     </main>
+</div>
 
+<!-- ════════════════ REST TIMER ════════════════ -->
+<div class="rest-timer hidden" id="restTimer">
+    <div class="rest-timer-info">
+        <div class="rest-time" id="restTime">90s</div>
+        <div class="rest-sublabel">Rest</div>
+        <div class="rest-bar-bg">
+            <div class="rest-bar-fill" id="restBarFill"></div>
+        </div>
+    </div>
+    <button class="rest-dismiss" onclick="dismissRest()" title="Dismiss">✕</button>
 </div>
 
 <script>
@@ -571,21 +677,21 @@
             progression: [
                 { session: 1, note: "Baseline — Learn the movements" },
                 { session: 2, note: "Add +1 set to all exercises" },
-                { session: 3, note: "Add +1 more set (up to 4 sets main lifts)" },
+                { session: 3, note: "Add +1 more set (up to 4 sets on main lifts)" },
                 { session: 4, note: "Taper — Keep mains at 4 sets, accessories at 3" }
             ],
             exercises: [
-                { name: "Glute Bridge",                      type: "Warm-Up", sets: 2, reps: "12-15",    tempo: "3010", rest: "—",       note: "Keep chin tucked, control lower back movement" },
-                { name: "Goblet Squat",                      type: "Block A",  sets: 2, reps: "8-12",     tempo: "4010", rest: "120-180", note: "Hold at chest, squat to comfortable depth" },
-                { name: "DB Bench Press",                    type: "Block A",  sets: 2, reps: "8-12",     tempo: "3010", rest: "30",      note: "Control on the way down" },
-                { name: "Ring Rows",                         type: "Block B",  sets: 2, reps: "8-12",     tempo: "3010", rest: "90",      note: "Start easy angle, pull chest to rings" },
-                { name: "Elevated Single Leg Glute Bridge",  type: "Block B",  sets: 2, reps: "10-12/leg",tempo: "3011", rest: "30",      note: "Shoulders on Bench. Non-working leg extended straight" },
-                { name: "Reverse Lunge",                     type: "Block C",  sets: 2, reps: "10/leg",   tempo: "3010", rest: "90",      note: "Step back, knee to 90°, drive through front heel" },
-                { name: "DB Overhead Press",                 type: "Block C",  sets: 2, reps: "8-12",     tempo: "3010", rest: "30",      note: "Back supported against wall if possible" },
-                { name: "DB RDL + Row",                      type: "Block C",  sets: 2, reps: "8-12",     tempo: "3011", rest: "90",      note: "Hinge at hips, pull to lower ribs" },
-                { name: "Sit Up",                            type: "Block D",  sets: 2, reps: "12-15/side",tempo: "3011", rest: "0",      note: "Keep lower back pressed to floor" },
-                { name: "Band Pull-Apart",                   type: "Block E",  sets: 2, reps: "12-15",    tempo: "3011", rest: "0",       note: "Arms straight, squeeze shoulder blades" },
-                { name: "Side Lying Lateral Leg Raise",      type: "Block E",  sets: 2, reps: "15-20",    tempo: "2010", rest: "0",       note: "Keep front slightly behind body, lead with heel" }
+                { name: "Glute Bridge",                     type: "Warm-Up", sets: 2, reps: "12-15",     tempo: "3010", rest: "—",       note: "Keep chin tucked, control lower back movement" },
+                { name: "Goblet Squat",                     type: "Block A",  sets: 2, reps: "8-12",      tempo: "4010", rest: "120-180", note: "Hold at chest, squat to comfortable depth" },
+                { name: "DB Bench Press",                   type: "Block A",  sets: 2, reps: "8-12",      tempo: "3010", rest: "30",      note: "Control on the way down" },
+                { name: "Ring Rows",                        type: "Block B",  sets: 2, reps: "8-12",      tempo: "3010", rest: "90",      note: "Start easy angle, pull chest to rings" },
+                { name: "Elevated Single Leg Glute Bridge", type: "Block B",  sets: 2, reps: "10-12/leg", tempo: "3011", rest: "30",      note: "Shoulders on Bench. Non-working leg extended straight" },
+                { name: "Reverse Lunge",                    type: "Block C",  sets: 2, reps: "10/leg",    tempo: "3010", rest: "90",      note: "Step back, knee to 90°, drive through front heel" },
+                { name: "DB Overhead Press",                type: "Block C",  sets: 2, reps: "8-12",      tempo: "3010", rest: "30",      note: "Back supported against wall if possible" },
+                { name: "DB RDL + Row",                     type: "Block C",  sets: 2, reps: "8-12",      tempo: "3011", rest: "90",      note: "Hinge at hips, pull to lower ribs" },
+                { name: "Sit Up",                           type: "Block D",  sets: 2, reps: "12-15/side",tempo: "3011", rest: "0",       note: "Keep lower back pressed to floor" },
+                { name: "Band Pull-Apart",                  type: "Block E",  sets: 2, reps: "12-15",     tempo: "3011", rest: "0",       note: "Arms straight, squeeze shoulder blades" },
+                { name: "Side Lying Lateral Leg Raise",     type: "Block E",  sets: 2, reps: "15-20",     tempo: "2010", rest: "0",       note: "Keep front slightly behind body, lead with heel" }
             ]
         },
         2: {
@@ -595,23 +701,23 @@
             progression: [
                 { session: 1, note: "Introduction to higher intensity" },
                 { session: 2, note: "Main lifts to 4 sets, accessories stay at 3" },
-                { session: 3, note: "Accessories to 4 sets, core stays 2-3" },
+                { session: 3, note: "Accessories to 4 sets, core stays at base" },
                 { session: 4, note: "Maintain 4 sets all except core" },
                 { session: 5, note: "Peak — compounds to 5 sets, accessories 4" },
                 { session: 6, note: "Taper — accessories to 3, compounds to 4" }
             ],
             exercises: [
-                { name: "Glute Bridge",               type: "Warm-Up", sets: 2, reps: "12-15",   tempo: "3010", rest: "—",       note: "Keep chin tucked, control lower back movement" },
-                { name: "Bulgarian Split Squat",       type: "Block A",  sets: 3, reps: "5-8/leg", tempo: "4010", rest: "120-180", note: "Rear foot on bench, front leg does work" },
-                { name: "DB Bench Press (neutral grip)",type: "Block B", sets: 3, reps: "5-8",     tempo: "3010", rest: "30",      note: "Palms face each other" },
-                { name: "Ring Rows",                   type: "Block B",  sets: 3, reps: "5-8",     tempo: "3010", rest: "90",      note: "Harder angle for strength focus" },
-                { name: "Single Leg Glute Bridge",     type: "Block C",  sets: 3, reps: "8-12/leg",tempo: "3011", rest: "30",      note: "Add weight for progression" },
-                { name: "Romanian Deadlift",           type: "Block C",  sets: 3, reps: "8-12",    tempo: "3010", rest: "90",      note: "Hinge at hips, feel hamstring stretch" },
-                { name: "Single Arm DB Press",         type: "Block D",  sets: 3, reps: "8-12/arm",tempo: "3010", rest: "30",      note: "Engage core for stability" },
-                { name: "Single Arm DB Row",           type: "Block D",  sets: 3, reps: "8-12/arm",tempo: "3011", rest: "90",      note: "Opposite hand/knee on bench" },
-                { name: "Dead Bug",                    type: "Block E",  sets: 2, reps: "12-15/side",tempo: "3011",rest: "0",      note: "Keep lower back pressed to floor" },
-                { name: "Band Pull-Apart",             type: "Block E",  sets: 2, reps: "12-15",   tempo: "3011", rest: "0",       note: "Arms straight, squeeze shoulder blades" },
-                { name: "Standing Lateral Leg Raise",  type: "Block E",  sets: 2, reps: "15-20",   tempo: "2010", rest: "0",       note: "Knee bent, squeeze at top" }
+                { name: "Glute Bridge",                type: "Warm-Up", sets: 2, reps: "12-15",    tempo: "3010", rest: "—",       note: "Keep chin tucked, control lower back movement" },
+                { name: "Bulgarian Split Squat",        type: "Block A",  sets: 3, reps: "5-8/leg",  tempo: "4010", rest: "120-180", note: "Rear foot on bench, front leg does work" },
+                { name: "DB Bench Press (neutral grip)",type: "Block B",  sets: 3, reps: "5-8",      tempo: "3010", rest: "30",      note: "Palms face each other" },
+                { name: "Ring Rows",                   type: "Block B",  sets: 3, reps: "5-8",      tempo: "3010", rest: "90",      note: "Harder angle for strength focus" },
+                { name: "Single Leg Glute Bridge",     type: "Block C",  sets: 3, reps: "8-12/leg", tempo: "3011", rest: "30",      note: "Add weight for progression" },
+                { name: "Romanian Deadlift",           type: "Block C",  sets: 3, reps: "8-12",     tempo: "3010", rest: "90",      note: "Hinge at hips, feel hamstring stretch" },
+                { name: "Single Arm DB Press",         type: "Block D",  sets: 3, reps: "8-12/arm", tempo: "3010", rest: "30",      note: "Engage core for stability" },
+                { name: "Single Arm DB Row",           type: "Block D",  sets: 3, reps: "8-12/arm", tempo: "3011", rest: "90",      note: "Opposite hand/knee on bench" },
+                { name: "Dead Bug",                    type: "Block E",  sets: 2, reps: "12-15/side",tempo: "3011", rest: "0",      note: "Keep lower back pressed to floor" },
+                { name: "Band Pull-Apart",             type: "Block E",  sets: 2, reps: "12-15",    tempo: "3011", rest: "0",       note: "Arms straight, squeeze shoulder blades" },
+                { name: "Standing Lateral Leg Raise",  type: "Block E",  sets: 2, reps: "15-20",    tempo: "2010", rest: "0",       note: "Knee bent, squeeze at top" }
             ]
         }
     };
@@ -637,15 +743,186 @@
     };
 
     /* ════════════════ STATE ════════════════ */
-    let currentPhase    = 1;
-    let currentSession  = 1;
+    let currentPhase       = 1;
+    let currentSession     = 1;
     let completedExercises = {};
     let sessionData        = {};
     let cardCollapsed      = {};
 
+    // Rest timer state
+    let restInterval     = null;
+    let restSecondsLeft  = 0;
+    let restTotalSeconds = 0;
+
+    /* ════════════════ LOCALSTORAGE ════════════════ */
+    function saveToStorage() {
+        try {
+            localStorage.setItem('wt-sessionData',  JSON.stringify(sessionData));
+            localStorage.setItem('wt-completed',    JSON.stringify(completedExercises));
+            localStorage.setItem('wt-phase',        String(currentPhase));
+            localStorage.setItem('wt-session',      String(currentSession));
+        } catch (e) { /* ignore quota errors */ }
+    }
+
+    function loadFromStorage() {
+        try {
+            const sd = localStorage.getItem('wt-sessionData');
+            const ce = localStorage.getItem('wt-completed');
+            const ph = localStorage.getItem('wt-phase');
+            const se = localStorage.getItem('wt-session');
+            if (sd) sessionData        = JSON.parse(sd);
+            if (ce) completedExercises = JSON.parse(ce);
+            if (ph) {
+                currentPhase = parseInt(ph);
+                // Sync phase button highlight
+                document.querySelectorAll('.phase-btn').forEach((btn, i) => {
+                    btn.classList.toggle('active', (i + 1) === currentPhase);
+                });
+            }
+            if (se) currentSession = parseInt(se);
+        } catch (e) { /* ignore parse errors */ }
+    }
+
+    /* ════════════════ SET PROGRESSION ════════════════ */
+    // Returns the actual number of sets for an exercise given the current phase + session,
+    // reflecting the progression rules described in each session note.
+    function getActualSets(exercise, phase, session) {
+        const base   = exercise.sets;
+        const type   = exercise.type;
+        const isMain = type === 'Block A';
+        const isCore = type === 'Block E';
+        const isWarm = type === 'Warm-Up';
+
+        // Warm-up never changes
+        if (isWarm) return base;
+
+        if (phase === 1) {
+            // Base = 2 for all
+            switch (session) {
+                case 1: return base;          // 2 — baseline
+                case 2: return base + 1;      // 3 — add +1 set to all
+                case 3: return 4;             // 4 — add +1 more (all reach 4)
+                case 4:                       // taper
+                    if (isMain) return 4;
+                    if (isCore) return base;
+                    return 3;
+                default: return base;
+            }
+        }
+
+        if (phase === 2) {
+            // Base = 3 for most, 2 for Block E
+            switch (session) {
+                case 1: return base;
+                case 2: return isMain ? 4 : base;
+                case 3: return isCore ? base : 4;
+                case 4: return isCore ? base : 4;
+                case 5: return isMain ? 5 : (isCore ? base : 4);
+                case 6: return isMain ? 4 : (isCore ? base : 3);
+                default: return base;
+            }
+        }
+
+        return base;
+    }
+
+    /* ════════════════ REST TIMER ════════════════ */
+    function formatTime(s) {
+        if (s <= 0) return '0s';
+        const m = Math.floor(s / 60);
+        const sec = s % 60;
+        return m > 0 ? `${m}:${sec.toString().padStart(2, '0')}` : `${s}s`;
+    }
+
+    function startRest(restValue) {
+        if (!restValue || restValue === '—' || restValue === '0') return;
+        // "120-180" → use lower bound
+        const seconds = parseInt(restValue.split('-')[0]);
+        if (isNaN(seconds) || seconds <= 0) return;
+
+        if (restInterval) clearInterval(restInterval);
+
+        restSecondsLeft  = seconds;
+        restTotalSeconds = seconds;
+
+        const timer  = document.getElementById('restTimer');
+        const timeEl = document.getElementById('restTime');
+        const fillEl = document.getElementById('restBarFill');
+
+        timer.classList.remove('hidden', 'done');
+        timeEl.textContent     = formatTime(restSecondsLeft);
+        fillEl.style.width     = '100%';
+        fillEl.style.transition = 'none';
+
+        // Trigger reflow so transition applies from next tick
+        requestAnimationFrame(() => {
+            fillEl.style.transition = `width ${seconds}s linear`;
+            fillEl.style.width      = '0%';
+        });
+
+        restInterval = setInterval(() => {
+            restSecondsLeft--;
+            if (timeEl) timeEl.textContent = formatTime(restSecondsLeft);
+
+            if (restSecondsLeft <= 0) {
+                clearInterval(restInterval);
+                restInterval = null;
+                timer.classList.add('done');
+                if (timeEl) timeEl.textContent = 'Done!';
+                if (fillEl) { fillEl.style.transition = 'none'; fillEl.style.width = '100%'; }
+            }
+        }, 1000);
+    }
+
+    function dismissRest() {
+        if (restInterval) clearInterval(restInterval);
+        restInterval = null;
+        document.getElementById('restTimer').classList.add('hidden');
+    }
+
+    /* ════════════════ EXERCISE ACTIONS ════════════════ */
+    function toggleCard(idx) {
+        cardCollapsed[idx] = !cardCollapsed[idx];
+        const body   = document.getElementById(`body-${idx}`);
+        const toggle = document.getElementById(`toggle-${idx}`);
+        if (body)   body.classList.toggle('hidden', cardCollapsed[idx]);
+        if (toggle) toggle.classList.toggle('open', !cardCollapsed[idx]);
+    }
+
+    function toggleExercise(idx) {
+        const key = getExerciseKey(idx);
+        completedExercises[key] = !completedExercises[key];
+        const done = completedExercises[key];
+
+        const check = document.getElementById(`check-${idx}`);
+        const name  = document.getElementById(`name-${idx}`);
+        const block = document.getElementById(`block-${idx}`);
+
+        if (check) { check.classList.toggle('done', done); check.innerHTML = done ? '✓' : ''; }
+        if (name)  { name.classList.toggle('done', done); }
+        if (block) { block.style.opacity = done ? '0.65' : ''; }
+
+        updateCompletionProgress();
+        saveToStorage();
+    }
+
+    function updateWeight(exIdx, setIdx, value) {
+        const sk = getSessionKey();
+        if (!sessionData[sk]) sessionData[sk] = {};
+        sessionData[sk][`${sk}-${exIdx}-${setIdx}-weight`] = value;
+        saveToStorage();
+    }
+
+    function updateReps(exIdx, setIdx, value) {
+        const sk = getSessionKey();
+        if (!sessionData[sk]) sessionData[sk] = {};
+        sessionData[sk][`${sk}-${exIdx}-${setIdx}-reps`] = value;
+        saveToStorage();
+    }
+
     /* ════════════════ HELPERS ════════════════ */
-    function getSessionKey()       { return `${currentPhase}-${currentSession}`; }
-    function getExerciseKey(i)     { return `${getSessionKey()}-${i}`; }
+    function getSessionKey()   { return `${currentPhase}-${currentSession}`; }
+    function getExerciseKey(i) { return `${getSessionKey()}-${i}`; }
 
     function getTagClass(type) {
         const map = { 'Warm-Up': 'tag-warmup', 'Block A': 'tag-a', 'Block B': 'tag-b',
@@ -672,7 +949,7 @@
         return `Try ${w + 2.5} lbs × ${r} or ${w} lbs × ${r + 1}`;
     }
 
-    /* ════════════════ ACTIONS ════════════════ */
+    /* ════════════════ NAVIGATION ════════════════ */
     function selectPhase(phase) {
         currentPhase   = phase;
         currentSession = 1;
@@ -687,42 +964,6 @@
         currentSession = session;
         cardCollapsed  = {};
         updateWorkout();
-    }
-
-    function toggleCard(idx) {
-        cardCollapsed[idx] = !cardCollapsed[idx];
-        const body   = document.getElementById(`body-${idx}`);
-        const toggle = document.getElementById(`toggle-${idx}`);
-        if (body)   body.classList.toggle('hidden', cardCollapsed[idx]);
-        if (toggle) toggle.classList.toggle('open', !cardCollapsed[idx]);
-    }
-
-    function toggleExercise(idx) {
-        const key  = getExerciseKey(idx);
-        completedExercises[key] = !completedExercises[key];
-        const done  = completedExercises[key];
-
-        const check = document.getElementById(`check-${idx}`);
-        const name  = document.getElementById(`name-${idx}`);
-        const block = document.getElementById(`block-${idx}`);
-
-        if (check) { check.classList.toggle('done', done); check.innerHTML = done ? '✓' : ''; }
-        if (name)  { name.classList.toggle('done', done); }
-        if (block) { block.style.opacity = done ? '0.65' : ''; }
-
-        updateCompletionProgress();
-    }
-
-    function updateWeight(exIdx, setIdx, value) {
-        const sk = getSessionKey();
-        if (!sessionData[sk]) sessionData[sk] = {};
-        sessionData[sk][`${sk}-${exIdx}-${setIdx}-weight`] = value;
-    }
-
-    function updateReps(exIdx, setIdx, value) {
-        const sk = getSessionKey();
-        if (!sessionData[sk]) sessionData[sk] = {};
-        sessionData[sk][`${sk}-${exIdx}-${setIdx}-reps`] = value;
     }
 
     /* ════════════════ PROGRESS ════════════════ */
@@ -759,17 +1000,15 @@
     }
 
     function updateSidebar() {
-        const data    = workoutData[currentPhase];
-        const prog    = data.progression[currentSession - 1];
+        const data = workoutData[currentPhase];
+        const prog = data.progression[currentSession - 1];
 
-        // Session note
         const noteEl = document.getElementById('sessionNote');
         if (noteEl) noteEl.textContent = prog.note;
 
         renderSessionNav();
         updateCompletionProgress();
 
-        // Previous session data
         const prevContainer = document.getElementById('prevContent');
         if (!prevContainer) return;
 
@@ -779,7 +1018,6 @@
             const prevKey  = `${currentPhase}-${currentSession - 1}`;
             const prevData = sessionData[prevKey];
             let html = '';
-
             if (prevData && Object.keys(prevData).length > 0) {
                 data.exercises.slice(0, 5).forEach((ex, idx) => {
                     const w = prevData[`${prevKey}-${idx}-0-weight`] || '—';
@@ -789,12 +1027,10 @@
                             <div class="prev-item">
                                 <div class="prev-name">${ex.name}</div>
                                 <div class="prev-data">Set 1: ${w} lbs × ${r} reps</div>
-                            </div>
-                        `;
+                            </div>`;
                     }
                 });
             }
-
             prevContainer.innerHTML = html ||
                 `<p style="font-size:12px;color:var(--text3);font-style:italic;">No data from previous session</p>`;
         }
@@ -804,29 +1040,28 @@
     function updateWorkout() {
         const data = workoutData[currentPhase];
 
-        // Page header
         document.getElementById('pageTitle').textContent    = data.name;
         document.getElementById('pageSubtitle').textContent = data.frequency;
 
-        // Properties
         const prog = data.progression[currentSession - 1];
         document.getElementById('propSession').innerHTML =
             `<span class="prop-tag">Session ${currentSession} of ${data.totalSessions}</span>`;
         document.getElementById('propFocus').textContent = prog.note;
 
-        // Exercise list
         const list = document.getElementById('exerciseList');
         list.innerHTML = '';
 
         let lastType = null;
 
         data.exercises.forEach((ex, idx) => {
-            const sk        = getSessionKey();
-            const isDone    = !!completedExercises[getExerciseKey(idx)];
-            const isOpen    = !cardCollapsed[idx];           // default: expanded
-            const videoUrl  = exerciseVideos[ex.name];
+            const sk         = getSessionKey();
+            const isDone     = !!completedExercises[getExerciseKey(idx)];
+            const isOpen     = !cardCollapsed[idx];
+            const videoUrl   = exerciseVideos[ex.name];
+            const actualSets = getActualSets(ex, currentPhase, currentSession);
+            const setsChanged = actualSets !== ex.sets;
 
-            // Section heading when block type changes
+            // Section heading on block type change
             if (ex.type !== lastType) {
                 const heading = document.createElement('div');
                 heading.className   = 'blk-heading';
@@ -837,14 +1072,15 @@
 
             // Build set rows
             let setRowsHtml = '';
-            for (let s = 0; s < ex.sets; s++) {
-                const wKey   = `${sk}-${idx}-${s}-weight`;
-                const rKey   = `${sk}-${idx}-${s}-reps`;
+            for (let s = 0; s < actualSets; s++) {
+                const wKey    = `${sk}-${idx}-${s}-weight`;
+                const rKey    = `${sk}-${idx}-${s}-reps`;
                 const curData = sessionData[sk] || {};
-                const wVal   = curData[wKey] || '';
-                const rVal   = curData[rKey] || '';
-                const prev   = getPrevData(idx, s);
-                const sugg   = getSuggestion(idx, s);
+                const wVal    = curData[wKey] || '';
+                const rVal    = curData[rKey] || '';
+                const prev    = getPrevData(idx, s);
+                const sugg    = getSuggestion(idx, s);
+                const hasRest = ex.rest !== '—' && ex.rest !== '0';
 
                 setRowsHtml += `
                     <tr>
@@ -855,13 +1091,13 @@
                                    onchange="updateReps(${idx}, ${s}, this.value)"></td>
                         <td class="prev-td">${prev ? `${prev.weight} × ${prev.reps}` : '—'}</td>
                         <td class="sugg-td">${sugg}</td>
-                    </tr>
-                `;
+                        <td>${hasRest ? `<button class="rest-btn" onclick="startRest('${ex.rest}')">⏱ Rest</button>` : ''}</td>
+                    </tr>`;
             }
 
             const block = document.createElement('div');
-            block.className  = 'ex-block';
-            block.id         = `block-${idx}`;
+            block.className = 'ex-block';
+            block.id        = `block-${idx}`;
             if (isDone) block.style.opacity = '0.65';
 
             block.innerHTML = `
@@ -880,7 +1116,11 @@
                 </div>
                 <div class="ex-body${isOpen ? '' : ' hidden'}" id="body-${idx}">
                     <div class="ex-props">
-                        <div class="xprop"><span class="xprop-lbl">Sets</span><span class="xprop-val">${ex.sets}</span></div>
+                        <div class="xprop">
+                            <span class="xprop-lbl">Sets</span>
+                            <span class="xprop-val">${actualSets}</span>
+                            ${setsChanged ? `<span class="sets-changed">↑ from ${ex.sets}</span>` : ''}
+                        </div>
                         <div class="xprop"><span class="xprop-lbl">Reps</span><span class="xprop-val">${ex.reps}</span></div>
                         <div class="xprop"><span class="xprop-lbl">Tempo</span><span class="xprop-val">${ex.tempo}</span></div>
                         <div class="xprop"><span class="xprop-lbl">Rest</span><span class="xprop-val">${ex.rest}</span></div>
@@ -898,20 +1138,24 @@
                                 <th>Reps</th>
                                 <th>Previous</th>
                                 <th>Suggestion</th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody>${setRowsHtml}</tbody>
                     </table>
-                </div>
-            `;
+                </div>`;
 
             list.appendChild(block);
         });
 
         updateSidebar();
+        saveToStorage();
     }
 
-    document.addEventListener('DOMContentLoaded', () => updateWorkout());
+    document.addEventListener('DOMContentLoaded', () => {
+        loadFromStorage();
+        updateWorkout();
+    });
 </script>
 </body>
 </html>
