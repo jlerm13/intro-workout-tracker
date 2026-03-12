@@ -109,6 +109,7 @@
         <div class="focus-set-counter" id="focusSetCounter"></div>
         <div class="focus-sets-dots" id="focusSetDots"></div>
         <div class="focus-prev" id="focusPrev"></div>
+        <div class="focus-cue hidden" id="focusCue"></div>
         <div class="focus-inputs" id="focusInputs">
             <div class="focus-input-group">
                 <label>Weight (lbs)</label>
@@ -120,6 +121,14 @@
             </div>
         </div>
         <button class="focus-done-btn" id="focusDoneBtn" onclick="confirmFocusSet()">✓ Done Set</button>
+        <div class="focus-rpe" id="focusRPE">
+            <div class="focus-rpe-label">How did that feel?</div>
+            <div class="focus-rpe-btns">
+                <button class="focus-rpe-btn easy" onclick="setFocusRPE('easy')">Easy</button>
+                <button class="focus-rpe-btn solid" onclick="setFocusRPE('solid')">Solid</button>
+                <button class="focus-rpe-btn hard" onclick="setFocusRPE('hard')">Hard</button>
+            </div>
+        </div>
         <div class="focus-rest-display hidden" id="focusRestDisplay">
             <div class="focus-rest-time" id="focusRestTime">90s</div>
             <div class="focus-rest-label">Rest</div>
@@ -175,6 +184,7 @@
             <div id="summaryPRList"></div>
         </div>
 
+        <button class="summary-share-btn" id="shareCoachBtn" onclick="copyShareText()">📋 Share with Coach</button>
         <button class="summary-cta-btn" id="summaryCTA">Continue →</button>
         <button class="summary-exit-btn" onclick="hideSummary()">Back to workout</button>
     </div>

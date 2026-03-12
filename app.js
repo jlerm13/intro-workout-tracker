@@ -5,6 +5,7 @@ let sessionData        = {};
 let cardCollapsed      = {};
 let completedSets      = {};   // tracks confirmed set rows: key = "sk-exIdx-setIdx"
 let workoutDates       = [];   // ISO date strings of days with logged sets
+let rpeData            = {};   // key = "sk-exIdx-setIdx" → 'easy'|'solid'|'hard'
 
 // Rest timer state
 let restInterval     = null;
@@ -27,6 +28,7 @@ function saveToStorage() {
         localStorage.setItem('wt-session',        String(currentSession));
         localStorage.setItem('wt-completed-sets', JSON.stringify(completedSets));
         localStorage.setItem('wt-workout-dates',  JSON.stringify(workoutDates));
+        localStorage.setItem('wt-rpe-data',       JSON.stringify(rpeData));
     } catch (e) { /* ignore quota errors */ }
 }
 
@@ -49,6 +51,8 @@ function loadFromStorage() {
         if (se) currentSession = parseInt(se);
         if (cs) completedSets  = JSON.parse(cs);
         if (wd) workoutDates   = JSON.parse(wd);
+        const rd = localStorage.getItem('wt-rpe-data');
+        if (rd) rpeData = JSON.parse(rd);
     } catch (e) { /* ignore parse errors */ }
 }
 
@@ -97,6 +101,8 @@ function confirmSet(exIdx, setIdx) {
     const row = document.getElementById(`setrow-${exIdx}-${setIdx}`);
     if (btn) { btn.classList.toggle('confirmed', isDone); btn.textContent = isDone ? '✓ Done' : 'Done'; }
     if (row) row.classList.toggle('confirmed', isDone);
+    const rpeDiv = document.getElementById(`rpe-${exIdx}-${setIdx}`);
+    if (rpeDiv) rpeDiv.classList.toggle('hidden', !isDone);
 
     if (isDone) {
         // Save input values at time of confirm
@@ -430,6 +436,26 @@ function renderFocusExercise() {
         document.getElementById('focusPrev').textContent = 'First time — start comfortable';
     }
 
+    // Progression cue
+    const cue    = getProgressionCue(focusExIdx, focusSetIdx);
+    const cueEl  = document.getElementById('focusCue');
+    if (cueEl) {
+        if (cue) {
+            cueEl.textContent = cue.text;
+            cueEl.className   = `focus-cue focus-cue-${cue.type}`;
+        } else {
+            cueEl.className = 'focus-cue hidden';
+        }
+    }
+
+    // RPE button state for this set
+    const currentRpe = rpeData[`${sk}-${focusExIdx}-${focusSetIdx}`];
+    document.querySelectorAll('.focus-rpe-btn').forEach(b => b.classList.remove('selected'));
+    if (currentRpe) {
+        const rpeBtn = document.querySelector(`.focus-rpe-btn.${currentRpe}`);
+        if (rpeBtn) rpeBtn.classList.add('selected');
+    }
+
     document.getElementById('focusWeight').value = savedW;
     document.getElementById('focusReps').value   = savedR;
 
@@ -448,9 +474,11 @@ function renderFocusExercise() {
     const restDisplay = document.getElementById('focusRestDisplay');
     const inputs      = document.getElementById('focusInputs');
     const doneBtn     = document.getElementById('focusDoneBtn');
+    const rpeArea     = document.getElementById('focusRPE');
     restDisplay.classList.add('hidden');
     inputs.style.display  = '';
     doneBtn.style.display = '';
+    if (rpeArea) rpeArea.style.display = '';
     doneBtn.textContent   = isDone ? '✓ Set Done' : '✓ Done Set';
 }
 
@@ -499,6 +527,8 @@ function startFocusRest(restValue) {
     restDisplay.classList.remove('hidden');
     inputs.style.display  = 'none';
     doneBtn.style.display = 'none';
+    const rpeAreaRest = document.getElementById('focusRPE');
+    if (rpeAreaRest) rpeAreaRest.style.display = 'none';
 
     restTimeEl.textContent       = formatTime(focusRestLeft);
     restFillEl.style.transition  = 'none';
@@ -632,6 +662,140 @@ function getSuggestion(exIdx, setIdx) {
     const r = parseInt(prev.reps);
     if (isNaN(w) || isNaN(r)) return 'Use previous as baseline';
     return `Try ${w + 2.5} lbs × ${r} or ${w} lbs × ${r + 1}`;
+}
+
+/* ════════════════ PROGRESSION CUE ════════════════ */
+function getProgressionCue(exIdx, setIdx) {
+    if (currentSession < 2) return null;
+
+    const prev1 = getPrevData(exIdx, setIdx);
+    if (!prev1 || prev1.weight === '—') return null;
+
+    const w1 = parseFloat(prev1.weight);
+    if (isNaN(w1) || w1 <= 0) return null;
+
+    // Check two sessions back for same-weight pattern
+    let w2 = null;
+    if (currentSession >= 3) {
+        const prevKey2  = `${currentPhase}-${currentSession - 2}`;
+        const prevData2 = sessionData[prevKey2];
+        if (prevData2) {
+            const w2val = prevData2[`${prevKey2}-${exIdx}-${setIdx}-weight`];
+            if (w2val) w2 = parseFloat(w2val);
+        }
+    }
+
+    if (w2 !== null && !isNaN(w2)) {
+        if (Math.abs(w1 - w2) < 0.5) {
+            // Same weight two sessions in a row → push harder
+            return { text: `↑ Ready for ${w1 + 5} lbs`, type: 'up' };
+        }
+        if (w1 < w2) {
+            // Weight dropped — encourage holding
+            return { text: `Hold at ${w1} lbs`, type: 'hold' };
+        }
+        // Weight went up — keep climbing
+        return { text: `↑ Try ${w1 + 2.5} lbs`, type: 'up' };
+    }
+
+    // Only one session of history
+    return { text: `Try ${w1 + 2.5} lbs`, type: 'neutral' };
+}
+
+/* ════════════════ RPE ════════════════ */
+function saveRPE(exIdx, setIdx, rpe) {
+    const key = `${getSessionKey()}-${exIdx}-${setIdx}`;
+    rpeData[key] = rpe;
+    saveToStorage();
+}
+
+function setSetRPE(exIdx, setIdx, rpe) {
+    saveRPE(exIdx, setIdx, rpe);
+    const rpeDiv = document.getElementById(`rpe-${exIdx}-${setIdx}`);
+    if (!rpeDiv) return;
+    rpeDiv.querySelectorAll('.rpe-mini-btn').forEach(b => b.classList.remove('sel', 'easy', 'solid', 'hard'));
+    const btn = rpeDiv.querySelector(`.rpe-mini-btn.${rpe}`);
+    if (btn) btn.classList.add('sel', rpe);
+}
+
+function setFocusRPE(rpe) {
+    saveRPE(focusExIdx, focusSetIdx, rpe);
+    document.querySelectorAll('.focus-rpe-btn').forEach(b => b.classList.remove('selected'));
+    const btn = document.querySelector(`.focus-rpe-btn.${rpe}`);
+    if (btn) btn.classList.add('selected');
+}
+
+/* ════════════════ SHARE WITH COACH ════════════════ */
+function generateShareText() {
+    const data  = workoutData[currentPhase];
+    const stats = calcSessionStats();
+    const prog  = data.progression[currentSession - 1];
+    const date  = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+    let text = `💪 Phase ${currentPhase} · Session ${currentSession} of ${data.totalSessions} — Done!\n`;
+    text += `📅 ${date}\n\n`;
+    text += `📊 ${stats.setsCompleted} sets`;
+    if (stats.totalVolume > 0) text += ` · ${stats.totalVolume.toLocaleString()} lbs volume`;
+    text += ` · ${stats.prs.length} PR${stats.prs.length !== 1 ? 's' : ''}\n`;
+
+    if (stats.prs.length > 0) {
+        text += `\n🏆 PRs\n`;
+        stats.prs.forEach(p => { text += `  • ${p.name} — ${p.weight} lbs\n`; });
+    }
+
+    // RPE summary
+    const sk         = getSessionKey();
+    const rpeEntries = Object.entries(rpeData).filter(([k]) => k.startsWith(sk + '-'));
+    if (rpeEntries.length > 0) {
+        const hardCount = rpeEntries.filter(([, v]) => v === 'hard').length;
+        const easyCount = rpeEntries.filter(([, v]) => v === 'easy').length;
+        const parts = [];
+        if (hardCount > 0) parts.push(`${hardCount} hard set${hardCount > 1 ? 's' : ''}`);
+        if (easyCount > 0) parts.push(`${easyCount} easy set${easyCount > 1 ? 's' : ''}`);
+        if (parts.length > 0) text += `\n💭 Feel: ${parts.join(', ')}\n`;
+    }
+
+    text += `\n📋 "${prog.note}"\n`;
+
+    // Streak
+    let streak = 0;
+    const check = new Date();
+    while (workoutDates.includes(check.toISOString().split('T')[0])) {
+        streak++;
+        check.setDate(check.getDate() - 1);
+    }
+    if (streak > 1) text += `🔥 ${streak}-day streak\n`;
+
+    return text.trim();
+}
+
+function copyShareText() {
+    const text = generateShareText();
+    const btn  = document.getElementById('shareCoachBtn');
+
+    const markCopied = () => {
+        if (btn) { btn.textContent = '✓ Copied!'; btn.classList.add('copied'); }
+        setTimeout(() => {
+            if (btn) { btn.textContent = '📋 Share with Coach'; btn.classList.remove('copied'); }
+        }, 2500);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(markCopied).catch(() => fallbackCopy(text, markCopied));
+    } else {
+        fallbackCopy(text, markCopied);
+    }
+}
+
+function fallbackCopy(text, cb) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0;';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    cb();
 }
 
 /* ════════════════ NAVIGATION ════════════════ */
@@ -768,6 +932,10 @@ function updateWorkout() {
             const rVal      = curData[rKey] || (prev && prev.reps   !== '—' ? prev.reps   : '');
             const hasRest   = ex.rest !== '—' && ex.rest !== '0';
             const setDone   = !!completedSets[`${sk}-${idx}-${s}`];
+            const cue       = getProgressionCue(idx, s);
+            const currentRpe = rpeData[`${sk}-${idx}-${s}`];
+
+            const rpeSel = (rpe) => currentRpe === rpe ? ` sel ${rpe}` : '';
 
             setRowsHtml += `
                 <tr class="set-row${setDone ? ' confirmed' : ''}" id="setrow-${idx}-${s}">
@@ -780,10 +948,20 @@ function updateWorkout() {
                     </td>
                     <td><input class="num-inp" id="rinp-${idx}-${s}" type="number" placeholder="reps" value="${rVal}"
                                onchange="updateReps(${idx}, ${s}, this.value)"></td>
-                    <td class="prev-td">${prev ? `${prev.weight} × ${prev.reps}` : '—'}</td>
+                    <td class="prev-td">
+                        ${prev ? `${prev.weight} × ${prev.reps}` : '—'}
+                        ${cue ? `<div class="prog-cue prog-cue-${cue.type}">${cue.text}</div>` : ''}
+                    </td>
                     <td>${hasRest ? `<button class="rest-btn" onclick="startRest('${ex.rest}')">⏱ Rest</button>` : ''}</td>
-                    <td><button class="set-done-btn${setDone ? ' confirmed' : ''}" id="setbtn-${idx}-${s}"
-                                onclick="confirmSet(${idx}, ${s})">${setDone ? '✓ Done' : 'Done'}</button></td>
+                    <td>
+                        <button class="set-done-btn${setDone ? ' confirmed' : ''}" id="setbtn-${idx}-${s}"
+                                onclick="confirmSet(${idx}, ${s})">${setDone ? '✓ Done' : 'Done'}</button>
+                        <div class="rpe-mini${setDone ? '' : ' hidden'}" id="rpe-${idx}-${s}">
+                            <button class="rpe-mini-btn easy${rpeSel('easy')}" onclick="setSetRPE(${idx}, ${s}, 'easy')" title="Easy">E</button>
+                            <button class="rpe-mini-btn solid${rpeSel('solid')}" onclick="setSetRPE(${idx}, ${s}, 'solid')" title="Solid">S</button>
+                            <button class="rpe-mini-btn hard${rpeSel('hard')}" onclick="setSetRPE(${idx}, ${s}, 'hard')" title="Hard">H</button>
+                        </div>
+                    </td>
                 </tr>`;
         }
 
