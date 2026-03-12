@@ -148,6 +148,38 @@
     <button class="rest-dismiss" onclick="dismissRest()" title="Dismiss">✕</button>
 </div>
 
+<!-- ════════════════ PROGRESS SUMMARY ════════════════ -->
+<div class="summary-overlay hidden" id="summaryOverlay">
+    <div class="summary-card">
+        <div class="summary-emoji" id="summaryEmoji">🎉</div>
+        <div class="summary-title" id="summaryTitle">Session Complete!</div>
+        <div class="summary-subtitle" id="summaryPhaseSession">Phase 1 · Session 1 of 4</div>
+
+        <div class="summary-stats">
+            <div class="summary-stat">
+                <div class="summary-stat-val" id="summarySets">0</div>
+                <div class="summary-stat-lbl">Sets Done</div>
+            </div>
+            <div class="summary-stat">
+                <div class="summary-stat-val" id="summaryVolume">—</div>
+                <div class="summary-stat-lbl">Volume</div>
+            </div>
+            <div class="summary-stat">
+                <div class="summary-stat-val" id="summaryPRCount">0</div>
+                <div class="summary-stat-lbl">PRs Hit</div>
+            </div>
+        </div>
+
+        <div class="summary-pr-section" id="summaryPRSection">
+            <div class="summary-pr-title">Personal Records</div>
+            <div id="summaryPRList"></div>
+        </div>
+
+        <button class="summary-cta-btn" id="summaryCTA">Continue →</button>
+        <button class="summary-exit-btn" onclick="hideSummary()">Back to workout</button>
+    </div>
+</div>
+
 <script src="data.js"></script>
 <script src="app.js"></script>
 </body>
