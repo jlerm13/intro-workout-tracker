@@ -1075,6 +1075,22 @@ body {
     border-color: #16a34a;
 }
 
+/* ──────────────────── TEMPO CUE (Focus Mode) ──────────────────── */
+.focus-tempo {
+    width: 100%;
+    max-width: 360px;
+    padding: 8px 14px;
+    background: #fef3c7;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #92400e;
+    text-align: center;
+    margin-top: 8px;
+    cursor: help;
+}
+
 /* ──────────────────── ON DECK (Focus Mode) ──────────────────── */
 .focus-on-deck {
     width: 100%;

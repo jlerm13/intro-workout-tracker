@@ -427,6 +427,35 @@ function hideSummary() {
     document.getElementById('summaryOverlay').classList.add('hidden');
 }
 
+function tempoToCue(tempo) {
+    if (!tempo || tempo.length !== 4) return null;
+    const ecc   = parseInt(tempo[0]);  // eccentric (lowering)
+    const pBot  = parseInt(tempo[1]);  // pause at bottom
+    const con   = parseInt(tempo[2]);  // concentric (lifting)
+    const pTop  = parseInt(tempo[3]);  // pause at top
+
+    const parts = [];
+    // Eccentric phase
+    if (ecc >= 4)      parts.push(`${ecc}s down — slow negative`);
+    else if (ecc >= 3) parts.push(`${ecc}s down — controlled`);
+    else if (ecc >= 2) parts.push(`${ecc}s down`);
+
+    // Bottom pause
+    if (pBot >= 2)      parts.push(`${pBot}s pause at bottom`);
+    else if (pBot === 1) parts.push('brief pause at bottom');
+
+    // Concentric phase
+    if (con === 0)      parts.push('explode up');
+    else if (con === 1) parts.push('drive up');
+    else if (con >= 2)  parts.push(`${con}s up — controlled`);
+
+    // Top pause
+    if (pTop >= 2)      parts.push(`${pTop}s squeeze at top`);
+    else if (pTop === 1) parts.push('squeeze at top');
+
+    return parts.join(', ');
+}
+
 function renderFocusSetDots(totalRounds) {
     const sk    = getSessionKey();
     const group = focusBlockGroups[focusGroupIdx];
@@ -507,6 +536,19 @@ function renderFocusExercise() {
     }
 
     document.getElementById('focusNote').textContent = `💡 ${ex.note}`;
+
+    // Tempo coaching cue
+    const tempoEl = document.getElementById('focusTempo');
+    if (tempoEl) {
+        const cueText = tempoToCue(ex.tempo);
+        if (cueText) {
+            tempoEl.textContent = `⏱ ${cueText}`;
+            tempoEl.title       = `Tempo: ${ex.tempo}`;
+            tempoEl.style.display = '';
+        } else {
+            tempoEl.style.display = 'none';
+        }
+    }
 
     if (prev && prev.weight !== '—') {
         document.getElementById('focusPrev').textContent = `Last time: ${prev.weight} lbs × ${prev.reps} reps`;
