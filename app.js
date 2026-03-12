@@ -13,11 +13,17 @@ let restSecondsLeft  = 0;
 let restTotalSeconds = 0;
 
 // Focus mode state
-let focusExIdx       = 0;
-let focusSetIdx      = 0;
+let focusExIdx        = 0;
+let focusSetIdx       = 0;
 let focusRestInterval = null;
-let focusRestLeft    = 0;
-let focusRestTotal   = 0;
+let focusRestLeft     = 0;
+let focusRestTotal    = 0;
+
+// Superset-aware focus state
+let focusBlockGroups  = [];  // [{type, exercises: [indices]}]
+let focusGroupIdx     = 0;   // current block group
+let focusSubIdx       = 0;   // exercise within group
+let focusRoundIdx     = 0;   // current round (= set index)
 
 /* ════════════════ LOCALSTORAGE ════════════════ */
 function saveToStorage() {
@@ -271,9 +277,32 @@ function dismissRest() {
 }
 
 /* ════════════════ FOCUS MODE ════════════════ */
+function buildBlockGroups() {
+    const exercises = workoutData[currentPhase].exercises;
+    const groups = [];
+    let current = null;
+    exercises.forEach((ex, idx) => {
+        if (!current || current.type !== ex.type) {
+            current = { type: ex.type, exercises: [idx] };
+            groups.push(current);
+        } else {
+            current.exercises.push(idx);
+        }
+    });
+    return groups;
+}
+
+function syncFocusState() {
+    focusExIdx  = focusBlockGroups[focusGroupIdx].exercises[focusSubIdx];
+    focusSetIdx = focusRoundIdx;
+}
+
 function enterFocusMode() {
-    focusExIdx = 0;
-    focusSetIdx = 0;
+    focusBlockGroups = buildBlockGroups();
+    focusGroupIdx = 0;
+    focusSubIdx   = 0;
+    focusRoundIdx = 0;
+    syncFocusState();
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
     document.getElementById('focusOverlay').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
@@ -398,37 +427,86 @@ function hideSummary() {
     document.getElementById('summaryOverlay').classList.add('hidden');
 }
 
-function renderFocusSetDots(actualSets) {
-    const sk   = getSessionKey();
-    let html   = '';
-    for (let s = 0; s < actualSets; s++) {
-        const done    = !!completedSets[`${sk}-${focusExIdx}-${s}`];
-        const current = s === focusSetIdx;
-        html += `<div class="focus-set-dot${done ? ' done' : current ? ' current' : ''}" onclick="jumpFocusSet(${s})"></div>`;
+function renderFocusSetDots(totalRounds) {
+    const sk    = getSessionKey();
+    const group = focusBlockGroups[focusGroupIdx];
+    let html    = '';
+    for (let r = 0; r < totalRounds; r++) {
+        const allDone = group.exercises.every(ei => !!completedSets[`${sk}-${ei}-${r}`]);
+        const current = r === focusRoundIdx;
+        html += `<div class="focus-set-dot${allDone ? ' done' : current ? ' current' : ''}" onclick="jumpFocusSet(${r})"></div>`;
     }
     document.getElementById('focusSetDots').innerHTML = html;
 }
 
-function renderFocusExercise() {
-    const data       = workoutData[currentPhase];
-    const exercises  = data.exercises;
-    const ex         = exercises[focusExIdx];
-    const actualSets = getActualSets(ex, currentPhase, currentSession);
-    const sk         = getSessionKey();
-    const curData    = sessionData[sk] || {};
-    const wKey       = `${sk}-${focusExIdx}-${focusSetIdx}-weight`;
-    const rKey       = `${sk}-${focusExIdx}-${focusSetIdx}-reps`;
-    const prev       = getPrevData(focusExIdx, focusSetIdx);
-    const savedW     = curData[wKey] || (prev && prev.weight !== '—' ? prev.weight : '');
-    const savedR     = curData[rKey] || (prev && prev.reps   !== '—' ? prev.reps   : '');
-    const isDone     = !!completedSets[`${sk}-${focusExIdx}-${focusSetIdx}`];
+function renderFocusOnDeck() {
+    const el = document.getElementById('focusOnDeck');
+    if (!el) return;
+    const group = focusBlockGroups[focusGroupIdx];
+    if (group.exercises.length <= 1 || focusSubIdx >= group.exercises.length - 1) {
+        el.style.display = 'none';
+        return;
+    }
+    const nextExIdx = group.exercises[focusSubIdx + 1];
+    const nextEx    = workoutData[currentPhase].exercises[nextExIdx];
+    const prev      = getPrevData(nextExIdx, focusRoundIdx);
+    el.style.display = '';
+    el.innerHTML = `
+        <div class="on-deck-label">Up Next</div>
+        <div class="on-deck-name">${nextEx.name}</div>
+        ${prev && prev.weight !== '—' ? `<div class="on-deck-prev">${prev.weight} lbs × ${prev.reps}</div>` : ''}
+    `;
+}
 
-    document.getElementById('focusProgText').textContent    = `Exercise ${focusExIdx + 1} of ${exercises.length}`;
-    document.getElementById('focusBlockTag').textContent    = ex.type;
-    document.getElementById('focusBlockTag').className      = `ex-tag focus-block-tag ${getTagClass(ex.type)}`;
-    document.getElementById('focusExName').textContent      = ex.name;
-    document.getElementById('focusSetCounter').textContent  = `Set ${focusSetIdx + 1} of ${actualSets}`;
-    document.getElementById('focusNote').textContent        = `💡 ${ex.note}`;
+function renderBlockProgress() {
+    const el = document.getElementById('focusBlockProgress');
+    if (!el) return;
+    el.innerHTML = focusBlockGroups.map((g, i) => {
+        const label = g.type.replace('Block ', '').replace('Warm-Up', 'WU');
+        const cls   = i < focusGroupIdx ? 'bp-done' : i === focusGroupIdx ? 'bp-current' : '';
+        return `<div class="bp-node ${cls}">${label}</div>`;
+    }).join('');
+}
+
+function renderFocusExercise() {
+    const data        = workoutData[currentPhase];
+    const exercises   = data.exercises;
+    const group       = focusBlockGroups[focusGroupIdx];
+    const isSuperset  = group.exercises.length > 1;
+    const ex          = exercises[focusExIdx];
+    const firstEx     = exercises[group.exercises[0]];
+    const totalRounds = getActualSets(firstEx, currentPhase, currentSession);
+    const sk          = getSessionKey();
+    const curData     = sessionData[sk] || {};
+    const wKey        = `${sk}-${focusExIdx}-${focusSetIdx}-weight`;
+    const rKey        = `${sk}-${focusExIdx}-${focusSetIdx}-reps`;
+    const prev        = getPrevData(focusExIdx, focusSetIdx);
+    const savedW      = curData[wKey] || (prev && prev.weight !== '—' ? prev.weight : '');
+    const savedR      = curData[rKey] || (prev && prev.reps   !== '—' ? prev.reps   : '');
+    const isDone      = !!completedSets[`${sk}-${focusExIdx}-${focusSetIdx}`];
+
+    // Header text
+    if (isSuperset) {
+        document.getElementById('focusProgText').textContent =
+            `${group.type} · Round ${focusRoundIdx + 1} of ${totalRounds}`;
+    } else {
+        document.getElementById('focusProgText').textContent =
+            `${group.type} · Set ${focusRoundIdx + 1} of ${totalRounds}`;
+    }
+
+    document.getElementById('focusBlockTag').textContent = ex.type;
+    document.getElementById('focusBlockTag').className   = `ex-tag focus-block-tag ${getTagClass(ex.type)}`;
+    document.getElementById('focusExName').textContent   = ex.name;
+
+    if (isSuperset) {
+        document.getElementById('focusSetCounter').textContent =
+            `Exercise ${focusSubIdx + 1} of ${group.exercises.length} · Round ${focusRoundIdx + 1}`;
+    } else {
+        document.getElementById('focusSetCounter').textContent =
+            `Set ${focusSetIdx + 1} of ${totalRounds}`;
+    }
+
+    document.getElementById('focusNote').textContent = `💡 ${ex.note}`;
 
     if (prev && prev.weight !== '—') {
         document.getElementById('focusPrev').textContent = `Last time: ${prev.weight} lbs × ${prev.reps} reps`;
@@ -437,8 +515,8 @@ function renderFocusExercise() {
     }
 
     // Progression cue
-    const cue    = getProgressionCue(focusExIdx, focusSetIdx);
-    const cueEl  = document.getElementById('focusCue');
+    const cue   = getProgressionCue(focusExIdx, focusSetIdx);
+    const cueEl = document.getElementById('focusCue');
     if (cueEl) {
         if (cue) {
             cueEl.textContent = cue.text;
@@ -448,7 +526,7 @@ function renderFocusExercise() {
         }
     }
 
-    // RPE button state for this set
+    // RPE button state
     const currentRpe = rpeData[`${sk}-${focusExIdx}-${focusSetIdx}`];
     document.querySelectorAll('.focus-rpe-btn').forEach(b => b.classList.remove('selected'));
     if (currentRpe) {
@@ -459,14 +537,18 @@ function renderFocusExercise() {
     document.getElementById('focusWeight').value = savedW;
     document.getElementById('focusReps').value   = savedR;
 
-    renderFocusSetDots(actualSets);
+    renderFocusSetDots(totalRounds);
+    renderFocusOnDeck();
+    renderBlockProgress();
 
     // Prev/next buttons
-    const isFirst  = focusExIdx === 0 && focusSetIdx === 0;
-    const isLast   = focusExIdx === exercises.length - 1 && focusSetIdx === actualSets - 1;
-    const prevBtn  = document.getElementById('focusPrevBtn');
-    const nextBtn  = document.getElementById('focusNextBtn');
-    prevBtn.disabled = isFirst;
+    const isFirst = focusGroupIdx === 0 && focusRoundIdx === 0 && focusSubIdx === 0;
+    const isLast  = focusGroupIdx === focusBlockGroups.length - 1 &&
+                    focusRoundIdx === totalRounds - 1 &&
+                    focusSubIdx === group.exercises.length - 1;
+    const prevBtn = document.getElementById('focusPrevBtn');
+    const nextBtn = document.getElementById('focusNextBtn');
+    prevBtn.disabled    = isFirst;
     nextBtn.textContent = isLast ? 'Finish ✓' : 'Next →';
     nextBtn.className   = `focus-nav-btn${isLast ? ' finish' : ''}`;
 
@@ -483,11 +565,14 @@ function renderFocusExercise() {
 }
 
 function confirmFocusSet() {
-    const ex         = workoutData[currentPhase].exercises[focusExIdx];
-    const actualSets = getActualSets(ex, currentPhase, currentSession);
-    const sk         = getSessionKey();
-    const wVal       = document.getElementById('focusWeight').value;
-    const rVal       = document.getElementById('focusReps').value;
+    const ex          = workoutData[currentPhase].exercises[focusExIdx];
+    const group       = focusBlockGroups[focusGroupIdx];
+    const firstEx     = workoutData[currentPhase].exercises[group.exercises[0]];
+    const totalRounds = getActualSets(firstEx, currentPhase, currentSession);
+    const isSuperset  = group.exercises.length > 1;
+    const sk          = getSessionKey();
+    const wVal        = document.getElementById('focusWeight').value;
+    const rVal        = document.getElementById('focusReps').value;
 
     if (!sessionData[sk]) sessionData[sk] = {};
     if (wVal) sessionData[sk][`${sk}-${focusExIdx}-${focusSetIdx}-weight`] = wVal;
@@ -497,16 +582,36 @@ function confirmFocusSet() {
     saveToStorage();
     recordWorkoutDate();
 
-    renderFocusSetDots(actualSets);
+    renderFocusSetDots(totalRounds);
 
     const doneBtn = document.getElementById('focusDoneBtn');
     doneBtn.textContent = '✓ Set Done';
 
-    const hasRest = ex.rest !== '—' && ex.rest !== '0';
-    if (hasRest) {
-        startFocusRest(ex.rest);
+    if (isSuperset) {
+        const isLastInRound = focusSubIdx >= group.exercises.length - 1;
+        if (!isLastInRound) {
+            // Transition to next exercise in pair — no rest
+            setTimeout(() => advanceFocusSet(), 300);
+        } else {
+            // End of round — rest before next round
+            const maxRest = Math.max(...group.exercises.map(i => {
+                const r = workoutData[currentPhase].exercises[i].rest;
+                return parseInt(r.split('-')[0]) || 0;
+            }));
+            if (maxRest > 0) {
+                startFocusRest(String(maxRest));
+            } else {
+                setTimeout(() => advanceFocusSet(), 300);
+            }
+        }
     } else {
-        setTimeout(() => advanceFocusSet(), 300);
+        // Solo exercise — rest as before
+        const hasRest = ex.rest !== '—' && ex.rest !== '0';
+        if (hasRest) {
+            startFocusRest(ex.rest);
+        } else {
+            setTimeout(() => advanceFocusSet(), 300);
+        }
     }
 }
 
@@ -556,31 +661,71 @@ function skipFocusRest() {
 }
 
 function advanceFocusSet() {
-    const data       = workoutData[currentPhase];
-    const ex         = data.exercises[focusExIdx];
-    const actualSets = getActualSets(ex, currentPhase, currentSession);
+    const group       = focusBlockGroups[focusGroupIdx];
+    const firstEx     = workoutData[currentPhase].exercises[group.exercises[0]];
+    const totalRounds = getActualSets(firstEx, currentPhase, currentSession);
 
-    if (focusSetIdx < actualSets - 1) {
-        focusSetIdx++;
-    } else if (focusExIdx < data.exercises.length - 1) {
-        focusExIdx++;
-        focusSetIdx = 0;
+    if (group.exercises.length > 1) {
+        // SUPERSET — advance within round, then to next round, then next group
+        if (focusSubIdx < group.exercises.length - 1) {
+            focusSubIdx++;
+        } else if (focusRoundIdx < totalRounds - 1) {
+            focusRoundIdx++;
+            focusSubIdx = 0;
+        } else if (focusGroupIdx < focusBlockGroups.length - 1) {
+            focusGroupIdx++;
+            focusSubIdx   = 0;
+            focusRoundIdx = 0;
+        } else {
+            showSummary();
+            return;
+        }
     } else {
-        showSummary();
-        return;
+        // SOLO — advance set, then next group
+        if (focusRoundIdx < totalRounds - 1) {
+            focusRoundIdx++;
+        } else if (focusGroupIdx < focusBlockGroups.length - 1) {
+            focusGroupIdx++;
+            focusSubIdx   = 0;
+            focusRoundIdx = 0;
+        } else {
+            showSummary();
+            return;
+        }
     }
+    syncFocusState();
     renderFocusExercise();
 }
 
 function focusNavPrev() {
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
-    if (focusSetIdx > 0) {
-        focusSetIdx--;
-    } else if (focusExIdx > 0) {
-        focusExIdx--;
-        const prevEx = workoutData[currentPhase].exercises[focusExIdx];
-        focusSetIdx  = getActualSets(prevEx, currentPhase, currentSession) - 1;
+
+    const group = focusBlockGroups[focusGroupIdx];
+    if (group.exercises.length > 1) {
+        if (focusSubIdx > 0) {
+            focusSubIdx--;
+        } else if (focusRoundIdx > 0) {
+            focusRoundIdx--;
+            focusSubIdx = group.exercises.length - 1;
+        } else if (focusGroupIdx > 0) {
+            focusGroupIdx--;
+            const pg = focusBlockGroups[focusGroupIdx];
+            focusSubIdx   = pg.exercises.length - 1;
+            const pfe     = workoutData[currentPhase].exercises[pg.exercises[0]];
+            focusRoundIdx = getActualSets(pfe, currentPhase, currentSession) - 1;
+        }
+    } else {
+        if (focusRoundIdx > 0) {
+            focusRoundIdx--;
+        } else if (focusGroupIdx > 0) {
+            focusGroupIdx--;
+            const pg = focusBlockGroups[focusGroupIdx];
+            focusSubIdx   = pg.exercises.length - 1;
+            const pfe     = workoutData[currentPhase].exercises[pg.exercises[0]];
+            focusRoundIdx = getActualSets(pfe, currentPhase, currentSession) - 1;
+        }
     }
+    syncFocusState();
     renderFocusExercise();
 }
 
@@ -589,9 +734,11 @@ function focusNavNext() {
     advanceFocusSet();
 }
 
-function jumpFocusSet(s) {
+function jumpFocusSet(r) {
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
-    focusSetIdx = s;
+    focusRoundIdx = r;
+    focusSubIdx   = 0;
+    syncFocusState();
     renderFocusExercise();
 }
 
