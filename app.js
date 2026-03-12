@@ -281,6 +281,117 @@ function exitFocusMode() {
     updateWorkout();
 }
 
+/* ════════════════ PROGRESS SUMMARY ════════════════ */
+function calcSessionStats() {
+    const sk      = getSessionKey();
+    const data    = workoutData[currentPhase];
+    const curData = sessionData[sk] || {};
+
+    // Count completed sets for this session
+    let setsCompleted = 0;
+    Object.keys(completedSets).forEach(key => {
+        if (key.startsWith(sk + '-')) setsCompleted++;
+    });
+
+    // Total volume: sum weight × reps for all sets with data
+    let totalVolume = 0;
+    data.exercises.forEach((ex, exIdx) => {
+        const actualSets = getActualSets(ex, currentPhase, currentSession);
+        for (let s = 0; s < actualSets; s++) {
+            const w = parseFloat(curData[`${sk}-${exIdx}-${s}-weight`]);
+            const r = parseFloat(curData[`${sk}-${exIdx}-${s}-reps`]);
+            if (!isNaN(w) && !isNaN(r)) totalVolume += w * r;
+        }
+    });
+
+    // PRs: current session max weight > all previous sessions' max for that exercise
+    const prs = [];
+    data.exercises.forEach((ex, exIdx) => {
+        const actualSets = getActualSets(ex, currentPhase, currentSession);
+        let currentMax = 0;
+        for (let s = 0; s < actualSets; s++) {
+            const w = parseFloat(curData[`${sk}-${exIdx}-${s}-weight`]);
+            if (!isNaN(w) && w > currentMax) currentMax = w;
+        }
+        if (currentMax <= 0) return;
+
+        let histMax = 0;
+        Object.entries(sessionData).forEach(([prevSk, prevData]) => {
+            if (prevSk === sk) return;
+            Object.keys(prevData).forEach(key => {
+                if (key.startsWith(`${prevSk}-${exIdx}-`) && key.endsWith('-weight')) {
+                    const pw = parseFloat(prevData[key]);
+                    if (!isNaN(pw) && pw > histMax) histMax = pw;
+                }
+            });
+        });
+
+        if (currentMax > histMax) {
+            prs.push({ name: ex.name, weight: currentMax });
+        }
+    });
+
+    return { setsCompleted, totalVolume, prs };
+}
+
+function showSummary() {
+    if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
+    document.getElementById('focusOverlay').classList.add('hidden');
+    document.body.style.overflow = '';
+    updateWorkout();
+
+    const data           = workoutData[currentPhase];
+    const isLastSession  = currentSession >= data.totalSessions;
+    const isLastPhase    = currentPhase >= 3;
+    const stats          = calcSessionStats();
+
+    document.getElementById('summaryPhaseSession').textContent =
+        `Phase ${currentPhase} · Session ${currentSession} of ${data.totalSessions}`;
+
+    document.getElementById('summarySets').textContent   = stats.setsCompleted;
+    document.getElementById('summaryVolume').textContent =
+        stats.totalVolume > 0 ? stats.totalVolume.toLocaleString() + ' lbs' : '—';
+    document.getElementById('summaryPRCount').textContent = stats.prs.length;
+
+    // PRs section
+    const prSection = document.getElementById('summaryPRSection');
+    if (stats.prs.length > 0) {
+        document.getElementById('summaryPRList').innerHTML =
+            stats.prs.map(p => `<div class="summary-pr-item">🏆 ${p.name} — ${p.weight} lbs</div>`).join('');
+        prSection.style.display = '';
+    } else {
+        prSection.style.display = 'none';
+    }
+
+    // CTA
+    const ctaBtn = document.getElementById('summaryCTA');
+    if (isLastPhase && isLastSession) {
+        document.getElementById('summaryEmoji').textContent  = '🏆';
+        document.getElementById('summaryTitle').textContent  = 'Program Complete!';
+        ctaBtn.textContent = 'View Full Summary';
+        ctaBtn.className   = 'summary-cta-btn finish';
+        ctaBtn.onclick     = hideSummary;
+    } else if (isLastSession) {
+        document.getElementById('summaryEmoji').textContent  = '🎉';
+        document.getElementById('summaryTitle').textContent  = 'Phase Complete!';
+        ctaBtn.textContent = `Start Phase ${currentPhase + 1} →`;
+        ctaBtn.className   = 'summary-cta-btn';
+        ctaBtn.onclick     = () => { hideSummary(); selectPhase(currentPhase + 1); };
+    } else {
+        document.getElementById('summaryEmoji').textContent  = '🎉';
+        document.getElementById('summaryTitle').textContent  = 'Session Complete!';
+        ctaBtn.textContent = `Continue to Session ${currentSession + 1} →`;
+        ctaBtn.className   = 'summary-cta-btn';
+        ctaBtn.onclick     = () => { hideSummary(); selectSession(currentSession + 1); };
+    }
+
+    document.getElementById('summaryOverlay').classList.remove('hidden');
+}
+
+function hideSummary() {
+    document.getElementById('summaryOverlay').classList.add('hidden');
+}
+
 function renderFocusSetDots(actualSets) {
     const sk   = getSessionKey();
     let html   = '';
@@ -425,7 +536,7 @@ function advanceFocusSet() {
         focusExIdx++;
         focusSetIdx = 0;
     } else {
-        exitFocusMode();
+        showSummary();
         return;
     }
     renderFocusExercise();
@@ -614,7 +725,8 @@ function updateSidebar() {
 function updateWorkout() {
     const data = workoutData[currentPhase];
 
-    document.getElementById('pageTitle').textContent    = data.name;
+    document.getElementById('pageTitle').innerHTML =
+        data.name + ' <span style="font-size:13px;color:var(--text3);font-weight:400;">v4</span>';
     document.getElementById('pageSubtitle').textContent = data.frequency;
 
     const prog = data.progression[currentSession - 1];
