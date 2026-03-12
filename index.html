@@ -856,6 +856,7 @@
             <div class="phase-toggle">
                 <button class="phase-btn active" onclick="selectPhase(1)">Phase 1</button>
                 <button class="phase-btn" onclick="selectPhase(2)">Phase 2</button>
+                <button class="phase-btn" onclick="selectPhase(3)">Phase 3</button>
             </div>
 
             <div class="sec-label">Sessions</div>
@@ -1029,6 +1030,36 @@
                 { name: "Dead Bug",                    type: "Block E",  sets: 2, reps: "12-15/side",tempo: "3011", rest: "0",      note: "Keep lower back pressed to floor" },
                 { name: "Band Pull-Apart",             type: "Block E",  sets: 2, reps: "12-15",    tempo: "3011", rest: "0",       note: "Arms straight, squeeze shoulder blades" },
                 { name: "Standing Lateral Leg Raise",  type: "Block E",  sets: 2, reps: "15-20",    tempo: "2010", rest: "0",       note: "Knee bent, squeeze at top" }
+            ]
+        },
+        3: {
+            name: "Phase 3 — Strength / Hypertrophy",
+            frequency: "3x per week for 3 weeks",
+            totalSessions: 9,
+            progression: [
+                { session: 1, note: "New movements — establish form at heavier loads, 3 sets all" },
+                { session: 2, note: "Strength lifts (Block A) to 4 sets — quality reps over weight" },
+                { session: 3, note: "All compounds to 4 sets — note your target weights for next week" },
+                { session: 4, note: "Maintain 4 sets — add weight where form allows" },
+                { session: 5, note: "Strength lifts peak to 5 sets — hypertrophy work at 4 sets" },
+                { session: 6, note: "Maintain peak sets — push for PR effort on Block A" },
+                { session: 7, note: "Max volume week — all compounds at 5 sets. Push hard" },
+                { session: 8, note: "Peak intensity — 5 sets Block A, 4 sets B/C. Go heavier" },
+                { session: 9, note: "Taper — reduce volume, maintain intensity. Program complete!" }
+            ],
+            exercises: [
+                { name: "Glute Bridge",               type: "Warm-Up", sets: 2, reps: "15-20",    tempo: "3010", rest: "—",       note: "Load with DB on hips. Full hip extension and hold 1 second at top" },
+                { name: "Heel-Elevated DB Squat",     type: "Block A",  sets: 3, reps: "4-6",      tempo: "4010", rest: "180",     note: "Heels elevated 1-2 inches on a plate. Knees track over toes, drive through full range" },
+                { name: "Weighted Ring Row",          type: "Block A",  sets: 3, reps: "4-6",      tempo: "3011", rest: "90",      note: "Use weight vest or hold DB on chest. Body parallel to floor — full scapular retraction at top" },
+                { name: "DB Bench Press",             type: "Block B",  sets: 3, reps: "6-10",     tempo: "3010", rest: "30",      note: "Controlled descent to chest, slight arch. Drive through sticking point" },
+                { name: "Single Leg Hip Thrust",      type: "Block B",  sets: 3, reps: "8-12/leg", tempo: "3011", rest: "90",      note: "Shoulders on bench, DB across hip. Full extension at top — pause and squeeze glute" },
+                { name: "DB Deadlift",                type: "Block C",  sets: 3, reps: "5-8",      tempo: "3010", rest: "30",      note: "Push floor away, keep DBs close to legs. Full hip extension at top, control descent" },
+                { name: "Chest-Supported DB Row",     type: "Block C",  sets: 3, reps: "8-12",     tempo: "3011", rest: "90",      note: "Chest on incline bench, arms hang. Pull elbows back, squeeze shoulder blades hard at top" },
+                { name: "DB Overhead Press",          type: "Block D",  sets: 3, reps: "8-10",     tempo: "3010", rest: "30",      note: "Strict press — no leg drive. Core braced, press directly overhead" },
+                { name: "DB Lateral Raise",           type: "Block D",  sets: 3, reps: "12-15",    tempo: "2010", rest: "60",      note: "Slight forward lean, lead with elbows to ear height. Slow controlled descent" },
+                { name: "Pallof Press",               type: "Block E",  sets: 3, reps: "10/side",  tempo: "3010", rest: "0",       note: "Anchor band at chest height. Press straight out and resist rotation — core stays square" },
+                { name: "Band Pull-Apart",            type: "Block E",  sets: 3, reps: "12-15",    tempo: "3011", rest: "0",       note: "Arms straight, squeeze shoulder blades at full extension" },
+                { name: "Side Lying Hip Abduction",   type: "Block E",  sets: 3, reps: "15-20",    tempo: "2010", rest: "0",       note: "Keep top hip slightly forward, lead with heel. Squeeze glute at top" }
             ]
         }
     };
@@ -1242,6 +1273,23 @@
                 case 4: return isCore ? base : 4;
                 case 5: return isMain ? 5 : (isCore ? base : 4);
                 case 6: return isMain ? 4 : (isCore ? base : 3);
+                default: return base;
+            }
+        }
+
+        if (phase === 3) {
+            // Base = 3 for all. Block A = strength lifts, Block E = core/accessory
+            const isStrengthA = type === 'Block A';
+            switch (session) {
+                case 1: return base;                                           // 3 all — learn loads
+                case 2: return isStrengthA ? 4 : base;                        // A→4
+                case 3: return isCore ? base : 4;                             // B/C/D→4
+                case 4: return isCore ? base : 4;                             // maintain
+                case 5: return isStrengthA ? 5 : (isCore ? base : 4);        // A→5, B/C/D→4
+                case 6: return isStrengthA ? 5 : (isCore ? base : 4);        // maintain peak
+                case 7: return isCore ? base : 5;                             // max volume — all→5
+                case 8: return isStrengthA ? 5 : (isCore ? base : 4);        // slight pull-back
+                case 9: return isStrengthA ? 4 : base;                        // taper
                 default: return base;
             }
         }
