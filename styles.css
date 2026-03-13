@@ -731,8 +731,25 @@ body {
     width: 100%;
     max-width: 300px;
     text-align: center;
-    margin-bottom: 20px;
 }
+.focus-rest-display.hidden { display: none; }
+
+.focus-continue-btn {
+    width: 100%;
+    max-width: 300px;
+    padding: 16px;
+    border: 2px solid var(--blue);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--blue);
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .15s;
+}
+.focus-continue-btn:hover { background: var(--blue); color: white; }
+.focus-continue-btn.hidden { display: none; }
 .focus-rest-time { font-size: 36px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
 .focus-rest-label { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--text3); margin-bottom: 10px; }
 .focus-rest-bar-bg { height: 4px; background: var(--bd); border-radius: 2px; overflow: hidden; margin-bottom: 12px; }

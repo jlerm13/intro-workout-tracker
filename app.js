@@ -576,14 +576,6 @@ function renderFocusExercise() {
         }
     }
 
-    // RPE button state (reset for this set)
-    const currentRpe = rpeData[`${sk}-${focusExIdx}-${focusSetIdx}`];
-    document.querySelectorAll('.focus-rpe-btn').forEach(b => b.classList.remove('selected'));
-    if (currentRpe) {
-        const rpeBtn = document.querySelector(`.focus-rpe-btn.${currentRpe}`);
-        if (rpeBtn) rpeBtn.classList.add('selected');
-    }
-
     document.getElementById('focusWeight').value = savedW;
     document.getElementById('focusReps').value   = savedR;
 
@@ -625,68 +617,81 @@ function confirmFocusSet() {
 
     renderFocusSetDots(totalRounds);
 
+    // Determine rest seconds for this exercise
+    let restSeconds = 0;
     if (isSuperset) {
         const isLastInRound = focusSubIdx >= group.exercises.length - 1;
-        if (!isLastInRound) {
-            setTimeout(() => advanceFocusSet(), 300);
-        } else {
-            const maxRest = Math.max(...group.exercises.map(i => {
+        if (isLastInRound) {
+            restSeconds = Math.max(...group.exercises.map(i => {
                 const r = workoutData[currentPhase].exercises[i].rest;
                 return parseInt(r.split('-')[0]) || 0;
             }));
-            if (maxRest > 0) {
-                showRestScreen(String(maxRest));
-            } else {
-                setTimeout(() => advanceFocusSet(), 300);
-            }
         }
+        // Mid-superset: no rest timer, but still show review screen
     } else {
-        const hasRest = ex.rest !== '—' && ex.rest !== '0';
-        if (hasRest) {
-            showRestScreen(ex.rest);
-        } else {
-            setTimeout(() => advanceFocusSet(), 300);
+        if (ex.rest !== '—' && ex.rest !== '0') {
+            restSeconds = parseInt(ex.rest.split('-')[0]) || 0;
         }
     }
+
+    showRestScreen(restSeconds);
 }
 
-function showRestScreen(restValue) {
-    const seconds = parseInt(restValue.split('-')[0]);
-    if (isNaN(seconds) || seconds <= 0) { advanceFocusSet(); return; }
-
+function showRestScreen(seconds) {
     // Switch screens
     document.getElementById('focusScreenExercise').classList.add('hidden');
     document.getElementById('focusScreenRest').classList.remove('hidden');
 
+    // RPE button state for this set
+    const sk = getSessionKey();
+    const currentRpe = rpeData[`${sk}-${focusExIdx}-${focusSetIdx}`];
+    document.querySelectorAll('.focus-rpe-btn').forEach(b => b.classList.remove('selected'));
+    if (currentRpe) {
+        const rpeBtn = document.querySelector(`.focus-rpe-btn.${currentRpe}`);
+        if (rpeBtn) rpeBtn.classList.add('selected');
+    }
+
     // Populate on-deck preview
     renderFocusOnDeck();
 
-    // Start the timer
-    if (focusRestInterval) clearInterval(focusRestInterval);
-    focusRestLeft  = seconds;
-    focusRestTotal = seconds;
+    const restDisplay  = document.getElementById('focusRestDisplay');
+    const continueBtn  = document.getElementById('focusContinueBtn');
 
-    const restTimeEl = document.getElementById('focusRestTime');
-    const restFillEl = document.getElementById('focusRestBarFill');
+    if (seconds > 0) {
+        // Timed rest mode
+        restDisplay.classList.remove('hidden');
+        continueBtn.classList.add('hidden');
 
-    restTimeEl.textContent       = formatTime(focusRestLeft);
-    restFillEl.style.transition  = 'none';
-    restFillEl.style.width       = '100%';
-    requestAnimationFrame(() => {
-        restFillEl.style.transition = `width ${seconds}s linear`;
-        restFillEl.style.width      = '0%';
-    });
+        if (focusRestInterval) clearInterval(focusRestInterval);
+        focusRestLeft  = seconds;
+        focusRestTotal = seconds;
 
-    focusRestInterval = setInterval(() => {
-        focusRestLeft--;
-        if (restTimeEl) restTimeEl.textContent = formatTime(focusRestLeft);
-        if (focusRestLeft <= 0) {
-            clearInterval(focusRestInterval);
-            focusRestInterval = null;
-            if (restTimeEl) restTimeEl.textContent = 'Done!';
-            setTimeout(() => advanceFocusSet(), 600);
-        }
-    }, 1000);
+        const restTimeEl = document.getElementById('focusRestTime');
+        const restFillEl = document.getElementById('focusRestBarFill');
+
+        restTimeEl.textContent       = formatTime(focusRestLeft);
+        restFillEl.style.transition  = 'none';
+        restFillEl.style.width       = '100%';
+        requestAnimationFrame(() => {
+            restFillEl.style.transition = `width ${seconds}s linear`;
+            restFillEl.style.width      = '0%';
+        });
+
+        focusRestInterval = setInterval(() => {
+            focusRestLeft--;
+            if (restTimeEl) restTimeEl.textContent = formatTime(focusRestLeft);
+            if (focusRestLeft <= 0) {
+                clearInterval(focusRestInterval);
+                focusRestInterval = null;
+                if (restTimeEl) restTimeEl.textContent = 'Done!';
+                setTimeout(() => advanceFocusSet(), 600);
+            }
+        }, 1000);
+    } else {
+        // No-timer review mode (mid-superset or no-rest exercises)
+        restDisplay.classList.add('hidden');
+        continueBtn.classList.remove('hidden');
+    }
 }
 
 function skipFocusRest() {
