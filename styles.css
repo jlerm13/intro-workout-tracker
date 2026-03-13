@@ -749,20 +749,17 @@ body {
 }
 .focus-skip-btn:hover { background: var(--hov); color: var(--text); }
 
-.focus-details {
+/* ──────────────────── Focus Screen Containers ──────────────────── */
+.focus-screen-exercise,
+.focus-screen-rest {
     width: 100%;
-    max-width: 360px;
-    margin-top: 12px;
-    opacity: 0;
-    transform: translateY(8px);
-    transition: opacity .3s ease, transform .3s ease;
-    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
-.focus-details.visible {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-}
+.focus-screen-rest { gap: 16px; }
+.focus-screen-exercise.hidden,
+.focus-screen-rest.hidden { display: none; }
 .focus-note {
     font-size: 12px;
     color: var(--text3);
@@ -1081,15 +1078,6 @@ body {
 .focus-rpe {
     margin-bottom: 20px;
     text-align: center;
-    opacity: 0;
-    transform: translateY(8px);
-    transition: opacity .3s ease, transform .3s ease;
-    pointer-events: none;
-}
-.focus-rpe.visible {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
 }
 .focus-rpe-label {
     font-size: 11px;

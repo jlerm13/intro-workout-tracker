@@ -110,38 +110,44 @@
         <div class="focus-ex-name" id="focusExName"></div>
         <div class="focus-set-counter" id="focusSetCounter"></div>
         <div class="focus-sets-dots" id="focusSetDots"></div>
-        <div class="focus-note" id="focusNote"></div>
-        <div class="focus-tempo" id="focusTempo" style="display:none"></div>
-        <div class="focus-prev" id="focusPrev"></div>
-        <div class="focus-cue hidden" id="focusCue"></div>
-        <div class="focus-inputs" id="focusInputs">
-            <div class="focus-input-group">
-                <label>Weight (lbs)</label>
-                <input class="focus-num-inp" type="number" id="focusWeight" placeholder="lbs" inputmode="decimal">
+
+        <!-- Screen 1: Exercise -->
+        <div class="focus-screen-exercise" id="focusScreenExercise">
+            <div class="focus-note" id="focusNote"></div>
+            <div class="focus-tempo" id="focusTempo" style="display:none"></div>
+            <div class="focus-prev" id="focusPrev"></div>
+            <div class="focus-cue hidden" id="focusCue"></div>
+            <div class="focus-inputs" id="focusInputs">
+                <div class="focus-input-group">
+                    <label>Weight (lbs)</label>
+                    <input class="focus-num-inp" type="number" id="focusWeight" placeholder="lbs" inputmode="decimal">
+                </div>
+                <div class="focus-input-group">
+                    <label>Reps</label>
+                    <input class="focus-num-inp" type="number" id="focusReps" placeholder="reps" inputmode="numeric">
+                </div>
             </div>
-            <div class="focus-input-group">
-                <label>Reps</label>
-                <input class="focus-num-inp" type="number" id="focusReps" placeholder="reps" inputmode="numeric">
-            </div>
+            <button class="focus-done-btn" id="focusDoneBtn" onclick="confirmFocusSet()">✓ Done Set</button>
         </div>
-        <button class="focus-done-btn" id="focusDoneBtn" onclick="confirmFocusSet()">✓ Done Set</button>
-        <div class="focus-rpe" id="focusRPE">
-            <div class="focus-rpe-label">How did that feel?</div>
-            <div class="focus-rpe-btns">
-                <button class="focus-rpe-btn easy" onclick="setFocusRPE('easy')">Easy</button>
-                <button class="focus-rpe-btn solid" onclick="setFocusRPE('solid')">Solid</button>
-                <button class="focus-rpe-btn hard" onclick="setFocusRPE('hard')">Hard</button>
+
+        <!-- Screen 2: Rest -->
+        <div class="focus-screen-rest hidden" id="focusScreenRest">
+            <div class="focus-rest-display" id="focusRestDisplay">
+                <div class="focus-rest-time" id="focusRestTime">90s</div>
+                <div class="focus-rest-label">Rest</div>
+                <div class="focus-rest-bar-bg">
+                    <div class="focus-rest-bar-fill" id="focusRestBarFill"></div>
+                </div>
+                <button class="focus-skip-btn" onclick="skipFocusRest()">Skip Rest</button>
             </div>
-        </div>
-        <div class="focus-rest-display hidden" id="focusRestDisplay">
-            <div class="focus-rest-time" id="focusRestTime">90s</div>
-            <div class="focus-rest-label">Rest</div>
-            <div class="focus-rest-bar-bg">
-                <div class="focus-rest-bar-fill" id="focusRestBarFill"></div>
+            <div class="focus-rpe" id="focusRPE">
+                <div class="focus-rpe-label">How did that feel?</div>
+                <div class="focus-rpe-btns">
+                    <button class="focus-rpe-btn easy" onclick="setFocusRPE('easy')">Easy</button>
+                    <button class="focus-rpe-btn solid" onclick="setFocusRPE('solid')">Solid</button>
+                    <button class="focus-rpe-btn hard" onclick="setFocusRPE('hard')">Hard</button>
+                </div>
             </div>
-            <button class="focus-skip-btn" onclick="skipFocusRest()">Skip Rest</button>
-        </div>
-        <div class="focus-details" id="focusDetails">
             <div class="focus-on-deck" id="focusOnDeck" style="display:none"></div>
         </div>
     </div>
