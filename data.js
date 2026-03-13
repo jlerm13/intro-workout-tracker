@@ -12,7 +12,7 @@ const workoutData = {
         ],
         exercises: [
             { name: "Glute Bridge",                     type: "Warm-Up", sets: 2, reps: "12-15",     tempo: "3010", rest: "—",       note: "Keep chin tucked, control lower back movement" },
-            { name: "Goblet Squat",                     type: "Block A",  sets: 2, reps: "8-12",      tempo: "4010", rest: "120-180", note: "Hold at chest, squat to comfortable depth" },
+            { name: "Goblet Squat",                     type: "Block A",  sets: 2, reps: "8-12",      tempo: "4010", rest: "60", note: "Hold at chest, squat to comfortable depth" },
             { name: "DB Bench Press",                   type: "Block A",  sets: 2, reps: "8-12",      tempo: "3010", rest: "30",      note: "Control on the way down" },
             { name: "Ring Rows",                        type: "Block B",  sets: 2, reps: "8-12",      tempo: "3010", rest: "90",      note: "Start easy angle, pull chest to rings" },
             { name: "Elevated Single Leg Glute Bridge", type: "Block B",  sets: 2, reps: "10-12/leg", tempo: "3011", rest: "30",      note: "Shoulders on Bench. Non-working leg extended straight" },
@@ -38,7 +38,7 @@ const workoutData = {
         ],
         exercises: [
             { name: "Glute Bridge",                type: "Warm-Up", sets: 2, reps: "12-15",    tempo: "3010", rest: "—",       note: "Keep chin tucked, control lower back movement" },
-            { name: "Bulgarian Split Squat",        type: "Block A",  sets: 3, reps: "5-8/leg",  tempo: "4010", rest: "120-180", note: "Rear foot on bench, front leg does work" },
+            { name: "Bulgarian Split Squat",        type: "Block A",  sets: 3, reps: "5-8/leg",  tempo: "4010", rest: "60", note: "Rear foot on bench, front leg does work" },
             { name: "DB Bench Press (neutral grip)",type: "Block B",  sets: 3, reps: "5-8",      tempo: "3010", rest: "30",      note: "Palms face each other" },
             { name: "Ring Rows",                   type: "Block B",  sets: 3, reps: "5-8",      tempo: "3010", rest: "90",      note: "Harder angle for strength focus" },
             { name: "Single Leg Glute Bridge",     type: "Block C",  sets: 3, reps: "8-12/leg", tempo: "3011", rest: "30",      note: "Add weight for progression" },

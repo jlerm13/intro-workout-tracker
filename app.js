@@ -617,21 +617,10 @@ function confirmFocusSet() {
 
     renderFocusSetDots(totalRounds);
 
-    // Determine rest seconds for this exercise
+    // Use this exercise's rest value
     let restSeconds = 0;
-    if (isSuperset) {
-        const isLastInRound = focusSubIdx >= group.exercises.length - 1;
-        if (isLastInRound) {
-            restSeconds = Math.max(...group.exercises.map(i => {
-                const r = workoutData[currentPhase].exercises[i].rest;
-                return parseInt(r.split('-')[0]) || 0;
-            }));
-        }
-        // Mid-superset: no rest timer, but still show review screen
-    } else {
-        if (ex.rest !== '—' && ex.rest !== '0') {
-            restSeconds = parseInt(ex.rest.split('-')[0]) || 0;
-        }
+    if (ex.rest !== '—' && ex.rest !== '0') {
+        restSeconds = parseInt(ex.rest.split('-')[0]) || 0;
     }
 
     showRestScreen(restSeconds);
