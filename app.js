@@ -674,10 +674,6 @@ function startFocusRest(restValue) {
     restDisplay.classList.remove('hidden');
     inputs.style.display  = 'none';
     doneBtn.style.display = 'none';
-    const rpeAreaRest     = document.getElementById('focusRPE');
-    const detailsAreaRest = document.getElementById('focusDetails');
-    if (rpeAreaRest)     rpeAreaRest.classList.remove('visible');
-    if (detailsAreaRest) detailsAreaRest.classList.remove('visible');
 
     restTimeEl.textContent       = formatTime(focusRestLeft);
     restFillEl.style.transition  = 'none';
