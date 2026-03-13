@@ -126,14 +126,12 @@ function confirmSet(exIdx, setIdx) {
 
 /* ════════════════ HEATMAP ════════════════ */
 function renderHeatmap() {
-    const grid     = document.getElementById('heatmapGrid');
-    const streakEl = document.getElementById('streakText');
+    const grid = document.getElementById('heatmapGrid');
     if (!grid) return;
 
     const today    = new Date();
     const todayStr = today.toISOString().split('T')[0];
 
-    // Build 28-day window starting from Monday of the week 4 weeks ago
     const days = [];
     for (let i = 27; i >= 0; i--) {
         const d = new Date(today);
@@ -141,25 +139,11 @@ function renderHeatmap() {
         days.push(d.toISOString().split('T')[0]);
     }
 
-    // Compute current streak (consecutive days going backwards from today)
-    let streak = 0;
-    const check = new Date(today);
-    while (workoutDates.includes(check.toISOString().split('T')[0])) {
-        streak++;
-        check.setDate(check.getDate() - 1);
-    }
-
     grid.innerHTML = days.map(d => {
         const isActive = workoutDates.includes(d);
         const isToday  = d === todayStr;
         return `<div class="heatmap-day${isActive ? ' active' : ''}${isToday ? ' today' : ''}" title="${d}"></div>`;
     }).join('');
-
-    if (streakEl) {
-        streakEl.innerHTML = streak > 0
-            ? `<span class="streak-num">${streak}-day</span> streak`
-            : 'Start your streak today';
-    }
 }
 
 /* ════════════════ SET PROGRESSION ════════════════ */
@@ -594,15 +578,17 @@ function renderFocusExercise() {
     nextBtn.textContent = isLast ? 'Finish ✓' : 'Next →';
     nextBtn.className   = `focus-nav-btn${isLast ? ' finish' : ''}`;
 
-    // Show inputs / rest
-    const restDisplay = document.getElementById('focusRestDisplay');
-    const inputs      = document.getElementById('focusInputs');
-    const doneBtn     = document.getElementById('focusDoneBtn');
-    const rpeArea     = document.getElementById('focusRPE');
+    // Show inputs / rest — hide RPE and details initially
+    const restDisplay  = document.getElementById('focusRestDisplay');
+    const inputs       = document.getElementById('focusInputs');
+    const doneBtn      = document.getElementById('focusDoneBtn');
+    const rpeArea      = document.getElementById('focusRPE');
+    const detailsArea  = document.getElementById('focusDetails');
     restDisplay.classList.add('hidden');
     inputs.style.display  = '';
     doneBtn.style.display = '';
-    if (rpeArea) rpeArea.style.display = '';
+    if (rpeArea) rpeArea.classList.remove('visible');
+    if (detailsArea) detailsArea.classList.remove('visible');
     doneBtn.textContent   = isDone ? '✓ Set Done' : '✓ Done Set';
 }
 
@@ -628,6 +614,15 @@ function confirmFocusSet() {
 
     const doneBtn = document.getElementById('focusDoneBtn');
     doneBtn.textContent = '✓ Set Done';
+
+    // Progressive reveal: show RPE briefly, show on-deck details
+    const rpeArea = document.getElementById('focusRPE');
+    if (rpeArea) rpeArea.classList.add('visible');
+    const detailsArea = document.getElementById('focusDetails');
+    if (detailsArea) {
+        renderFocusOnDeck();
+        detailsArea.classList.add('visible');
+    }
 
     if (isSuperset) {
         const isLastInRound = focusSubIdx >= group.exercises.length - 1;
@@ -1037,12 +1032,35 @@ function renderSessionNav() {
     }
 }
 
+function getStreakCount() {
+    let streak = 0;
+    const check = new Date();
+    while (workoutDates.includes(check.toISOString().split('T')[0])) {
+        streak++;
+        check.setDate(check.getDate() - 1);
+    }
+    return streak;
+}
+
+function toggleSidebarDetails() {
+    const btn  = document.getElementById('sbToggleDetails');
+    const body = document.getElementById('sbCollapsible');
+    if (!btn || !body) return;
+    const isOpen = body.classList.toggle('open');
+    btn.classList.toggle('open', isOpen);
+}
+
 function updateSidebar() {
     const data = workoutData[currentPhase];
     const prog = data.progression[currentSession - 1];
 
     const noteEl = document.getElementById('sessionNote');
-    if (noteEl) noteEl.textContent = prog.note;
+    if (noteEl) noteEl.textContent = `📋 ${prog.note}`;
+
+    // Hero streak
+    const streak = getStreakCount();
+    const heroEl = document.getElementById('sbHeroStreak');
+    if (heroEl) heroEl.textContent = streak;
 
     renderSessionNav();
     updateCompletionProgress();
