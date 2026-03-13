@@ -296,8 +296,33 @@ function enterFocusMode() {
 function exitFocusMode() {
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
     document.getElementById('focusOverlay').classList.add('hidden');
+    // Clean up video iframe when exiting
+    const videoEmbed = document.getElementById('focusVideoEmbed');
+    if (videoEmbed) { videoEmbed.innerHTML = ''; videoEmbed.classList.add('hidden'); }
     document.body.style.overflow = '';
     updateWorkout();
+}
+
+function toggleFocusVideo() {
+    const embed  = document.getElementById('focusVideoEmbed');
+    const toggle = document.getElementById('focusVideoToggle');
+    const isOpen = !embed.classList.contains('hidden');
+    if (isOpen) {
+        embed.classList.add('hidden');
+        embed.innerHTML = '';
+        toggle.classList.remove('open');
+        toggle.textContent = '▶ Watch form';
+    } else {
+        const ex       = workoutData[currentPhase].exercises[focusExIdx];
+        const videoUrl = exerciseVideos[ex.name];
+        if (!videoUrl) return;
+        const videoId = new URL(videoUrl).searchParams.get('v');
+        if (!videoId) return;
+        embed.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?rel=0" allowfullscreen loading="lazy"></iframe>`;
+        embed.classList.remove('hidden');
+        toggle.classList.add('open');
+        toggle.textContent = '✕ Hide video';
+    }
 }
 
 /* ════════════════ PROGRESS SUMMARY ════════════════ */
@@ -544,6 +569,23 @@ function renderFocusExercise() {
     }
 
     document.getElementById('focusNote').textContent = `💡 ${ex.note}`;
+
+    // Video embed
+    const videoUrl  = exerciseVideos[ex.name];
+    const videoWrap = document.getElementById('focusVideo');
+    const videoEmbed = document.getElementById('focusVideoEmbed');
+    const videoToggle = document.getElementById('focusVideoToggle');
+    if (videoUrl) {
+        videoWrap.classList.remove('hidden');
+        // Collapse video when switching exercises
+        videoEmbed.classList.add('hidden');
+        videoEmbed.innerHTML = '';
+        videoToggle.classList.remove('open');
+        videoToggle.textContent = '▶ Watch form';
+    } else {
+        videoWrap.classList.add('hidden');
+        videoEmbed.innerHTML = '';
+    }
 
     // Tempo coaching cue
     const tempoEl = document.getElementById('focusTempo');

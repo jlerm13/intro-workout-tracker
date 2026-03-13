@@ -788,6 +788,38 @@ body {
     text-align: left;
 }
 
+.focus-video { width: 100%; margin-bottom: 8px; }
+.focus-video.hidden { display: none; }
+.focus-video-toggle {
+    background: none;
+    border: 1px solid var(--bd);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--blue);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .15s;
+}
+.focus-video-toggle:hover { background: var(--sb-bg); }
+.focus-video-toggle.open { border-color: var(--blue); background: rgba(35,131,226,.06); }
+.focus-video-embed {
+    margin-top: 10px;
+    border-radius: 10px;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+    width: 100%;
+    background: #000;
+}
+.focus-video-embed.hidden { display: none; }
+.focus-video-embed iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 10px;
+}
+
 .focus-footer {
     display: flex;
     gap: 12px;
