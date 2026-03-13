@@ -482,6 +482,12 @@ function renderBlockProgress() {
 }
 
 function renderFocusExercise() {
+    // Hide details/RPE immediately before updating any content to prevent flash
+    const rpeAreaEarly     = document.getElementById('focusRPE');
+    const detailsAreaEarly = document.getElementById('focusDetails');
+    if (rpeAreaEarly)     rpeAreaEarly.classList.remove('visible');
+    if (detailsAreaEarly) detailsAreaEarly.classList.remove('visible');
+
     const data        = workoutData[currentPhase];
     const exercises   = data.exercises;
     const group       = focusBlockGroups[focusGroupIdx];
@@ -578,17 +584,13 @@ function renderFocusExercise() {
     nextBtn.textContent = isLast ? 'Finish ✓' : 'Next →';
     nextBtn.className   = `focus-nav-btn${isLast ? ' finish' : ''}`;
 
-    // Show inputs / rest — hide RPE and details initially
-    const restDisplay  = document.getElementById('focusRestDisplay');
-    const inputs       = document.getElementById('focusInputs');
-    const doneBtn      = document.getElementById('focusDoneBtn');
-    const rpeArea      = document.getElementById('focusRPE');
-    const detailsArea  = document.getElementById('focusDetails');
+    // Show inputs / rest
+    const restDisplay = document.getElementById('focusRestDisplay');
+    const inputs      = document.getElementById('focusInputs');
+    const doneBtn     = document.getElementById('focusDoneBtn');
     restDisplay.classList.add('hidden');
     inputs.style.display  = '';
     doneBtn.style.display = '';
-    if (rpeArea) rpeArea.classList.remove('visible');
-    if (detailsArea) detailsArea.classList.remove('visible');
     doneBtn.textContent   = isDone ? '✓ Set Done' : '✓ Done Set';
 }
 
@@ -669,8 +671,10 @@ function startFocusRest(restValue) {
     restDisplay.classList.remove('hidden');
     inputs.style.display  = 'none';
     doneBtn.style.display = 'none';
-    const rpeAreaRest = document.getElementById('focusRPE');
-    if (rpeAreaRest) rpeAreaRest.style.display = 'none';
+    const rpeAreaRest     = document.getElementById('focusRPE');
+    const detailsAreaRest = document.getElementById('focusDetails');
+    if (rpeAreaRest)     rpeAreaRest.classList.remove('visible');
+    if (detailsAreaRest) detailsAreaRest.classList.remove('visible');
 
     restTimeEl.textContent       = formatTime(focusRestLeft);
     restFillEl.style.transition  = 'none';
