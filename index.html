@@ -130,16 +130,8 @@
             <button class="focus-done-btn" id="focusDoneBtn" onclick="confirmFocusSet()">✓ Done Set</button>
         </div>
 
-        <!-- Screen 2: Rest -->
+        <!-- Screen 2: Rest / Review -->
         <div class="focus-screen-rest hidden" id="focusScreenRest">
-            <div class="focus-rest-display" id="focusRestDisplay">
-                <div class="focus-rest-time" id="focusRestTime">90s</div>
-                <div class="focus-rest-label">Rest</div>
-                <div class="focus-rest-bar-bg">
-                    <div class="focus-rest-bar-fill" id="focusRestBarFill"></div>
-                </div>
-                <button class="focus-skip-btn" onclick="skipFocusRest()">Skip Rest</button>
-            </div>
             <div class="focus-rpe" id="focusRPE">
                 <div class="focus-rpe-label">How did that feel?</div>
                 <div class="focus-rpe-btns">
@@ -148,6 +140,15 @@
                     <button class="focus-rpe-btn hard" onclick="setFocusRPE('hard')">Hard</button>
                 </div>
             </div>
+            <div class="focus-rest-display hidden" id="focusRestDisplay">
+                <div class="focus-rest-time" id="focusRestTime">90s</div>
+                <div class="focus-rest-label">Rest</div>
+                <div class="focus-rest-bar-bg">
+                    <div class="focus-rest-bar-fill" id="focusRestBarFill"></div>
+                </div>
+                <button class="focus-skip-btn" onclick="skipFocusRest()">Skip Rest →</button>
+            </div>
+            <button class="focus-continue-btn hidden" id="focusContinueBtn" onclick="skipFocusRest()">Continue →</button>
             <div class="focus-on-deck" id="focusOnDeck" style="display:none"></div>
         </div>
     </div>
