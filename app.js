@@ -888,9 +888,9 @@ function setSetRPE(exIdx, setIdx, rpe) {
     saveRPE(exIdx, setIdx, rpe);
     const rpeDiv = document.getElementById(`rpe-${exIdx}-${setIdx}`);
     if (!rpeDiv) return;
-    rpeDiv.querySelectorAll('.rpe-mini-btn').forEach(b => b.classList.remove('sel', 'easy', 'solid', 'hard'));
+    rpeDiv.querySelectorAll('.rpe-mini-btn').forEach(b => b.classList.remove('sel'));
     const btn = rpeDiv.querySelector(`.rpe-mini-btn.${rpe}`);
-    if (btn) btn.classList.add('sel', rpe);
+    if (btn) btn.classList.add('sel');
 }
 
 function setFocusRPE(rpe) {
