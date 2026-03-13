@@ -617,40 +617,43 @@ function confirmFocusSet() {
     const doneBtn = document.getElementById('focusDoneBtn');
     doneBtn.textContent = '✓ Set Done';
 
-    // Progressive reveal: show RPE briefly, show on-deck details
-    const rpeArea = document.getElementById('focusRPE');
-    if (rpeArea) rpeArea.classList.add('visible');
-    const detailsArea = document.getElementById('focusDetails');
-    if (detailsArea) {
-        renderFocusOnDeck();
-        detailsArea.classList.add('visible');
-    }
-
     if (isSuperset) {
         const isLastInRound = focusSubIdx >= group.exercises.length - 1;
         if (!isLastInRound) {
-            // Transition to next exercise in pair — no rest
+            // Mid-superset: move immediately, no reveal
             setTimeout(() => advanceFocusSet(), 300);
         } else {
-            // End of round — rest before next round
             const maxRest = Math.max(...group.exercises.map(i => {
                 const r = workoutData[currentPhase].exercises[i].rest;
                 return parseInt(r.split('-')[0]) || 0;
             }));
             if (maxRest > 0) {
+                // Has rest — reveal RPE/details during rest window
+                revealFocusDetails();
                 startFocusRest(String(maxRest));
             } else {
                 setTimeout(() => advanceFocusSet(), 300);
             }
         }
     } else {
-        // Solo exercise — rest as before
         const hasRest = ex.rest !== '—' && ex.rest !== '0';
         if (hasRest) {
+            // Has rest — reveal RPE/details during rest window
+            revealFocusDetails();
             startFocusRest(ex.rest);
         } else {
             setTimeout(() => advanceFocusSet(), 300);
         }
+    }
+}
+
+function revealFocusDetails() {
+    const rpeArea = document.getElementById('focusRPE');
+    if (rpeArea) rpeArea.classList.add('visible');
+    const detailsArea = document.getElementById('focusDetails');
+    if (detailsArea) {
+        renderFocusOnDeck();
+        detailsArea.classList.add('visible');
     }
 }
 
