@@ -12,7 +12,7 @@ const workoutData = {
         ],
         exercises: [
             { name: "Glute Bridge",                     type: "Warm-Up", sets: 2, reps: "12-15",     tempo: "3010", rest: "—",       note: "Keep chin tucked, control lower back movement" },
-            { name: "Goblet Squat",                     type: "Block A",  sets: 2, reps: "8-12",      tempo: "4010", rest: "60", note: "Hold at chest, squat to comfortable depth" },
+            { name: "DB Goblet Squat",                  type: "Block A",  sets: 2, reps: "8-12",      tempo: "4010", rest: "60", note: "Hold at chest, squat to comfortable depth" },
             { name: "DB Bench Press",                   type: "Block A",  sets: 2, reps: "8-12",      tempo: "3010", rest: "30",      note: "Control on the way down" },
             { name: "Ring Rows",                        type: "Block B",  sets: 2, reps: "8-12",      tempo: "3010", rest: "90",      note: "Start easy angle, pull chest to rings" },
             { name: "Elevated Single Leg Glute Bridge", type: "Block B",  sets: 2, reps: "10-12/leg", tempo: "3011", rest: "30",      note: "Shoulders on Bench. Non-working leg extended straight" },
@@ -84,10 +84,10 @@ const workoutData = {
 
 const exerciseVideos = {
     'Glute Bridge':                     'https://www.youtube.com/watch?v=OUgsJ8-Vi0E',
-    'Goblet Squat':                     'https://www.youtube.com/watch?v=EkSAynpQxuo',
-    'DB Bench Press (feet elevated)':   'https://www.youtube.com/watch?v=QsYre__-aro',
+    'DB Goblet Squat':                  'https://www.youtube.com/watch?v=XY8p9ijlsSQ',
+    'DB Bench Press':                   'https://www.youtube.com/watch?v=vfcYF6_yFAs',
     'DB Bench Press (neutral grip)':    'https://www.youtube.com/watch?v=KeUF3cx1n_o',
-    'Ring Rows':                        'https://www.youtube.com/watch?v=hXTc1mDnZCw',
+    'Ring Rows':                        'https://www.youtube.com/watch?v=DTtdIfsh9lE',
     'Single Leg Glute Bridge':          'https://www.youtube.com/watch?v=AVAXhy6pl7o',
     'Reverse Lunge':                    'https://www.youtube.com/watch?v=Q2k3kYbtOcI',
     'DB Overhead Press':                'https://www.youtube.com/watch?v=qEwKCR5JCog',
