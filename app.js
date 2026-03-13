@@ -455,19 +455,39 @@ function renderFocusSetDots(totalRounds) {
 function renderFocusOnDeck() {
     const el = document.getElementById('focusOnDeck');
     if (!el) return;
-    const group = focusBlockGroups[focusGroupIdx];
-    if (group.exercises.length <= 1 || focusSubIdx >= group.exercises.length - 1) {
-        el.style.display = 'none';
-        return;
+    const group       = focusBlockGroups[focusGroupIdx];
+    const isSuperset  = group.exercises.length > 1;
+    const firstEx     = workoutData[currentPhase].exercises[group.exercises[0]];
+    const totalRounds = getActualSets(firstEx, currentPhase, currentSession);
+    let nextEx = null, nextLabel = 'Up Next', nextPrev = null;
+
+    if (isSuperset && focusSubIdx < group.exercises.length - 1) {
+        // Next exercise in superset pair
+        const nextExIdx = group.exercises[focusSubIdx + 1];
+        nextEx    = workoutData[currentPhase].exercises[nextExIdx];
+        nextLabel = 'Up Next in Pair';
+        nextPrev  = getPrevData(nextExIdx, focusRoundIdx);
+    } else if (focusRoundIdx < totalRounds - 1) {
+        // More rounds — show what's coming (first exercise in next round)
+        const nextExIdx = group.exercises[0];
+        nextEx    = workoutData[currentPhase].exercises[nextExIdx];
+        nextLabel = `Next: Round ${focusRoundIdx + 2} of ${totalRounds}`;
+        nextPrev  = getPrevData(nextExIdx, focusRoundIdx + 1);
+    } else if (focusGroupIdx < focusBlockGroups.length - 1) {
+        // Next block
+        const nextGroup = focusBlockGroups[focusGroupIdx + 1];
+        const nextExIdx = nextGroup.exercises[0];
+        nextEx    = workoutData[currentPhase].exercises[nextExIdx];
+        nextLabel = `Next: ${nextGroup.type}`;
+        nextPrev  = getPrevData(nextExIdx, 0);
     }
-    const nextExIdx = group.exercises[focusSubIdx + 1];
-    const nextEx    = workoutData[currentPhase].exercises[nextExIdx];
-    const prev      = getPrevData(nextExIdx, focusRoundIdx);
+
+    if (!nextEx) { el.style.display = 'none'; return; }
     el.style.display = '';
     el.innerHTML = `
-        <div class="on-deck-label">Up Next</div>
+        <div class="on-deck-label">${nextLabel}</div>
         <div class="on-deck-name">${nextEx.name}</div>
-        ${prev && prev.weight !== '—' ? `<div class="on-deck-prev">${prev.weight} lbs × ${prev.reps}</div>` : ''}
+        ${nextPrev && nextPrev.weight !== '—' ? `<div class="on-deck-prev">${nextPrev.weight} lbs × ${nextPrev.reps}</div>` : ''}
     `;
 }
 
@@ -482,11 +502,9 @@ function renderBlockProgress() {
 }
 
 function renderFocusExercise() {
-    // Hide details/RPE immediately before updating any content to prevent flash
-    const rpeAreaEarly     = document.getElementById('focusRPE');
-    const detailsAreaEarly = document.getElementById('focusDetails');
-    if (rpeAreaEarly)     rpeAreaEarly.classList.remove('visible');
-    if (detailsAreaEarly) detailsAreaEarly.classList.remove('visible');
+    // Switch to exercise screen
+    document.getElementById('focusScreenExercise').classList.remove('hidden');
+    document.getElementById('focusScreenRest').classList.add('hidden');
 
     const data        = workoutData[currentPhase];
     const exercises   = data.exercises;
@@ -558,7 +576,7 @@ function renderFocusExercise() {
         }
     }
 
-    // RPE button state
+    // RPE button state (reset for this set)
     const currentRpe = rpeData[`${sk}-${focusExIdx}-${focusSetIdx}`];
     document.querySelectorAll('.focus-rpe-btn').forEach(b => b.classList.remove('selected'));
     if (currentRpe) {
@@ -570,7 +588,6 @@ function renderFocusExercise() {
     document.getElementById('focusReps').value   = savedR;
 
     renderFocusSetDots(totalRounds);
-    renderFocusOnDeck();
     renderBlockProgress();
 
     // Prev/next buttons
@@ -584,14 +601,8 @@ function renderFocusExercise() {
     nextBtn.textContent = isLast ? 'Finish ✓' : 'Next →';
     nextBtn.className   = `focus-nav-btn${isLast ? ' finish' : ''}`;
 
-    // Show inputs / rest
-    const restDisplay = document.getElementById('focusRestDisplay');
-    const inputs      = document.getElementById('focusInputs');
-    const doneBtn     = document.getElementById('focusDoneBtn');
-    restDisplay.classList.add('hidden');
-    inputs.style.display  = '';
-    doneBtn.style.display = '';
-    doneBtn.textContent   = isDone ? '✓ Set Done' : '✓ Done Set';
+    const doneBtn = document.getElementById('focusDoneBtn');
+    doneBtn.textContent = isDone ? '✓ Set Done' : '✓ Done Set';
 }
 
 function confirmFocusSet() {
@@ -614,13 +625,9 @@ function confirmFocusSet() {
 
     renderFocusSetDots(totalRounds);
 
-    const doneBtn = document.getElementById('focusDoneBtn');
-    doneBtn.textContent = '✓ Set Done';
-
     if (isSuperset) {
         const isLastInRound = focusSubIdx >= group.exercises.length - 1;
         if (!isLastInRound) {
-            // Mid-superset: move immediately, no reveal
             setTimeout(() => advanceFocusSet(), 300);
         } else {
             const maxRest = Math.max(...group.exercises.map(i => {
@@ -628,9 +635,7 @@ function confirmFocusSet() {
                 return parseInt(r.split('-')[0]) || 0;
             }));
             if (maxRest > 0) {
-                // Has rest — reveal RPE/details during rest window
-                revealFocusDetails();
-                startFocusRest(String(maxRest));
+                showRestScreen(String(maxRest));
             } else {
                 setTimeout(() => advanceFocusSet(), 300);
             }
@@ -638,42 +643,31 @@ function confirmFocusSet() {
     } else {
         const hasRest = ex.rest !== '—' && ex.rest !== '0';
         if (hasRest) {
-            // Has rest — reveal RPE/details during rest window
-            revealFocusDetails();
-            startFocusRest(ex.rest);
+            showRestScreen(ex.rest);
         } else {
             setTimeout(() => advanceFocusSet(), 300);
         }
     }
 }
 
-function revealFocusDetails() {
-    const rpeArea = document.getElementById('focusRPE');
-    if (rpeArea) rpeArea.classList.add('visible');
-    const detailsArea = document.getElementById('focusDetails');
-    if (detailsArea) {
-        renderFocusOnDeck();
-        detailsArea.classList.add('visible');
-    }
-}
-
-function startFocusRest(restValue) {
+function showRestScreen(restValue) {
     const seconds = parseInt(restValue.split('-')[0]);
     if (isNaN(seconds) || seconds <= 0) { advanceFocusSet(); return; }
 
+    // Switch screens
+    document.getElementById('focusScreenExercise').classList.add('hidden');
+    document.getElementById('focusScreenRest').classList.remove('hidden');
+
+    // Populate on-deck preview
+    renderFocusOnDeck();
+
+    // Start the timer
     if (focusRestInterval) clearInterval(focusRestInterval);
     focusRestLeft  = seconds;
     focusRestTotal = seconds;
 
-    const restDisplay = document.getElementById('focusRestDisplay');
-    const restTimeEl  = document.getElementById('focusRestTime');
-    const restFillEl  = document.getElementById('focusRestBarFill');
-    const inputs      = document.getElementById('focusInputs');
-    const doneBtn     = document.getElementById('focusDoneBtn');
-
-    restDisplay.classList.remove('hidden');
-    inputs.style.display  = 'none';
-    doneBtn.style.display = 'none';
+    const restTimeEl = document.getElementById('focusRestTime');
+    const restFillEl = document.getElementById('focusRestBarFill');
 
     restTimeEl.textContent       = formatTime(focusRestLeft);
     restFillEl.style.transition  = 'none';
