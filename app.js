@@ -490,7 +490,7 @@ function renderFocusOnDeck() {
         // Next exercise in superset pair
         const nextExIdx = group.exercises[focusSubIdx + 1];
         nextEx    = workoutData[currentPhase].exercises[nextExIdx];
-        nextLabel = 'Up Next in Pair';
+        nextLabel = 'Up Next';
         nextPrev  = getPrevData(nextExIdx, focusRoundIdx);
     } else if (focusRoundIdx < totalRounds - 1) {
         // More rounds — show what's coming (first exercise in next round)
@@ -543,7 +543,10 @@ function renderFocusExercise() {
     const wKey        = `${sk}-${focusExIdx}-${focusSetIdx}-weight`;
     const rKey        = `${sk}-${focusExIdx}-${focusSetIdx}-reps`;
     const prev        = getPrevData(focusExIdx, focusSetIdx);
-    const savedW      = curData[wKey] || (prev && prev.weight !== '—' ? prev.weight : '');
+    // Auto-fill: use saved data, then progression weight, then previous weight
+    const cue         = getProgressionCue(focusExIdx, focusSetIdx);
+    const progWeight  = cue && cue.type === 'up' ? cue.text.match(/([\d.]+)\s*lbs/)?.[1] : null;
+    const savedW      = curData[wKey] || progWeight || (prev && prev.weight !== '—' ? prev.weight : '');
     const savedR      = curData[rKey] || (prev && prev.reps   !== '—' ? prev.reps   : '');
     const isDone      = !!completedSets[`${sk}-${focusExIdx}-${focusSetIdx}`];
 
@@ -556,8 +559,8 @@ function renderFocusExercise() {
             `${group.type} · Set ${focusRoundIdx + 1} of ${totalRounds}`;
     }
 
-    document.getElementById('focusBlockTag').textContent = ex.type;
-    document.getElementById('focusBlockTag').className   = `ex-tag focus-block-tag ${getTagClass(ex.type)}`;
+    // Block tag removed — redundant with header block progress indicator
+    document.getElementById('focusBlockTag').style.display = 'none';
     document.getElementById('focusExName').textContent   = ex.name;
 
     if (isSuperset) {
@@ -568,37 +571,28 @@ function renderFocusExercise() {
             `Set ${focusSetIdx + 1} of ${totalRounds}`;
     }
 
-    document.getElementById('focusNote').textContent = `💡 ${ex.note}`;
+    // Collapse note + tempo into a single compact coaching line
+    const noteEl = document.getElementById('focusNote');
+    const tempoCueText = tempoToCue(ex.tempo);
+    const parts = [];
+    if (ex.note) parts.push(ex.note);
+    if (tempoCueText) parts.push(tempoCueText);
+    if (parts.length) {
+        noteEl.textContent = parts.join(' · ');
+        noteEl.style.display = '';
+    } else {
+        noteEl.style.display = 'none';
+    }
 
-    // Video embed
-    const videoUrl  = exerciseVideos[ex.name];
+    // Hide video embed in focus mode (available in pre-workout review)
     const videoWrap = document.getElementById('focusVideo');
     const videoEmbed = document.getElementById('focusVideoEmbed');
-    const videoToggle = document.getElementById('focusVideoToggle');
-    if (videoUrl) {
-        videoWrap.classList.remove('hidden');
-        // Collapse video when switching exercises
-        videoEmbed.classList.add('hidden');
-        videoEmbed.innerHTML = '';
-        videoToggle.classList.remove('open');
-        videoToggle.textContent = '▶ Watch form';
-    } else {
-        videoWrap.classList.add('hidden');
-        videoEmbed.innerHTML = '';
-    }
+    videoWrap.classList.add('hidden');
+    videoEmbed.innerHTML = '';
 
-    // Tempo coaching cue
+    // Hide standalone tempo element (merged into note line above)
     const tempoEl = document.getElementById('focusTempo');
-    if (tempoEl) {
-        const cueText = tempoToCue(ex.tempo);
-        if (cueText) {
-            tempoEl.textContent = `⏱ ${cueText}`;
-            tempoEl.title       = `Tempo: ${ex.tempo}`;
-            tempoEl.style.display = '';
-        } else {
-            tempoEl.style.display = 'none';
-        }
-    }
+    if (tempoEl) tempoEl.style.display = 'none';
 
     if (prev && prev.weight !== '—') {
         document.getElementById('focusPrev').textContent = `Last time: ${prev.weight} lbs × ${prev.reps} reps`;
@@ -636,7 +630,7 @@ function renderFocusExercise() {
     nextBtn.className   = `focus-nav-btn${isLast ? ' finish' : ''}`;
 
     const doneBtn = document.getElementById('focusDoneBtn');
-    doneBtn.textContent = isDone ? '✓ Set Done' : '✓ Done Set';
+    doneBtn.textContent = isDone ? '✓ Done' : '✓ Done';
 }
 
 function confirmFocusSet() {
@@ -673,8 +667,16 @@ function showRestScreen(seconds) {
     document.getElementById('focusScreenExercise').classList.add('hidden');
     document.getElementById('focusScreenRest').classList.remove('hidden');
 
-    // RPE button state for this set
+    // Only show RPE on the final set of the current exercise
     const sk = getSessionKey();
+    const group       = focusBlockGroups[focusGroupIdx];
+    const firstEx     = workoutData[currentPhase].exercises[group.exercises[0]];
+    const totalRounds = getActualSets(firstEx, currentPhase, currentSession);
+    const isLastSet   = focusRoundIdx === totalRounds - 1;
+    const rpeEl       = document.getElementById('focusRPE');
+    if (rpeEl) rpeEl.style.display = isLastSet ? '' : 'none';
+
+    // RPE button state for this set
     const currentRpe = rpeData[`${sk}-${focusExIdx}-${focusSetIdx}`];
     document.querySelectorAll('.focus-rpe-btn').forEach(b => b.classList.remove('selected'));
     if (currentRpe) {
