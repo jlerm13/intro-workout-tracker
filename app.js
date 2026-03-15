@@ -545,7 +545,8 @@ function renderFocusExercise() {
     const prev        = getPrevData(focusExIdx, focusSetIdx);
     // Auto-fill: use saved data, then progression weight, then previous weight
     const cue         = getProgressionCue(focusExIdx, focusSetIdx);
-    const progWeight  = cue && cue.type === 'up' ? cue.text.match(/([\d.]+)\s*lbs/)?.[1] : null;
+    const progMatch   = cue && cue.type === 'up' ? cue.text.match(/([\d.]+)\s*lbs/) : null;
+    const progWeight  = progMatch ? progMatch[1] : null;
     const savedW      = curData[wKey] || progWeight || (prev && prev.weight !== '—' ? prev.weight : '');
     const savedR      = curData[rKey] || (prev && prev.reps   !== '—' ? prev.reps   : '');
     const isDone      = !!completedSets[`${sk}-${focusExIdx}-${focusSetIdx}`];
