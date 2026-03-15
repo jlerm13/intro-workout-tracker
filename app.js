@@ -601,12 +601,12 @@ function renderFocusExercise() {
     }
 
     // Progression cue
-    const cue   = getProgressionCue(focusExIdx, focusSetIdx);
-    const cueEl = document.getElementById('focusCue');
+    const progCue = getProgressionCue(focusExIdx, focusSetIdx);
+    const cueEl   = document.getElementById('focusCue');
     if (cueEl) {
-        if (cue) {
-            cueEl.textContent = cue.text;
-            cueEl.className   = `focus-cue focus-cue-${cue.type}`;
+        if (progCue) {
+            cueEl.textContent = progCue.text;
+            cueEl.className   = `focus-cue focus-cue-${progCue.type}`;
         } else {
             cueEl.className = 'focus-cue hidden';
         }
