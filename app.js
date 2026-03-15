@@ -545,7 +545,8 @@ function renderFocusExercise() {
     const prev        = getPrevData(focusExIdx, focusSetIdx);
     // Auto-fill: use saved data, then progression weight, then previous weight
     const cue         = getProgressionCue(focusExIdx, focusSetIdx);
-    const progWeight  = cue && cue.type === 'up' ? cue.text.match(/([\d.]+)\s*lbs/)?.[1] : null;
+    const progMatch   = cue && cue.type === 'up' ? cue.text.match(/([\d.]+)\s*lbs/) : null;
+    const progWeight  = progMatch ? progMatch[1] : null;
     const savedW      = curData[wKey] || progWeight || (prev && prev.weight !== '—' ? prev.weight : '');
     const savedR      = curData[rKey] || (prev && prev.reps   !== '—' ? prev.reps   : '');
     const isDone      = !!completedSets[`${sk}-${focusExIdx}-${focusSetIdx}`];
@@ -601,12 +602,12 @@ function renderFocusExercise() {
     }
 
     // Progression cue
-    const cue   = getProgressionCue(focusExIdx, focusSetIdx);
-    const cueEl = document.getElementById('focusCue');
+    const progCue = getProgressionCue(focusExIdx, focusSetIdx);
+    const cueEl   = document.getElementById('focusCue');
     if (cueEl) {
-        if (cue) {
-            cueEl.textContent = cue.text;
-            cueEl.className   = `focus-cue focus-cue-${cue.type}`;
+        if (progCue) {
+            cueEl.textContent = progCue.text;
+            cueEl.className   = `focus-cue focus-cue-${progCue.type}`;
         } else {
             cueEl.className = 'focus-cue hidden';
         }
