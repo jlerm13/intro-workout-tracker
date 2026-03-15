@@ -371,26 +371,6 @@ body {
 .ex-toggle .arr { display: inline-block; transition: transform .15s; }
 .ex-toggle.open .arr { transform: rotate(90deg); }
 
-.ex-check {
-    width: 20px; height: 20px;
-    border: 1.5px solid rgba(55,53,47,.25);
-    border-radius: 3px;
-    background: white;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-    font-size: 11px;
-    transition: all .15s;
-    position: relative;
-}
-/* Enlarge touch target to 44px minimum */
-.ex-check::before {
-    content: '';
-    position: absolute;
-    inset: -12px;
-}
-.ex-check:hover { border-color: var(--accent); background: var(--accent-bg); }
-.ex-check.done { background: var(--accent); border-color: var(--accent); color: white; }
 
 .ex-title {
     flex: 1;
@@ -513,7 +493,8 @@ body {
 }
 .sets-tbl tr:last-child td { border-bottom: none; }
 
-.set-lbl { font-size: 12px; font-weight: 500; color: var(--text-secondary); width: 52px; }
+.set-lbl { font-size: 12px; font-weight: 500; color: var(--text-secondary); width: 52px; vertical-align: top; padding-top: 10px !important; }
+.set-lbl .prog-cue { margin-top: 2px; }
 
 .num-inp {
     width: 64px;
@@ -534,7 +515,6 @@ body {
     box-shadow: 0 0 0 2px rgba(35,131,226,.18);
 }
 
-.prev-td  { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
 .sugg-td  { font-size: 12px; color: var(--success); font-weight: 500; }
 
 /* ──────────────────── REST TIMER ──────────────────── */
@@ -625,10 +605,17 @@ body {
 }
 .rest-dismiss:hover { background: rgba(255,255,255,.25); }
 
-/* ──────────────────── SET CONFIRM ──────────────────── */
+/* ──────────────────── SET ACTION STACK (Done + RPE) ──────────────────── */
+.set-action-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
 .set-done-btn {
     padding: var(--space-2) var(--space-3);
     min-height: 44px;
+    width: 100%;
     border: 1.5px solid rgba(55,53,47,.2);
     border-radius: var(--radius-sm);
     background: transparent;
@@ -1211,12 +1198,12 @@ body {
 .rpe-mini {
     display: flex;
     gap: 3px;
-    margin-top: var(--space-1);
 }
 .rpe-mini.hidden { display: none; }
 .rpe-mini-btn {
-    padding: 6px 10px;
-    min-height: 32px;
+    flex: 1;
+    padding: 6px 4px;
+    min-height: 36px;
     border-radius: 3px;
     border: 1px solid var(--border);
     background: transparent;
@@ -1227,13 +1214,7 @@ body {
     color: var(--text-muted);
     transition: all .1s;
     line-height: 1.4;
-    position: relative;
-}
-/* Enlarge touch target to 44px minimum */
-.rpe-mini-btn::before {
-    content: '';
-    position: absolute;
-    inset: -6px;
+    text-align: center;
 }
 .rpe-mini-btn:hover { border-color: var(--text-muted); color: var(--text-secondary); }
 .rpe-mini-btn.easy.sel  { background: #d1fae5; border-color: var(--success); color: var(--success); }
@@ -1366,7 +1347,6 @@ body {
 
     .num-inp,
     .focus-num-inp,
-    .ex-check,
     .sb-card,
     .sb-context-card,
     .summary-card,
