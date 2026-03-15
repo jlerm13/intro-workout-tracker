@@ -1102,7 +1102,7 @@ function updateSidebar() {
     if (!prevContainer) return;
 
     if (currentSession === 1) {
-        prevContainer.innerHTML = `<p style="font-size:12px;color:var(--text3);font-style:italic;">First session — establish baseline</p>`;
+        prevContainer.innerHTML = `<p style="font-size:12px;color:var(--text-muted);font-style:italic;">First session — establish baseline</p>`;
     } else {
         const prevKey  = `${currentPhase}-${currentSession - 1}`;
         const prevData = sessionData[prevKey];
@@ -1121,7 +1121,7 @@ function updateSidebar() {
             });
         }
         prevContainer.innerHTML = html ||
-            `<p style="font-size:12px;color:var(--text3);font-style:italic;">No data from previous session</p>`;
+            `<p style="font-size:12px;color:var(--text-muted);font-style:italic;">No data from previous session</p>`;
     }
 }
 
@@ -1130,7 +1130,7 @@ function updateWorkout() {
     const data = workoutData[currentPhase];
 
     document.getElementById('pageTitle').innerHTML =
-        data.name + ' <span style="font-size:13px;color:var(--text3);font-weight:400;">v4</span>';
+        data.name + ' <span style="font-size:13px;color:var(--text-muted);font-weight:400;">v4</span>';
     document.getElementById('pageSubtitle').textContent = data.frequency;
 
     const prog = data.progression[currentSession - 1];
