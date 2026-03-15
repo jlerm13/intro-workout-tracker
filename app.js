@@ -1167,9 +1167,11 @@ function updateWorkout() {
             const rKey      = `${sk}-${idx}-${s}-reps`;
             const curData   = sessionData[sk] || {};
             const prev      = getPrevData(idx, s);
-            // Pre-fill: current session data > previous session data > empty
-            const wVal      = curData[wKey] || (prev && prev.weight !== '—' ? prev.weight : '');
-            const rVal      = curData[rKey] || (prev && prev.reps   !== '—' ? prev.reps   : '');
+            // Show current session data as value; previous session data as placeholder
+            const wVal      = curData[wKey] || '';
+            const rVal      = curData[rKey] || '';
+            const wPlaceholder = prev && prev.weight !== '—' ? prev.weight : 'lbs';
+            const rPlaceholder = prev && prev.reps   !== '—' ? prev.reps   : 'reps';
             const hasRest   = ex.rest !== '—' && ex.rest !== '0';
             const setDone   = !!completedSets[`${sk}-${idx}-${s}`];
             const cue       = getProgressionCue(idx, s);
@@ -1179,27 +1181,28 @@ function updateWorkout() {
 
             setRowsHtml += `
                 <tr class="set-row${setDone ? ' confirmed' : ''}" id="setrow-${idx}-${s}">
-                    <td class="set-lbl">Set ${s + 1}</td>
+                    <td class="set-lbl">
+                        Set ${s + 1}
+                        ${cue ? `<div class="prog-cue prog-cue-${cue.type}">${cue.text}</div>` : ''}
+                    </td>
                     <td>
-                        <input class="num-inp" id="winp-${idx}-${s}" type="number" placeholder="lbs" value="${wVal}"
+                        <input class="num-inp" id="winp-${idx}-${s}" type="number" placeholder="${wPlaceholder}" value="${wVal}"
                                oninput="checkPR(${idx}, this.value, 'pr-${idx}-${s}')"
                                onchange="updateWeight(${idx}, ${s}, this.value)">
                         <span class="pr-badge" id="pr-${idx}-${s}" style="display:none">🏆 PR</span>
                     </td>
-                    <td><input class="num-inp" id="rinp-${idx}-${s}" type="number" placeholder="reps" value="${rVal}"
+                    <td><input class="num-inp" id="rinp-${idx}-${s}" type="number" placeholder="${rPlaceholder}" value="${rVal}"
                                onchange="updateReps(${idx}, ${s}, this.value)"></td>
-                    <td class="prev-td">
-                        ${prev ? `${prev.weight} × ${prev.reps}` : '—'}
-                        ${cue ? `<div class="prog-cue prog-cue-${cue.type}">${cue.text}</div>` : ''}
-                    </td>
                     <td>${hasRest ? `<button class="rest-btn" onclick="startRest('${ex.rest}')">⏱ Rest</button>` : ''}</td>
                     <td>
-                        <button class="set-done-btn${setDone ? ' confirmed' : ''}" id="setbtn-${idx}-${s}"
-                                onclick="confirmSet(${idx}, ${s})">${setDone ? '✓ Done' : 'Done'}</button>
-                        <div class="rpe-mini${setDone ? '' : ' hidden'}" id="rpe-${idx}-${s}">
-                            <button class="rpe-mini-btn easy${rpeSel('easy')}" onclick="setSetRPE(${idx}, ${s}, 'easy')" title="Easy">E</button>
-                            <button class="rpe-mini-btn solid${rpeSel('solid')}" onclick="setSetRPE(${idx}, ${s}, 'solid')" title="Solid">S</button>
-                            <button class="rpe-mini-btn hard${rpeSel('hard')}" onclick="setSetRPE(${idx}, ${s}, 'hard')" title="Hard">H</button>
+                        <div class="set-action-stack">
+                            <button class="set-done-btn${setDone ? ' confirmed' : ''}" id="setbtn-${idx}-${s}"
+                                    onclick="confirmSet(${idx}, ${s})">${setDone ? '✓ Done' : 'Done'}</button>
+                            <div class="rpe-mini${setDone ? '' : ' hidden'}" id="rpe-${idx}-${s}">
+                                <button class="rpe-mini-btn easy${rpeSel('easy')}" onclick="setSetRPE(${idx}, ${s}, 'easy')" title="Easy">E</button>
+                                <button class="rpe-mini-btn solid${rpeSel('solid')}" onclick="setSetRPE(${idx}, ${s}, 'solid')" title="Solid">S</button>
+                                <button class="rpe-mini-btn hard${rpeSel('hard')}" onclick="setSetRPE(${idx}, ${s}, 'hard')" title="Hard">H</button>
+                            </div>
                         </div>
                     </td>
                 </tr>`;
@@ -1215,7 +1218,6 @@ function updateWorkout() {
                 <div class="ex-toggle${isOpen ? ' open' : ''}" id="toggle-${idx}" onclick="toggleCard(${idx})">
                     <span class="arr">▶</span>
                 </div>
-                <div class="ex-check${isDone ? ' done' : ''}" id="check-${idx}" onclick="toggleExercise(${idx})">${isDone ? '✓' : ''}</div>
                 <div class="ex-title">
                     <span class="ex-name${isDone ? ' done' : ''}" id="name-${idx}">${ex.name}</span>
                     <span class="ex-tag ${getTagClass(ex.type)}">${ex.type}</span>
@@ -1246,7 +1248,6 @@ function updateWorkout() {
                             <th></th>
                             <th>Weight</th>
                             <th>Reps</th>
-                            <th>Previous</th>
                             <th></th>
                             <th></th>
                         </tr>
