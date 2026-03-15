@@ -5,7 +5,7 @@
     /* Colors */
     --text:       #37352f;
     --text-secondary: #787774;
-    --text-muted:  #9b9a97;
+    --text-muted:  #6b6966;
     --background:  #ffffff;
     --surface:     #f7f6f3;
     --border:      rgba(55,53,47,.09);
@@ -151,7 +151,8 @@ body {
 
 .phase-btn {
     flex: 1;
-    padding: 5px 6px;
+    padding: 10px 6px;
+    min-height: 44px;
     border: none;
     background: transparent;
     border-radius: var(--radius-sm);
@@ -358,13 +359,20 @@ body {
     border-radius: 3px;
     flex-shrink: 0;
     transition: all .1s;
+    position: relative;
+}
+/* Enlarge touch target to 44px minimum */
+.ex-toggle::before {
+    content: '';
+    position: absolute;
+    inset: -11px;
 }
 .ex-toggle:hover { background: rgba(55,53,47,.1); color: var(--text); }
 .ex-toggle .arr { display: inline-block; transition: transform .15s; }
 .ex-toggle.open .arr { transform: rotate(90deg); }
 
 .ex-check {
-    width: 18px; height: 18px;
+    width: 20px; height: 20px;
     border: 1.5px solid rgba(55,53,47,.25);
     border-radius: 3px;
     background: white;
@@ -373,6 +381,13 @@ body {
     flex-shrink: 0;
     font-size: 11px;
     transition: all .15s;
+    position: relative;
+}
+/* Enlarge touch target to 44px minimum */
+.ex-check::before {
+    content: '';
+    position: absolute;
+    inset: -12px;
 }
 .ex-check:hover { border-color: var(--accent); background: var(--accent-bg); }
 .ex-check.done { background: var(--accent); border-color: var(--accent); color: white; }
@@ -397,11 +412,11 @@ body {
     flex-shrink: 0;
 }
 .tag-warmup { background: #fef3c7; color: #92400e; }
-.tag-a      { background: var(--surface); color: var(--text-secondary); border: 1px solid var(--border); }
-.tag-b      { background: var(--surface); color: var(--text-secondary); border: 1px solid var(--border); }
-.tag-c      { background: var(--surface); color: var(--text-secondary); border: 1px solid var(--border); }
-.tag-d      { background: var(--surface); color: var(--text-secondary); border: 1px solid var(--border); }
-.tag-e      { background: var(--surface); color: var(--text-secondary); border: 1px solid var(--border); }
+.tag-a { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+.tag-b { background: #ede9fe; color: #5b21b6; border: 1px solid #ddd6fe; }
+.tag-c { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+.tag-d { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+.tag-e { background: #ffe4e6; color: #9f1239; border: 1px solid #fecdd3; }
 
 .ex-actions {
     display: flex;
@@ -524,7 +539,8 @@ body {
 
 /* ──────────────────── REST TIMER ──────────────────── */
 .rest-btn {
-    padding: 3px var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    min-height: 44px;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     background: transparent;
@@ -611,7 +627,8 @@ body {
 
 /* ──────────────────── SET CONFIRM ──────────────────── */
 .set-done-btn {
-    padding: 3px 10px;
+    padding: var(--space-2) var(--space-3);
+    min-height: 44px;
     border: 1.5px solid rgba(55,53,47,.2);
     border-radius: var(--radius-sm);
     background: transparent;
@@ -1173,7 +1190,8 @@ body {
 }
 .focus-rpe-btns { display: flex; gap: var(--space-2); justify-content: center; }
 .focus-rpe-btn {
-    padding: 7px 18px;
+    padding: 12px 18px;
+    min-height: 44px;
     border-radius: var(--radius-full);
     border: 1.5px solid var(--border-strong);
     background: transparent;
@@ -1197,7 +1215,8 @@ body {
 }
 .rpe-mini.hidden { display: none; }
 .rpe-mini-btn {
-    padding: 2px 6px;
+    padding: 6px 10px;
+    min-height: 32px;
     border-radius: 3px;
     border: 1px solid var(--border);
     background: transparent;
@@ -1208,6 +1227,13 @@ body {
     color: var(--text-muted);
     transition: all .1s;
     line-height: 1.4;
+    position: relative;
+}
+/* Enlarge touch target to 44px minimum */
+.rpe-mini-btn::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
 }
 .rpe-mini-btn:hover { border-color: var(--text-muted); color: var(--text-secondary); }
 .rpe-mini-btn.easy.sel  { background: #d1fae5; border-color: var(--success); color: var(--success); }
@@ -1288,6 +1314,134 @@ body {
     font-size: 12px;
     color: var(--text-muted);
     margin-top: 2px;
+}
+
+/* ──────────────────── FOCUS-VISIBLE (Keyboard A11y) ──────────────────── */
+:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* Inputs already have their own focus ring — suppress the default outline */
+.num-inp:focus-visible,
+.focus-num-inp:focus-visible {
+    outline: none;
+}
+
+/* Buttons that look better with a box-shadow ring instead of outline */
+.focus-done-btn:focus-visible,
+.focus-continue-btn:focus-visible,
+.focus-nav-btn:focus-visible,
+.start-workout-btn:focus-visible,
+.sb-start-btn:focus-visible,
+.summary-cta-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(35,131,226,.4);
+}
+
+/* ──────────────────── DARK MODE ──────────────────── */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --text:          #ededec;
+        --text-secondary:#a1a09e;
+        --text-muted:    #8a8986;
+        --background:    #191919;
+        --surface:       #252525;
+        --border:        rgba(255,255,255,.1);
+        --border-strong: rgba(255,255,255,.2);
+        --hover:         rgba(255,255,255,.06);
+        --accent:        #529CCA;
+        --accent-bg:     rgba(82,156,202,.15);
+        --success:       #34d399;
+        --warning:       #fbbf24;
+
+        --shadow-sm:  0 1px 3px rgba(0,0,0,.4);
+        --shadow-md:  0 4px 12px rgba(0,0,0,.5);
+        --shadow-lg:  0 4px 24px rgba(0,0,0,.5);
+        --shadow-xl:  0 20px 60px rgba(0,0,0,.6);
+    }
+
+    /* Override explicit whites/hard-coded backgrounds */
+    body { color-scheme: dark; }
+
+    .num-inp,
+    .focus-num-inp,
+    .ex-check,
+    .sb-card,
+    .sb-context-card,
+    .summary-card,
+    .focus-overlay {
+        background: var(--surface);
+        color: var(--text);
+    }
+
+    .phase-btn.active {
+        background: var(--surface);
+        color: var(--text);
+        box-shadow: none;
+    }
+
+    .focus-overlay { background: var(--background); }
+
+    /* Rest timer — keep dark background legible */
+    .rest-timer { background: #111; }
+    .rest-timer.done { background: #065f46; }
+
+    /* Tags — slightly muted for dark mode */
+    .tag-warmup { background: #422006; color: #fbbf24; }
+    .tag-a { background: #1e3a5f; color: #93c5fd; border-color: #2563eb; }
+    .tag-b { background: #2e1065; color: #c4b5fd; border-color: #7c3aed; }
+    .tag-c { background: #064e3b; color: #6ee7b7; border-color: #059669; }
+    .tag-d { background: #422006; color: #fcd34d; border-color: #d97706; }
+    .tag-e { background: #4c0519; color: #fda4af; border-color: #e11d48; }
+
+    /* PR section */
+    .summary-pr-section { background: #422006; border-color: #92400e; }
+    .summary-pr-title { color: #fbbf24; }
+
+    /* Set confirmed state */
+    .set-done-btn.confirmed { background: #064e3b; border-color: #059669; color: #34d399; }
+    .set-row.confirmed td { background: rgba(52,211,153,.06); }
+
+    /* Focus cues */
+    .focus-cue-up { color: #34d399; background: #064e3b; }
+    .focus-cue-hold { color: #fbbf24; background: #422006; }
+
+    /* RPE selected states */
+    .focus-rpe-btn.easy.selected,
+    .rpe-mini-btn.easy.sel  { background: #064e3b; color: #34d399; border-color: #059669; }
+    .focus-rpe-btn.solid.selected,
+    .rpe-mini-btn.solid.sel { background: rgba(82,156,202,.15); color: #529CCA; border-color: #529CCA; }
+    .focus-rpe-btn.hard.selected,
+    .rpe-mini-btn.hard.sel  { background: #422006; color: #fbbf24; border-color: #d97706; }
+
+    /* PR badge */
+    .pr-badge { background: #422006; color: #fbbf24; }
+
+    /* Progression cues */
+    .prog-cue-up { color: #34d399; }
+    .prog-cue-hold { color: #fbbf24; }
+
+    /* Tempo cue */
+    .focus-tempo { background: #422006; border-color: #92400e; color: #fbbf24; }
+
+    /* Block progress nodes */
+    .bp-node { background: var(--surface); color: var(--text-muted); border-color: var(--border); }
+    .bp-node.bp-current { background: rgba(82,156,202,.15); color: #529CCA; border-color: #529CCA; }
+    .bp-node.bp-done { background: #064e3b; color: #34d399; border-color: #059669; }
+
+    /* Summary share copied */
+    .summary-share-btn.copied { background: #064e3b; border-color: #059669; color: #34d399; }
+
+    /* Focus video embed */
+    .focus-video-toggle.open { border-color: #529CCA; background: rgba(82,156,202,.1); }
+
+    /* Heatmap active */
+    .heatmap-day { background: rgba(255,255,255,.08); }
+    .heatmap-day.active { background: #d97706; opacity: .85; }
+
+    /* On deck */
+    .focus-on-deck { background: var(--surface); border-color: var(--border-strong); }
 }
 
 /* ──────────────────── RESPONSIVE: TABLET & UP ──────────────────── */
