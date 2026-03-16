@@ -11,7 +11,7 @@ const workoutData = {
             { session: 4, note: "Taper — Keep mains at 4 sets, accessories at 3" }
         ],
         exercises: [
-            { name: "Glute Bridge",                     type: "Warm-Up", sets: 2, reps: "12-15",     tempo: "3010", rest: "—",       note: "Keep chin tucked, control lower back movement" },
+            { name: "Air Dyne / Assault Bike",            type: "Warm-Up", sets: 1, reps: "5",          work: "30s",   rest: "30",     note: "Max effort sprint for 30s" },
             { name: "DB Goblet Squat",                  type: "Block A",  sets: 2, reps: "8-12",      tempo: "4010", rest: "60", note: "Hold at chest, squat to comfortable depth" },
             { name: "DB Bench Press",                   type: "Block A",  sets: 2, reps: "8-12",      tempo: "3010", rest: "30",      note: "Control on the way down" },
             { name: "Ring Rows",                        type: "Block B",  sets: 2, reps: "8-12",      tempo: "3010", rest: "90",      note: "Start easy angle, pull chest to rings" },
@@ -37,7 +37,7 @@ const workoutData = {
             { session: 6, note: "Taper — accessories to 3, compounds to 4" }
         ],
         exercises: [
-            { name: "Glute Bridge",                type: "Warm-Up", sets: 2, reps: "12-15",    tempo: "3010", rest: "—",       note: "Keep chin tucked, control lower back movement" },
+            { name: "Air Dyne / Assault Bike",   type: "Warm-Up", sets: 1, reps: "8",         work: "20s",   rest: "40",     note: "Max effort sprint for 20s" },
             { name: "Bulgarian Split Squat",        type: "Block A",  sets: 3, reps: "5-8/leg",  tempo: "4010", rest: "60", note: "Rear foot on bench, front leg does work" },
             { name: "DB Bench Press (neutral grip)",type: "Block B",  sets: 3, reps: "5-8",      tempo: "3010", rest: "30",      note: "Palms face each other" },
             { name: "Ring Rows",                   type: "Block B",  sets: 3, reps: "5-8",      tempo: "3010", rest: "90",      note: "Harder angle for strength focus" },
@@ -66,7 +66,7 @@ const workoutData = {
             { session: 9, note: "Taper — reduce volume, maintain intensity. Program complete!" }
         ],
         exercises: [
-            { name: "Glute Bridge",               type: "Warm-Up", sets: 2, reps: "15-20",    tempo: "3010", rest: "—",       note: "Load with DB on hips. Full hip extension and hold 1 second at top" },
+            { name: "Air Dyne / Assault Bike",    type: "Warm-Up", sets: 1, reps: "10",        work: "10s",   rest: "50",     note: "Max effort sprint for 10s" },
             { name: "Heel-Elevated DB Squat",     type: "Block A",  sets: 3, reps: "4-6",      tempo: "4010", rest: "180",     note: "Heels elevated 1-2 inches on a plate. Knees track over toes, drive through full range" },
             { name: "Weighted Ring Row",          type: "Block A",  sets: 3, reps: "4-6",      tempo: "3011", rest: "90",      note: "Use weight vest or hold DB on chest. Body parallel to floor — full scapular retraction at top" },
             { name: "DB Bench Press",             type: "Block B",  sets: 3, reps: "6-10",     tempo: "3010", rest: "30",      note: "Controlled descent to chest, slight arch. Drive through sticking point" },
