@@ -1164,6 +1164,7 @@ function updateWorkout() {
         }
 
         // Build set rows
+        const isCardio = !!ex.work;
         let setRowsHtml = '';
         for (let s = 0; s < actualSets; s++) {
             const wKey      = `${sk}-${idx}-${s}-weight`;
@@ -1173,8 +1174,8 @@ function updateWorkout() {
             // Show current session data as value; previous session data as placeholder
             const wVal      = curData[wKey] || '';
             const rVal      = curData[rKey] || '';
-            const wPlaceholder = prev && prev.weight !== '—' ? prev.weight : 'lbs';
-            const rPlaceholder = prev && prev.reps   !== '—' ? prev.reps   : 'reps';
+            const wPlaceholder = isCardio ? 'meters' : (prev && prev.weight !== '—' ? prev.weight : 'lbs');
+            const rPlaceholder = isCardio ? 'cals'   : (prev && prev.reps   !== '—' ? prev.reps   : 'reps');
             const hasRest   = ex.rest !== '—' && ex.rest !== '0';
             const setDone   = !!completedSets[`${sk}-${idx}-${s}`];
             const cue       = getProgressionCue(idx, s);
@@ -1185,14 +1186,14 @@ function updateWorkout() {
             setRowsHtml += `
                 <tr class="set-row${setDone ? ' confirmed' : ''}" id="setrow-${idx}-${s}">
                     <td class="set-lbl">
-                        Set ${s + 1}
+                        ${isCardio ? `Round ${s + 1}` : `Set ${s + 1}`}
                         ${cue ? `<div class="prog-cue prog-cue-${cue.type}">${cue.text}</div>` : ''}
                     </td>
                     <td>
                         <input class="num-inp" id="winp-${idx}-${s}" type="number" placeholder="${wPlaceholder}" value="${wVal}"
-                               oninput="checkPR(${idx}, this.value, 'pr-${idx}-${s}')"
+                               ${isCardio ? '' : `oninput="checkPR(${idx}, this.value, 'pr-${idx}-${s}')"`}
                                onchange="updateWeight(${idx}, ${s}, this.value)">
-                        <span class="pr-badge" id="pr-${idx}-${s}" style="display:none">🏆 PR</span>
+                        ${isCardio ? '' : `<span class="pr-badge" id="pr-${idx}-${s}" style="display:none">🏆 PR</span>`}
                     </td>
                     <td><input class="num-inp" id="rinp-${idx}-${s}" type="number" placeholder="${rPlaceholder}" value="${rVal}"
                                onchange="updateReps(${idx}, ${s}, this.value)"></td>
@@ -1237,8 +1238,11 @@ function updateWorkout() {
                         ${setsChanged ? `<span class="sets-changed">↑ from ${ex.sets}</span>` : ''}
                     </div>
                     <div class="xprop"><span class="xprop-lbl">Reps</span><span class="xprop-val">${ex.reps}</span></div>
-                    <div class="xprop"><span class="xprop-lbl">Tempo</span><span class="xprop-val">${ex.tempo}</span></div>
-                    <div class="xprop"><span class="xprop-lbl">Rest</span><span class="xprop-val">${ex.rest}</span></div>
+                    ${ex.work
+                        ? `<div class="xprop"><span class="xprop-lbl">Work</span><span class="xprop-val">${ex.work}</span></div>`
+                        : `<div class="xprop"><span class="xprop-lbl">Tempo</span><span class="xprop-val">${ex.tempo}</span></div>`
+                    }
+                    <div class="xprop"><span class="xprop-lbl">Rest</span><span class="xprop-val">${ex.rest}${ex.work ? 's' : ''}</span></div>
                 </div>
                 <div class="callout">
                     <span class="callout-ico">💡</span>
@@ -1249,8 +1253,8 @@ function updateWorkout() {
                     <thead>
                         <tr>
                             <th></th>
-                            <th>Weight</th>
-                            <th>Reps</th>
+                            <th>${isCardio ? 'Distance' : 'Weight'}</th>
+                            <th>${isCardio ? 'Calories' : 'Reps'}</th>
                             <th></th>
                             <th></th>
                         </tr>
