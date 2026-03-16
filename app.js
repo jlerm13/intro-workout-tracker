@@ -156,7 +156,9 @@ function getActualSets(exercise, phase, session) {
     const isCore = type === 'Block E';
     const isWarm = type === 'Warm-Up';
 
-    // Warm-up never changes
+    // Cardio warm-up: reps = number of rounds
+    if (isWarm && exercise.work) return parseInt(exercise.reps) || base;
+    // Non-cardio warm-up never changes
     if (isWarm) return base;
 
     if (phase === 1) {
@@ -557,19 +559,22 @@ function renderFocusExercise() {
             `${group.type} · Round ${focusRoundIdx + 1} of ${totalRounds}`;
     } else {
         document.getElementById('focusProgText').textContent =
-            `${group.type} · Set ${focusRoundIdx + 1} of ${totalRounds}`;
+            `${group.type} · ${ex.work ? 'Round' : 'Set'} ${focusRoundIdx + 1} of ${totalRounds}`;
     }
 
     // Block tag removed — redundant with header block progress indicator
     document.getElementById('focusBlockTag').style.display = 'none';
     document.getElementById('focusExName').textContent   = ex.name;
 
+    const focusIsCardio = !!ex.work;
     if (isSuperset) {
         document.getElementById('focusSetCounter').textContent =
             `Exercise ${focusSubIdx + 1} of ${group.exercises.length} · Round ${focusRoundIdx + 1}`;
     } else {
         document.getElementById('focusSetCounter').textContent =
-            `Set ${focusSetIdx + 1} of ${totalRounds}`;
+            focusIsCardio
+                ? `Round ${focusSetIdx + 1} of ${totalRounds}`
+                : `Set ${focusSetIdx + 1} of ${totalRounds}`;
     }
 
     // Collapse note + tempo into a single compact coaching line
@@ -596,9 +601,13 @@ function renderFocusExercise() {
     if (tempoEl) tempoEl.style.display = 'none';
 
     if (prev && prev.weight !== '—') {
-        document.getElementById('focusPrev').textContent = `Last time: ${prev.weight} lbs × ${prev.reps} reps`;
+        document.getElementById('focusPrev').textContent = focusIsCardio
+            ? `Last time: ${prev.weight}m · ${prev.reps} cal`
+            : `Last time: ${prev.weight} lbs × ${prev.reps} reps`;
     } else {
-        document.getElementById('focusPrev').textContent = 'First time — start comfortable';
+        document.getElementById('focusPrev').textContent = focusIsCardio
+            ? 'First time — go all out'
+            : 'First time — start comfortable';
     }
 
     // Progression cue
@@ -613,8 +622,25 @@ function renderFocusExercise() {
         }
     }
 
-    document.getElementById('focusWeight').value = savedW;
-    document.getElementById('focusReps').value   = savedR;
+    // Update input labels and placeholders for cardio vs lifting
+    const focusInputs = document.getElementById('focusInputs');
+    const labels = focusInputs.querySelectorAll('label');
+    const weightInp = document.getElementById('focusWeight');
+    const repsInp   = document.getElementById('focusReps');
+    if (focusIsCardio) {
+        labels[0].textContent = 'Distance';
+        labels[1].textContent = 'Calories';
+        weightInp.placeholder = 'meters';
+        repsInp.placeholder   = 'cals';
+    } else {
+        labels[0].textContent = 'Weight (lbs)';
+        labels[1].textContent = 'Reps';
+        weightInp.placeholder = 'lbs';
+        repsInp.placeholder   = 'reps';
+    }
+
+    weightInp.value = savedW;
+    repsInp.value   = savedR;
 
     renderFocusSetDots(totalRounds);
     renderBlockProgress();
@@ -1232,23 +1258,26 @@ function updateWorkout() {
             </div>
             <div class="ex-body${isOpen ? '' : ' hidden'}" id="body-${idx}">
                 <div class="ex-props">
+                    ${isCardio ? `
+                    <div class="xprop"><span class="xprop-lbl">Rounds</span><span class="xprop-val">${actualSets}</span></div>
+                    <div class="xprop"><span class="xprop-lbl">Work</span><span class="xprop-val">${ex.work}</span></div>
+                    <div class="xprop"><span class="xprop-lbl">Rest</span><span class="xprop-val">${ex.rest}s</span></div>
+                    ` : `
                     <div class="xprop">
                         <span class="xprop-lbl">Sets</span>
                         <span class="xprop-val">${actualSets}</span>
                         ${setsChanged ? `<span class="sets-changed">↑ from ${ex.sets}</span>` : ''}
                     </div>
                     <div class="xprop"><span class="xprop-lbl">Reps</span><span class="xprop-val">${ex.reps}</span></div>
-                    ${ex.work
-                        ? `<div class="xprop"><span class="xprop-lbl">Work</span><span class="xprop-val">${ex.work}</span></div>`
-                        : `<div class="xprop"><span class="xprop-lbl">Tempo</span><span class="xprop-val">${ex.tempo}</span></div>`
-                    }
-                    <div class="xprop"><span class="xprop-lbl">Rest</span><span class="xprop-val">${ex.rest}${ex.work ? 's' : ''}</span></div>
+                    <div class="xprop"><span class="xprop-lbl">Tempo</span><span class="xprop-val">${ex.tempo}</span></div>
+                    <div class="xprop"><span class="xprop-lbl">Rest</span><span class="xprop-val">${ex.rest}</span></div>
+                    `}
                 </div>
                 <div class="callout">
                     <span class="callout-ico">💡</span>
                     <span class="callout-txt">${ex.note}</span>
                 </div>
-                <div class="sets-lbl">Set Tracking</div>
+                <div class="sets-lbl">${isCardio ? 'Round Tracking' : 'Set Tracking'}</div>
                 <table class="sets-tbl">
                     <thead>
                         <tr>
