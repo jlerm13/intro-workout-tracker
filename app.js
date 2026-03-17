@@ -569,46 +569,57 @@ function renderFocusExercise() {
     const focusIsCardio = !!ex.work;
     if (isSuperset) {
         document.getElementById('focusSetCounter').textContent =
-            `Exercise ${focusSubIdx + 1} of ${group.exercises.length} · Round ${focusRoundIdx + 1}`;
+            `Exercise ${focusSubIdx + 1} of ${group.exercises.length} · Round ${focusRoundIdx + 1} · ${ex.reps} reps`;
     } else {
         document.getElementById('focusSetCounter').textContent =
             focusIsCardio
                 ? `Round ${focusSetIdx + 1} of ${totalRounds}`
-                : `Set ${focusSetIdx + 1} of ${totalRounds}`;
+                : `Set ${focusSetIdx + 1} of ${totalRounds} · ${ex.reps} reps`;
     }
 
-    // Collapse note + tempo into a single compact coaching line
+    // Show note, tempo, and previous data as separate lines
     const noteEl = document.getElementById('focusNote');
     const tempoCueText = tempoToCue(ex.tempo);
-    const parts = [];
-    if (ex.note) parts.push(ex.note);
-    if (tempoCueText) parts.push(tempoCueText);
-    if (parts.length) {
-        noteEl.textContent = parts.join(' · ');
+    const noteLines = [];
+    if (ex.note) noteLines.push(ex.note);
+    if (tempoCueText) noteLines.push(tempoCueText);
+    // Fold "First time" / "Last time" into the note block
+    if (prev && prev.weight !== '—') {
+        noteLines.push(focusIsCardio
+            ? `Last time: ${prev.weight}m · ${prev.reps} cal`
+            : `Last time: ${prev.weight} lbs × ${prev.reps} reps`);
+    } else {
+        noteLines.push(focusIsCardio ? 'First time — go all out' : 'First time — start comfortable');
+    }
+    if (noteLines.length) {
+        noteEl.innerHTML = noteLines.join('<br>');
         noteEl.style.display = '';
     } else {
         noteEl.style.display = 'none';
     }
 
-    // Hide video embed in focus mode (available in pre-workout review)
+    // Show video toggle in focus mode when a video exists
     const videoWrap = document.getElementById('focusVideo');
     const videoEmbed = document.getElementById('focusVideoEmbed');
-    videoWrap.classList.add('hidden');
-    videoEmbed.innerHTML = '';
+    const videoToggle = document.getElementById('focusVideoToggle');
+    const videoUrl = exerciseVideos[ex.name];
+    if (videoUrl) {
+        videoWrap.classList.remove('hidden');
+        videoEmbed.classList.add('hidden');
+        videoEmbed.innerHTML = '';
+        videoToggle.classList.remove('open');
+        videoToggle.textContent = '▶ Watch form';
+    } else {
+        videoWrap.classList.add('hidden');
+        videoEmbed.innerHTML = '';
+    }
 
     // Hide standalone tempo element (merged into note line above)
     const tempoEl = document.getElementById('focusTempo');
     if (tempoEl) tempoEl.style.display = 'none';
 
-    if (prev && prev.weight !== '—') {
-        document.getElementById('focusPrev').textContent = focusIsCardio
-            ? `Last time: ${prev.weight}m · ${prev.reps} cal`
-            : `Last time: ${prev.weight} lbs × ${prev.reps} reps`;
-    } else {
-        document.getElementById('focusPrev').textContent = focusIsCardio
-            ? 'First time — go all out'
-            : 'First time — start comfortable';
-    }
+    // Previous data now shown in the note block above — hide the standalone element
+    document.getElementById('focusPrev').textContent = '';
 
     // Progression cue
     const progCue = getProgressionCue(focusExIdx, focusSetIdx);
@@ -628,9 +639,9 @@ function renderFocusExercise() {
     const weightInp = document.getElementById('focusWeight');
     const repsInp   = document.getElementById('focusReps');
     if (focusIsCardio) {
-        labels[0].textContent = 'Distance';
+        labels[0].textContent = 'Distance (m)';
         labels[1].textContent = 'Calories';
-        weightInp.placeholder = 'meters';
+        weightInp.placeholder = 'm';
         repsInp.placeholder   = 'cals';
     } else {
         labels[0].textContent = 'Weight (lbs)';
