@@ -1211,7 +1211,7 @@ function updateWorkout() {
             // Show current session data as value; previous session data as placeholder
             const wVal      = curData[wKey] || '';
             const rVal      = curData[rKey] || '';
-            const wPlaceholder = isCardio ? 'meters' : (prev && prev.weight !== '—' ? prev.weight : 'lbs');
+            const wPlaceholder = isCardio ? 'm' : (prev && prev.weight !== '—' ? prev.weight : 'lbs');
             const rPlaceholder = isCardio ? 'cals'   : (prev && prev.reps   !== '—' ? prev.reps   : 'reps');
             const hasRest   = ex.rest !== '—' && ex.rest !== '0';
             const setDone   = !!completedSets[`${sk}-${idx}-${s}`];
@@ -1293,7 +1293,7 @@ function updateWorkout() {
                     <thead>
                         <tr>
                             <th></th>
-                            <th>${isCardio ? 'Distance' : 'Weight'}</th>
+                            <th>${isCardio ? 'Distance (m)' : 'Weight'}</th>
                             <th>${isCardio ? 'Calories' : 'Reps'}</th>
                             <th></th>
                             <th></th>
