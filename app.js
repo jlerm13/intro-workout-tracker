@@ -289,13 +289,12 @@ function startSessionTimer() {
     if (sessionTimerInterval) clearInterval(sessionTimerInterval);
     const timerEl = document.getElementById('sessionTimer');
 
-    // Load visibility preference
+    // Load visibility preference — pill always visible, content toggles
     sessionTimerVisible = localStorage.getItem('wt-timer-visible') === 'true';
-    timerEl.classList.toggle('hidden', !sessionTimerVisible);
-    timerEl.textContent = '0:00';
+    timerEl.textContent = sessionTimerVisible ? '0:00' : '⏱';
 
     sessionTimerInterval = setInterval(() => {
-        if (!sessionStartTime) return;
+        if (!sessionStartTime || !sessionTimerVisible) return;
         timerEl.textContent = formatSessionTime(Date.now() - sessionStartTime);
     }, 1000);
 }
@@ -310,7 +309,11 @@ function stopSessionTimer() {
 function toggleSessionTimer() {
     sessionTimerVisible = !sessionTimerVisible;
     const timerEl = document.getElementById('sessionTimer');
-    timerEl.classList.toggle('hidden', !sessionTimerVisible);
+    if (sessionTimerVisible && sessionStartTime) {
+        timerEl.textContent = formatSessionTime(Date.now() - sessionStartTime);
+    } else {
+        timerEl.textContent = '⏱';
+    }
     try { localStorage.setItem('wt-timer-visible', String(sessionTimerVisible)); } catch (e) {}
 }
 
