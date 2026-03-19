@@ -103,6 +103,7 @@
     <div class="focus-header">
         <span class="focus-prog" id="focusProgText">Exercise 1 of 11</span>
         <div class="focus-block-progress" id="focusBlockProgress"></div>
+        <button class="session-timer hidden" id="sessionTimer" onclick="toggleSessionTimer()" title="Session timer — click to hide">0:00</button>
         <button class="focus-exit" onclick="exitFocusMode()">✕ Exit</button>
     </div>
     <div class="focus-body">
@@ -181,6 +182,10 @@
         <div class="summary-subtitle" id="summaryPhaseSession">Phase 1 · Session 1 of 4</div>
 
         <div class="summary-stats">
+            <div class="summary-stat">
+                <div class="summary-stat-val" id="summaryDuration">—</div>
+                <div class="summary-stat-lbl">Duration</div>
+            </div>
             <div class="summary-stat">
                 <div class="summary-stat-val" id="summarySets">0</div>
                 <div class="summary-stat-lbl">Sets Done</div>
