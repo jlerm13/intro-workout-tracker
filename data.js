@@ -99,7 +99,7 @@ const exerciseVideos = {
     'Bulgarian Split Squat':            'https://www.youtube.com/watch?v=2C-uNgKwPLE',
     'Romanian Deadlift':                'https://www.youtube.com/watch?v=jEy_czb3RKA',
     'Single Arm DB Press':              'https://www.youtube.com/watch?v=B-aVuyhvLHU',
-    'Single Arm DB Row':                'https://www.youtube.com/watch?v=dFzUjzfih7k'
-    'DB RDL + Row':                     'https://www.youtube.com/shorts/2ZGw_a5dowM'
+    'Single Arm DB Row':                'https://www.youtube.com/watch?v=dFzUjzfih7k',
+    'DB RDL + Row':                     'https://www.youtube.com/shorts/2ZGw_a5dowM',
 };
 
