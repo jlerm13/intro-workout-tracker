@@ -112,6 +112,18 @@
         <div class="focus-set-counter" id="focusSetCounter"></div>
         <div class="focus-sets-dots" id="focusSetDots"></div>
 
+        <!-- Screen 0: Interval Work Phase (Cardio) -->
+        <div class="focus-screen-work hidden" id="focusScreenWork">
+            <div class="interval-phase-label ready" id="intervalWorkPhase">READY</div>
+            <div class="interval-work-time" id="intervalWorkTime">30</div>
+            <div class="interval-work-label" id="intervalWorkLabel">Round 1</div>
+            <div class="interval-work-bar-bg">
+                <div class="interval-work-bar-fill" id="intervalWorkBarFill"></div>
+            </div>
+            <button class="interval-start-btn" id="intervalStartBtn">START</button>
+            <button class="interval-skip-btn hidden" id="intervalSkipBtn" onclick="skipWorkPhase()">Skip &rarr; Log KPIs</button>
+        </div>
+
         <!-- Screen 1: Exercise -->
         <div class="focus-screen-exercise" id="focusScreenExercise">
             <div class="focus-note" id="focusNote"></div>
@@ -145,12 +157,25 @@
                     <button class="focus-rpe-btn hard" onclick="setFocusRPE('hard')">Hard</button>
                 </div>
             </div>
+            <div class="cardio-kpi-inputs hidden" id="cardioKpiInputs">
+                <div class="cardio-kpi-label">Log this round</div>
+                <div class="cardio-kpi-row">
+                    <div class="focus-input-group">
+                        <label>Distance (m)</label>
+                        <input class="focus-num-inp cardio-kpi-inp" type="number" id="cardioDistance" placeholder="m" inputmode="decimal">
+                    </div>
+                    <div class="focus-input-group">
+                        <label>Calories</label>
+                        <input class="focus-num-inp cardio-kpi-inp" type="number" id="cardioCalories" placeholder="cals" inputmode="numeric">
+                    </div>
+                </div>
+            </div>
             <div class="focus-rest-display hidden" id="focusRestDisplay">
                 <div class="focus-rest-time" id="focusRestTime">90s</div>
                 <div class="focus-rest-bar-bg">
                     <div class="focus-rest-bar-fill" id="focusRestBarFill"></div>
                 </div>
-                <button class="focus-skip-btn" onclick="skipFocusRest()">Skip Rest →</button>
+                <button class="focus-skip-btn" onclick="skipFocusRest()">Skip Rest &rarr;</button>
             </div>
             <button class="focus-continue-btn hidden" id="focusContinueBtn" onclick="skipFocusRest()">Continue →</button>
             <div class="focus-on-deck" id="focusOnDeck" style="display:none"></div>

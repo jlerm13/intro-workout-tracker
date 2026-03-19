@@ -19,6 +19,11 @@ let focusRestInterval = null;
 let focusRestLeft     = 0;
 let focusRestTotal    = 0;
 
+// Interval timer state (cardio conditioning)
+let intervalWorkInterval = null;
+let intervalWorkLeft     = 0;
+let intervalPhase        = null;  // 'work' | 'rest' | null
+
 // Superset-aware focus state
 let focusBlockGroups  = [];  // [{type, exercises: [indices]}]
 let focusGroupIdx     = 0;   // current block group
@@ -317,6 +322,287 @@ function toggleSessionTimer() {
     try { localStorage.setItem('wt-timer-visible', String(sessionTimerVisible)); } catch (e) {}
 }
 
+/* ════════════════ AUDIO CUE (Web Audio API) ════════════════ */
+let _audioCtx = null;
+function getAudioCtx() {
+    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return _audioCtx;
+}
+
+function playBeep(freq, duration, count) {
+    freq = freq || 880;
+    duration = duration || 0.12;
+    count = count || 1;
+    try {
+        const ctx = getAudioCtx();
+        for (let i = 0; i < count; i++) {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'square';
+            osc.frequency.value = freq;
+            gain.gain.value = 0.15;
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            const start = ctx.currentTime + i * (duration + 0.08);
+            osc.start(start);
+            osc.stop(start + duration);
+        }
+    } catch (e) { /* audio not available */ }
+}
+
+/* ════════════════ INTERVAL TIMER (Cardio Conditioning) ════════════════ */
+function clearIntervalTimer() {
+    if (intervalWorkInterval) { clearInterval(intervalWorkInterval); intervalWorkInterval = null; }
+    intervalPhase = null;
+    intervalWorkLeft = 0;
+}
+
+function showReadyScreen() {
+    const ex = workoutData[currentPhase].exercises[focusExIdx];
+    if (!ex.work) return;
+
+    clearIntervalTimer();
+    intervalPhase = null;
+    const workSec = parseInt(ex.work) || 30;
+
+    // Show work screen in ready state
+    document.getElementById('focusScreenExercise').classList.add('hidden');
+    document.getElementById('focusScreenRest').classList.add('hidden');
+    document.getElementById('focusScreenWork').classList.remove('hidden');
+
+    const timerEl  = document.getElementById('intervalWorkTime');
+    const labelEl  = document.getElementById('intervalWorkLabel');
+    const phaseEl  = document.getElementById('intervalWorkPhase');
+    const fillEl   = document.getElementById('intervalWorkBarFill');
+    const startBtn = document.getElementById('intervalStartBtn');
+    const skipBtn  = document.getElementById('intervalSkipBtn');
+
+    timerEl.textContent = workSec;
+    labelEl.textContent = `Round ${focusRoundIdx + 1}`;
+    phaseEl.textContent = 'READY';
+    phaseEl.className = 'interval-phase-label ready';
+
+    // Static bar at 100%
+    fillEl.style.transition = 'none';
+    fillEl.style.width = '100%';
+
+    // Show start button, hide skip button
+    if (startBtn) { startBtn.classList.remove('hidden'); startBtn.onclick = function() { runCountdown(); }; }
+    if (skipBtn) skipBtn.classList.add('hidden');
+}
+
+function runCountdown() {
+    const timerEl  = document.getElementById('intervalWorkTime');
+    const phaseEl  = document.getElementById('intervalWorkPhase');
+    const startBtn = document.getElementById('intervalStartBtn');
+
+    // Hide start button during countdown
+    if (startBtn) startBtn.classList.add('hidden');
+
+    let count = 3;
+    timerEl.textContent = count;
+    phaseEl.textContent = 'GET READY';
+    phaseEl.className = 'interval-phase-label countdown';
+    playBeep(660, 0.1, 1);
+
+    const countdownInterval = setInterval(() => {
+        count--;
+        if (count > 0) {
+            timerEl.textContent = count;
+            playBeep(660, 0.1, 1);
+        } else {
+            clearInterval(countdownInterval);
+            startWorkPhase();
+        }
+    }, 1000);
+}
+
+function startWorkPhase() {
+    const ex = workoutData[currentPhase].exercises[focusExIdx];
+    if (!ex.work) return;
+
+    clearIntervalTimer();
+    intervalPhase = 'work';
+    const workSec = parseInt(ex.work) || 30;
+    intervalWorkLeft = workSec;
+
+    // Show work screen, hide exercise + rest screens
+    document.getElementById('focusScreenExercise').classList.add('hidden');
+    document.getElementById('focusScreenRest').classList.add('hidden');
+    document.getElementById('focusScreenWork').classList.remove('hidden');
+
+    const timerEl  = document.getElementById('intervalWorkTime');
+    const labelEl  = document.getElementById('intervalWorkLabel');
+    const fillEl   = document.getElementById('intervalWorkBarFill');
+    const phaseEl  = document.getElementById('intervalWorkPhase');
+    const startBtn = document.getElementById('intervalStartBtn');
+    const skipBtn  = document.getElementById('intervalSkipBtn');
+
+    timerEl.textContent = intervalWorkLeft;
+    labelEl.textContent = `Round ${focusRoundIdx + 1}`;
+    phaseEl.textContent = 'GO';
+    phaseEl.className = 'interval-phase-label go';
+
+    // Hide start button, show skip button
+    if (startBtn) startBtn.classList.add('hidden');
+    if (skipBtn) skipBtn.classList.remove('hidden');
+
+    // Fill bar animation
+    fillEl.style.transition = 'none';
+    fillEl.style.width = '100%';
+    requestAnimationFrame(() => {
+        fillEl.style.transition = `width ${workSec}s linear`;
+        fillEl.style.width = '0%';
+    });
+
+    // Audio: GO beep (high, double)
+    playBeep(1046, 0.15, 2);
+
+    intervalWorkInterval = setInterval(() => {
+        intervalWorkLeft--;
+        if (timerEl) timerEl.textContent = intervalWorkLeft;
+
+        // Warning beep at 3, 2, 1
+        if (intervalWorkLeft <= 3 && intervalWorkLeft > 0) {
+            playBeep(660, 0.08, 1);
+        }
+
+        if (intervalWorkLeft <= 0) {
+            clearInterval(intervalWorkInterval);
+            intervalWorkInterval = null;
+            // Audio: STOP beep (low, long)
+            playBeep(440, 0.25, 1);
+            // Transition to combined rest + KPI screen
+            endWorkPhase();
+        }
+    }, 1000);
+}
+
+function endWorkPhase() {
+    intervalPhase = 'rest';
+
+    const ex = workoutData[currentPhase].exercises[focusExIdx];
+    let restSeconds = 0;
+    if (ex.rest !== '—' && ex.rest !== '0') {
+        restSeconds = parseInt(ex.rest.split('-')[0]) || 0;
+    }
+
+    // Go directly to rest screen with KPI inputs — timer starts immediately
+    showCardioRestScreen(restSeconds);
+}
+
+function skipWorkPhase() {
+    clearIntervalTimer();
+    endWorkPhase();
+}
+
+function saveCardioKPIs() {
+    const sk   = getSessionKey();
+    const wVal = document.getElementById('cardioDistance');
+    const rVal = document.getElementById('cardioCalories');
+
+    if (!sessionData[sk]) sessionData[sk] = {};
+    if (wVal && wVal.value) sessionData[sk][`${sk}-${focusExIdx}-${focusSetIdx}-weight`] = wVal.value;
+    if (rVal && rVal.value) sessionData[sk][`${sk}-${focusExIdx}-${focusSetIdx}-reps`]   = rVal.value;
+
+    completedSets[`${sk}-${focusExIdx}-${focusSetIdx}`] = true;
+    saveToStorage();
+    recordWorkoutDate();
+}
+
+function showCardioRestScreen(seconds) {
+    // Hide work + exercise screens, show rest screen
+    document.getElementById('focusScreenWork').classList.add('hidden');
+    document.getElementById('focusScreenExercise').classList.add('hidden');
+    document.getElementById('focusScreenRest').classList.remove('hidden');
+
+    const group       = focusBlockGroups[focusGroupIdx];
+    const firstEx     = workoutData[currentPhase].exercises[group.exercises[0]];
+    const totalRounds = getActualSets(firstEx, currentPhase, currentSession);
+
+    // Show cardio KPI inputs
+    const kpiContainer = document.getElementById('cardioKpiInputs');
+    if (kpiContainer) {
+        kpiContainer.classList.remove('hidden');
+        // Pre-populate from any existing saved data
+        const sk = getSessionKey();
+        const distInp = document.getElementById('cardioDistance');
+        const calInp  = document.getElementById('cardioCalories');
+        const savedDist = sessionData[sk] && sessionData[sk][`${sk}-${focusExIdx}-${focusSetIdx}-weight`];
+        const savedCals = sessionData[sk] && sessionData[sk][`${sk}-${focusExIdx}-${focusSetIdx}-reps`];
+        if (distInp) distInp.value = savedDist || '';
+        if (calInp)  calInp.value  = savedCals || '';
+    }
+
+    // RPE only on final round
+    const isLastSet = focusRoundIdx === totalRounds - 1;
+    const rpeEl     = document.getElementById('focusRPE');
+    if (rpeEl) rpeEl.style.display = isLastSet ? '' : 'none';
+
+    // RPE button state
+    const sk = getSessionKey();
+    const currentRpe = rpeData[`${sk}-${focusExIdx}-${focusSetIdx}`];
+    document.querySelectorAll('.focus-rpe-btn').forEach(b => b.classList.remove('selected'));
+    if (currentRpe) {
+        const rpeBtn = document.querySelector(`.focus-rpe-btn.${currentRpe}`);
+        if (rpeBtn) rpeBtn.classList.add('selected');
+    }
+
+    // On-deck preview
+    renderFocusOnDeck();
+
+    // Update set dots
+    renderFocusSetDots(totalRounds);
+
+    const restDisplay = document.getElementById('focusRestDisplay');
+    const continueBtn = document.getElementById('focusContinueBtn');
+
+    if (seconds > 0) {
+        restDisplay.classList.remove('hidden');
+        continueBtn.classList.add('hidden');
+
+        if (focusRestInterval) clearInterval(focusRestInterval);
+        focusRestLeft  = seconds;
+        focusRestTotal = seconds;
+
+        const restTimeEl = document.getElementById('focusRestTime');
+        const restFillEl = document.getElementById('focusRestBarFill');
+
+        restTimeEl.textContent      = formatTime(focusRestLeft);
+        restFillEl.style.transition = 'none';
+        restFillEl.style.width      = '100%';
+        requestAnimationFrame(() => {
+            restFillEl.style.transition = `width ${seconds}s linear`;
+            restFillEl.style.width      = '0%';
+        });
+
+        focusRestInterval = setInterval(() => {
+            focusRestLeft--;
+            if (restTimeEl) restTimeEl.textContent = formatTime(focusRestLeft);
+
+            // Warning beeps at 3, 2, 1
+            if (focusRestLeft <= 3 && focusRestLeft > 0) {
+                playBeep(660, 0.08, 1);
+            }
+
+            if (focusRestLeft <= 0) {
+                clearInterval(focusRestInterval);
+                focusRestInterval = null;
+                if (restTimeEl) restTimeEl.textContent = 'Done!';
+                // Auto-save any entered KPIs
+                saveCardioKPIs();
+                intervalPhase = null;
+                // Hide cardio KPI inputs
+                if (kpiContainer) kpiContainer.classList.add('hidden');
+                setTimeout(() => advanceFocusSet(), 600);
+            }
+        }, 1000);
+    } else {
+        restDisplay.classList.add('hidden');
+        continueBtn.classList.remove('hidden');
+    }
+}
+
 /* ════════════════ FOCUS MODE ════════════════ */
 function buildBlockGroups() {
     const exercises = workoutData[currentPhase].exercises;
@@ -345,6 +631,7 @@ function enterFocusMode() {
     focusRoundIdx = 0;
     syncFocusState();
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
+    clearIntervalTimer();
     document.getElementById('focusOverlay').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     startSessionTimer();
@@ -353,6 +640,7 @@ function enterFocusMode() {
 
 function exitFocusMode() {
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
+    clearIntervalTimer();
     stopSessionTimer();
     document.getElementById('focusOverlay').classList.add('hidden');
     // Clean up video iframe when exiting
@@ -439,6 +727,7 @@ function calcSessionStats() {
 
 function showSummary() {
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
+    clearIntervalTimer();
     const sessionElapsed = stopSessionTimer();
     document.getElementById('focusOverlay').classList.add('hidden');
     document.body.style.overflow = '';
@@ -591,10 +880,12 @@ function renderBlockProgress() {
     }).join('');
 }
 
-function renderFocusExercise() {
+function renderFocusExercise(skipAutoStart) {
     // Switch to exercise screen
     document.getElementById('focusScreenExercise').classList.remove('hidden');
     document.getElementById('focusScreenRest').classList.add('hidden');
+    const workScreen = document.getElementById('focusScreenWork');
+    if (workScreen) workScreen.classList.add('hidden');
 
     const data        = workoutData[currentPhase];
     const exercises   = data.exercises;
@@ -732,6 +1023,18 @@ function renderFocusExercise() {
 
     const doneBtn = document.getElementById('focusDoneBtn');
     doneBtn.textContent = isDone ? '✓ Done' : '✓ Done';
+
+    // Auto-start interval for cardio exercises
+    if (focusIsCardio && !skipAutoStart && !isDone && intervalPhase !== 'rest') {
+        if (focusRoundIdx === 0) {
+            // First round: show ready screen with START button
+            showReadyScreen();
+        } else {
+            // Subsequent rounds: auto-countdown (user is already on the bike)
+            showReadyScreen();
+            runCountdown();
+        }
+    }
 }
 
 function confirmFocusSet() {
@@ -760,6 +1063,9 @@ function confirmFocusSet() {
         restSeconds = parseInt(ex.rest.split('-')[0]) || 0;
     }
 
+    // For cardio, mark that we're in rest phase of the interval cycle
+    if (ex.work) intervalPhase = 'rest';
+
     showRestScreen(restSeconds);
 }
 
@@ -767,6 +1073,10 @@ function showRestScreen(seconds) {
     // Switch screens
     document.getElementById('focusScreenExercise').classList.add('hidden');
     document.getElementById('focusScreenRest').classList.remove('hidden');
+
+    // Hide cardio KPI inputs (this is the non-cardio rest screen path)
+    const kpiContainer = document.getElementById('cardioKpiInputs');
+    if (kpiContainer) kpiContainer.classList.add('hidden');
 
     // Only show RPE on the final set of the current exercise
     const sk = getSessionKey();
@@ -814,10 +1124,18 @@ function showRestScreen(seconds) {
         focusRestInterval = setInterval(() => {
             focusRestLeft--;
             if (restTimeEl) restTimeEl.textContent = formatTime(focusRestLeft);
+
+            // Warning beeps at 3, 2, 1 for cardio (next round incoming)
+            const ex = workoutData[currentPhase].exercises[focusExIdx];
+            if (ex.work && focusRestLeft <= 3 && focusRestLeft > 0) {
+                playBeep(660, 0.08, 1);
+            }
+
             if (focusRestLeft <= 0) {
                 clearInterval(focusRestInterval);
                 focusRestInterval = null;
                 if (restTimeEl) restTimeEl.textContent = 'Done!';
+                intervalPhase = null;
                 setTimeout(() => advanceFocusSet(), 600);
             }
         }, 1000);
@@ -830,6 +1148,14 @@ function showRestScreen(seconds) {
 
 function skipFocusRest() {
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
+    // Save cardio KPIs if present before skipping
+    const ex = workoutData[currentPhase].exercises[focusExIdx];
+    if (ex.work) {
+        saveCardioKPIs();
+        intervalPhase = null;
+        const kpiContainer = document.getElementById('cardioKpiInputs');
+        if (kpiContainer) kpiContainer.classList.add('hidden');
+    }
     advanceFocusSet();
 }
 
@@ -872,6 +1198,7 @@ function advanceFocusSet() {
 
 function focusNavPrev() {
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
+    clearIntervalTimer();
 
     const group = focusBlockGroups[focusGroupIdx];
     if (group.exercises.length > 1) {
@@ -904,11 +1231,13 @@ function focusNavPrev() {
 
 function focusNavNext() {
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
+    clearIntervalTimer();
     advanceFocusSet();
 }
 
 function jumpFocusSet(r) {
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
+    clearIntervalTimer();
     focusRoundIdx = r;
     focusSubIdx   = 0;
     syncFocusState();
