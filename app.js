@@ -357,6 +357,66 @@ function clearIntervalTimer() {
     intervalWorkLeft = 0;
 }
 
+function showReadyScreen() {
+    const ex = workoutData[currentPhase].exercises[focusExIdx];
+    if (!ex.work) return;
+
+    clearIntervalTimer();
+    intervalPhase = null;
+    const workSec = parseInt(ex.work) || 30;
+
+    // Show work screen in ready state
+    document.getElementById('focusScreenExercise').classList.add('hidden');
+    document.getElementById('focusScreenRest').classList.add('hidden');
+    document.getElementById('focusScreenWork').classList.remove('hidden');
+
+    const timerEl  = document.getElementById('intervalWorkTime');
+    const labelEl  = document.getElementById('intervalWorkLabel');
+    const phaseEl  = document.getElementById('intervalWorkPhase');
+    const fillEl   = document.getElementById('intervalWorkBarFill');
+    const startBtn = document.getElementById('intervalStartBtn');
+    const skipBtn  = document.getElementById('intervalSkipBtn');
+
+    timerEl.textContent = workSec;
+    labelEl.textContent = `Round ${focusRoundIdx + 1}`;
+    phaseEl.textContent = 'READY';
+    phaseEl.className = 'interval-phase-label ready';
+
+    // Static bar at 100%
+    fillEl.style.transition = 'none';
+    fillEl.style.width = '100%';
+
+    // Show start button, hide skip button
+    if (startBtn) { startBtn.classList.remove('hidden'); startBtn.onclick = function() { runCountdown(); }; }
+    if (skipBtn) skipBtn.classList.add('hidden');
+}
+
+function runCountdown() {
+    const timerEl  = document.getElementById('intervalWorkTime');
+    const phaseEl  = document.getElementById('intervalWorkPhase');
+    const startBtn = document.getElementById('intervalStartBtn');
+
+    // Hide start button during countdown
+    if (startBtn) startBtn.classList.add('hidden');
+
+    let count = 3;
+    timerEl.textContent = count;
+    phaseEl.textContent = 'GET READY';
+    phaseEl.className = 'interval-phase-label countdown';
+    playBeep(660, 0.1, 1);
+
+    const countdownInterval = setInterval(() => {
+        count--;
+        if (count > 0) {
+            timerEl.textContent = count;
+            playBeep(660, 0.1, 1);
+        } else {
+            clearInterval(countdownInterval);
+            startWorkPhase();
+        }
+    }, 1000);
+}
+
 function startWorkPhase() {
     const ex = workoutData[currentPhase].exercises[focusExIdx];
     if (!ex.work) return;
@@ -371,15 +431,21 @@ function startWorkPhase() {
     document.getElementById('focusScreenRest').classList.add('hidden');
     document.getElementById('focusScreenWork').classList.remove('hidden');
 
-    const timerEl = document.getElementById('intervalWorkTime');
-    const labelEl = document.getElementById('intervalWorkLabel');
-    const fillEl  = document.getElementById('intervalWorkBarFill');
-    const phaseEl = document.getElementById('intervalWorkPhase');
+    const timerEl  = document.getElementById('intervalWorkTime');
+    const labelEl  = document.getElementById('intervalWorkLabel');
+    const fillEl   = document.getElementById('intervalWorkBarFill');
+    const phaseEl  = document.getElementById('intervalWorkPhase');
+    const startBtn = document.getElementById('intervalStartBtn');
+    const skipBtn  = document.getElementById('intervalSkipBtn');
 
     timerEl.textContent = intervalWorkLeft;
     labelEl.textContent = `Round ${focusRoundIdx + 1}`;
     phaseEl.textContent = 'GO';
     phaseEl.className = 'interval-phase-label go';
+
+    // Hide start button, show skip button
+    if (startBtn) startBtn.classList.add('hidden');
+    if (skipBtn) skipBtn.classList.remove('hidden');
 
     // Fill bar animation
     fillEl.style.transition = 'none';
@@ -406,7 +472,7 @@ function startWorkPhase() {
             intervalWorkInterval = null;
             // Audio: STOP beep (low, long)
             playBeep(440, 0.25, 1);
-            // Transition to rest phase with KPI entry
+            // Transition to combined rest + KPI screen
             endWorkPhase();
         }
     }, 1000);
@@ -414,22 +480,127 @@ function startWorkPhase() {
 
 function endWorkPhase() {
     intervalPhase = 'rest';
-    // Hide work screen, show exercise screen for KPI entry
-    document.getElementById('focusScreenWork').classList.add('hidden');
-    document.getElementById('focusScreenExercise').classList.remove('hidden');
-    document.getElementById('focusScreenRest').classList.add('hidden');
 
-    // Update the done button text to indicate this is a rest-phase entry
-    const doneBtn = document.getElementById('focusDoneBtn');
-    if (doneBtn) doneBtn.textContent = '✓ Log & Rest';
+    const ex = workoutData[currentPhase].exercises[focusExIdx];
+    let restSeconds = 0;
+    if (ex.rest !== '—' && ex.rest !== '0') {
+        restSeconds = parseInt(ex.rest.split('-')[0]) || 0;
+    }
 
-    // Re-render the exercise screen with current data (KPI inputs)
-    renderFocusExercise(true);
+    // Go directly to rest screen with KPI inputs — timer starts immediately
+    showCardioRestScreen(restSeconds);
 }
 
 function skipWorkPhase() {
     clearIntervalTimer();
     endWorkPhase();
+}
+
+function saveCardioKPIs() {
+    const sk   = getSessionKey();
+    const wVal = document.getElementById('cardioDistance');
+    const rVal = document.getElementById('cardioCalories');
+
+    if (!sessionData[sk]) sessionData[sk] = {};
+    if (wVal && wVal.value) sessionData[sk][`${sk}-${focusExIdx}-${focusSetIdx}-weight`] = wVal.value;
+    if (rVal && rVal.value) sessionData[sk][`${sk}-${focusExIdx}-${focusSetIdx}-reps`]   = rVal.value;
+
+    completedSets[`${sk}-${focusExIdx}-${focusSetIdx}`] = true;
+    saveToStorage();
+    recordWorkoutDate();
+}
+
+function showCardioRestScreen(seconds) {
+    // Hide work + exercise screens, show rest screen
+    document.getElementById('focusScreenWork').classList.add('hidden');
+    document.getElementById('focusScreenExercise').classList.add('hidden');
+    document.getElementById('focusScreenRest').classList.remove('hidden');
+
+    const group       = focusBlockGroups[focusGroupIdx];
+    const firstEx     = workoutData[currentPhase].exercises[group.exercises[0]];
+    const totalRounds = getActualSets(firstEx, currentPhase, currentSession);
+
+    // Show cardio KPI inputs
+    const kpiContainer = document.getElementById('cardioKpiInputs');
+    if (kpiContainer) {
+        kpiContainer.classList.remove('hidden');
+        // Pre-populate from any existing saved data
+        const sk = getSessionKey();
+        const distInp = document.getElementById('cardioDistance');
+        const calInp  = document.getElementById('cardioCalories');
+        const savedDist = sessionData[sk] && sessionData[sk][`${sk}-${focusExIdx}-${focusSetIdx}-weight`];
+        const savedCals = sessionData[sk] && sessionData[sk][`${sk}-${focusExIdx}-${focusSetIdx}-reps`];
+        if (distInp) distInp.value = savedDist || '';
+        if (calInp)  calInp.value  = savedCals || '';
+    }
+
+    // RPE only on final round
+    const isLastSet = focusRoundIdx === totalRounds - 1;
+    const rpeEl     = document.getElementById('focusRPE');
+    if (rpeEl) rpeEl.style.display = isLastSet ? '' : 'none';
+
+    // RPE button state
+    const sk = getSessionKey();
+    const currentRpe = rpeData[`${sk}-${focusExIdx}-${focusSetIdx}`];
+    document.querySelectorAll('.focus-rpe-btn').forEach(b => b.classList.remove('selected'));
+    if (currentRpe) {
+        const rpeBtn = document.querySelector(`.focus-rpe-btn.${currentRpe}`);
+        if (rpeBtn) rpeBtn.classList.add('selected');
+    }
+
+    // On-deck preview
+    renderFocusOnDeck();
+
+    // Update set dots
+    renderFocusSetDots(totalRounds);
+
+    const restDisplay = document.getElementById('focusRestDisplay');
+    const continueBtn = document.getElementById('focusContinueBtn');
+
+    if (seconds > 0) {
+        restDisplay.classList.remove('hidden');
+        continueBtn.classList.add('hidden');
+
+        if (focusRestInterval) clearInterval(focusRestInterval);
+        focusRestLeft  = seconds;
+        focusRestTotal = seconds;
+
+        const restTimeEl = document.getElementById('focusRestTime');
+        const restFillEl = document.getElementById('focusRestBarFill');
+
+        restTimeEl.textContent      = formatTime(focusRestLeft);
+        restFillEl.style.transition = 'none';
+        restFillEl.style.width      = '100%';
+        requestAnimationFrame(() => {
+            restFillEl.style.transition = `width ${seconds}s linear`;
+            restFillEl.style.width      = '0%';
+        });
+
+        focusRestInterval = setInterval(() => {
+            focusRestLeft--;
+            if (restTimeEl) restTimeEl.textContent = formatTime(focusRestLeft);
+
+            // Warning beeps at 3, 2, 1
+            if (focusRestLeft <= 3 && focusRestLeft > 0) {
+                playBeep(660, 0.08, 1);
+            }
+
+            if (focusRestLeft <= 0) {
+                clearInterval(focusRestInterval);
+                focusRestInterval = null;
+                if (restTimeEl) restTimeEl.textContent = 'Done!';
+                // Auto-save any entered KPIs
+                saveCardioKPIs();
+                intervalPhase = null;
+                // Hide cardio KPI inputs
+                if (kpiContainer) kpiContainer.classList.add('hidden');
+                setTimeout(() => advanceFocusSet(), 600);
+            }
+        }, 1000);
+    } else {
+        restDisplay.classList.add('hidden');
+        continueBtn.classList.remove('hidden');
+    }
 }
 
 /* ════════════════ FOCUS MODE ════════════════ */
@@ -851,15 +1022,18 @@ function renderFocusExercise(skipAutoStart) {
     nextBtn.className   = `focus-nav-btn${isLast ? ' finish' : ''}`;
 
     const doneBtn = document.getElementById('focusDoneBtn');
-    if (focusIsCardio && intervalPhase === 'rest') {
-        doneBtn.textContent = isDone ? '✓ Done' : '✓ Log & Rest';
-    } else {
-        doneBtn.textContent = isDone ? '✓ Done' : '✓ Done';
-    }
+    doneBtn.textContent = isDone ? '✓ Done' : '✓ Done';
 
-    // Auto-start interval timer for cardio exercises
+    // Auto-start interval for cardio exercises
     if (focusIsCardio && !skipAutoStart && !isDone && intervalPhase !== 'rest') {
-        startWorkPhase();
+        if (focusRoundIdx === 0) {
+            // First round: show ready screen with START button
+            showReadyScreen();
+        } else {
+            // Subsequent rounds: auto-countdown (user is already on the bike)
+            showReadyScreen();
+            runCountdown();
+        }
     }
 }
 
@@ -899,6 +1073,10 @@ function showRestScreen(seconds) {
     // Switch screens
     document.getElementById('focusScreenExercise').classList.add('hidden');
     document.getElementById('focusScreenRest').classList.remove('hidden');
+
+    // Hide cardio KPI inputs (this is the non-cardio rest screen path)
+    const kpiContainer = document.getElementById('cardioKpiInputs');
+    if (kpiContainer) kpiContainer.classList.add('hidden');
 
     // Only show RPE on the final set of the current exercise
     const sk = getSessionKey();
@@ -970,6 +1148,14 @@ function showRestScreen(seconds) {
 
 function skipFocusRest() {
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
+    // Save cardio KPIs if present before skipping
+    const ex = workoutData[currentPhase].exercises[focusExIdx];
+    if (ex.work) {
+        saveCardioKPIs();
+        intervalPhase = null;
+        const kpiContainer = document.getElementById('cardioKpiInputs');
+        if (kpiContainer) kpiContainer.classList.add('hidden');
+    }
     advanceFocusSet();
 }
 

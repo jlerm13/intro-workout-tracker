@@ -868,6 +868,17 @@ body {
     border-radius: var(--radius-full);
     animation: intervalPulse 1s ease-in-out infinite;
 }
+.interval-phase-label.ready {
+    background: var(--surface);
+    color: var(--text-muted);
+    border: 2px solid var(--border-strong);
+    animation: none;
+}
+.interval-phase-label.countdown {
+    background: #fef3c7;
+    color: #92400e;
+    border: 2px solid #f59e0b;
+}
 .interval-phase-label.go {
     background: #dcfce7;
     color: #15803d;
@@ -918,6 +929,24 @@ body {
     transition: width 1s linear;
 }
 
+.interval-start-btn {
+    margin-top: var(--space-4);
+    padding: 18px 48px;
+    border: none;
+    border-radius: var(--radius-lg);
+    background: #16a34a;
+    color: white;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .15s;
+}
+.interval-start-btn:hover { background: #15803d; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.interval-start-btn:active { transform: none; box-shadow: none; }
+.interval-start-btn.hidden { display: none; }
+
 .interval-skip-btn {
     margin-top: var(--space-3);
     padding: 8px var(--space-5);
@@ -932,6 +961,38 @@ body {
     transition: all .15s;
 }
 .interval-skip-btn:hover { background: var(--hover); color: var(--text); }
+.interval-skip-btn.hidden { display: none; }
+
+/* Cardio KPI inputs (inline on rest screen) */
+.cardio-kpi-inputs {
+    width: 100%;
+    max-width: 360px;
+    padding: var(--space-3) var(--space-4);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-4);
+}
+.cardio-kpi-inputs.hidden { display: none; }
+.cardio-kpi-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--text-muted);
+    margin-bottom: var(--space-2);
+    text-align: center;
+}
+.cardio-kpi-row {
+    display: flex;
+    gap: var(--space-4);
+    justify-content: center;
+}
+.cardio-kpi-inp {
+    width: 90px;
+    padding: 10px var(--space-2);
+    font-size: 22px;
+}
 
 /* ──────────────────── Focus Screen Containers ──────────────────── */
 .focus-screen-exercise,
@@ -1526,9 +1587,14 @@ body {
     .focus-on-deck { background: var(--surface); border-color: var(--border-strong); }
 
     /* Interval timer (cardio) */
+    .interval-phase-label.ready { background: var(--surface); color: var(--text-muted); border-color: var(--border-strong); }
+    .interval-phase-label.countdown { background: #422006; color: #fbbf24; border-color: #d97706; }
     .interval-phase-label.go { background: #064e3b; color: #34d399; border-color: #059669; }
     .interval-phase-label.rest-label { background: #422006; color: #fbbf24; border-color: #d97706; }
     .interval-work-bar-fill { background: #34d399; }
+    .interval-start-btn { background: #059669; }
+    .interval-start-btn:hover { background: #047857; }
+    .cardio-kpi-inputs { background: var(--surface); border-color: var(--border-strong); }
 }
 
 /* ──────────────────── RESPONSIVE: TABLET & UP ──────────────────── */
