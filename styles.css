@@ -848,6 +848,91 @@ body {
 }
 .focus-skip-btn:hover { background: var(--hover); color: var(--text); }
 
+/* ──────────────────── Interval Timer (Cardio Work Phase) ──────────────────── */
+.focus-screen-work {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+}
+.focus-screen-work.hidden { display: none; }
+
+.interval-phase-label {
+    font-size: 18px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .15em;
+    padding: 8px 28px;
+    border-radius: var(--radius-full);
+    animation: intervalPulse 1s ease-in-out infinite;
+}
+.interval-phase-label.go {
+    background: #dcfce7;
+    color: #15803d;
+    border: 2px solid #16a34a;
+}
+.interval-phase-label.rest-label {
+    background: #fef3c7;
+    color: #92400e;
+    border: 2px solid #f59e0b;
+    animation: none;
+}
+
+@keyframes intervalPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.interval-work-time {
+    font-size: 96px;
+    font-weight: 800;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    letter-spacing: -2px;
+}
+
+.interval-work-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .07em;
+}
+
+.interval-work-bar-bg {
+    width: 100%;
+    max-width: 300px;
+    height: 6px;
+    background: var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    margin-top: var(--space-2);
+}
+.interval-work-bar-fill {
+    height: 6px;
+    background: #16a34a;
+    border-radius: var(--radius-sm);
+    transition: width 1s linear;
+}
+
+.interval-skip-btn {
+    margin-top: var(--space-3);
+    padding: 8px var(--space-5);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .15s;
+}
+.interval-skip-btn:hover { background: var(--hover); color: var(--text); }
+
 /* ──────────────────── Focus Screen Containers ──────────────────── */
 .focus-screen-exercise,
 .focus-screen-rest {
@@ -1439,6 +1524,11 @@ body {
 
     /* On deck */
     .focus-on-deck { background: var(--surface); border-color: var(--border-strong); }
+
+    /* Interval timer (cardio) */
+    .interval-phase-label.go { background: #064e3b; color: #34d399; border-color: #059669; }
+    .interval-phase-label.rest-label { background: #422006; color: #fbbf24; border-color: #d97706; }
+    .interval-work-bar-fill { background: #34d399; }
 }
 
 /* ──────────────────── RESPONSIVE: TABLET & UP ──────────────────── */

@@ -19,6 +19,11 @@ let focusRestInterval = null;
 let focusRestLeft     = 0;
 let focusRestTotal    = 0;
 
+// Interval timer state (cardio conditioning)
+let intervalWorkInterval = null;
+let intervalWorkLeft     = 0;
+let intervalPhase        = null;  // 'work' | 'rest' | null
+
 // Superset-aware focus state
 let focusBlockGroups  = [];  // [{type, exercises: [indices]}]
 let focusGroupIdx     = 0;   // current block group
@@ -317,6 +322,116 @@ function toggleSessionTimer() {
     try { localStorage.setItem('wt-timer-visible', String(sessionTimerVisible)); } catch (e) {}
 }
 
+/* ════════════════ AUDIO CUE (Web Audio API) ════════════════ */
+let _audioCtx = null;
+function getAudioCtx() {
+    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return _audioCtx;
+}
+
+function playBeep(freq, duration, count) {
+    freq = freq || 880;
+    duration = duration || 0.12;
+    count = count || 1;
+    try {
+        const ctx = getAudioCtx();
+        for (let i = 0; i < count; i++) {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'square';
+            osc.frequency.value = freq;
+            gain.gain.value = 0.15;
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            const start = ctx.currentTime + i * (duration + 0.08);
+            osc.start(start);
+            osc.stop(start + duration);
+        }
+    } catch (e) { /* audio not available */ }
+}
+
+/* ════════════════ INTERVAL TIMER (Cardio Conditioning) ════════════════ */
+function clearIntervalTimer() {
+    if (intervalWorkInterval) { clearInterval(intervalWorkInterval); intervalWorkInterval = null; }
+    intervalPhase = null;
+    intervalWorkLeft = 0;
+}
+
+function startWorkPhase() {
+    const ex = workoutData[currentPhase].exercises[focusExIdx];
+    if (!ex.work) return;
+
+    clearIntervalTimer();
+    intervalPhase = 'work';
+    const workSec = parseInt(ex.work) || 30;
+    intervalWorkLeft = workSec;
+
+    // Show work screen, hide exercise + rest screens
+    document.getElementById('focusScreenExercise').classList.add('hidden');
+    document.getElementById('focusScreenRest').classList.add('hidden');
+    document.getElementById('focusScreenWork').classList.remove('hidden');
+
+    const timerEl = document.getElementById('intervalWorkTime');
+    const labelEl = document.getElementById('intervalWorkLabel');
+    const fillEl  = document.getElementById('intervalWorkBarFill');
+    const phaseEl = document.getElementById('intervalWorkPhase');
+
+    timerEl.textContent = intervalWorkLeft;
+    labelEl.textContent = `Round ${focusRoundIdx + 1}`;
+    phaseEl.textContent = 'GO';
+    phaseEl.className = 'interval-phase-label go';
+
+    // Fill bar animation
+    fillEl.style.transition = 'none';
+    fillEl.style.width = '100%';
+    requestAnimationFrame(() => {
+        fillEl.style.transition = `width ${workSec}s linear`;
+        fillEl.style.width = '0%';
+    });
+
+    // Audio: GO beep (high, double)
+    playBeep(1046, 0.15, 2);
+
+    intervalWorkInterval = setInterval(() => {
+        intervalWorkLeft--;
+        if (timerEl) timerEl.textContent = intervalWorkLeft;
+
+        // Warning beep at 3, 2, 1
+        if (intervalWorkLeft <= 3 && intervalWorkLeft > 0) {
+            playBeep(660, 0.08, 1);
+        }
+
+        if (intervalWorkLeft <= 0) {
+            clearInterval(intervalWorkInterval);
+            intervalWorkInterval = null;
+            // Audio: STOP beep (low, long)
+            playBeep(440, 0.25, 1);
+            // Transition to rest phase with KPI entry
+            endWorkPhase();
+        }
+    }, 1000);
+}
+
+function endWorkPhase() {
+    intervalPhase = 'rest';
+    // Hide work screen, show exercise screen for KPI entry
+    document.getElementById('focusScreenWork').classList.add('hidden');
+    document.getElementById('focusScreenExercise').classList.remove('hidden');
+    document.getElementById('focusScreenRest').classList.add('hidden');
+
+    // Update the done button text to indicate this is a rest-phase entry
+    const doneBtn = document.getElementById('focusDoneBtn');
+    if (doneBtn) doneBtn.textContent = '✓ Log & Rest';
+
+    // Re-render the exercise screen with current data (KPI inputs)
+    renderFocusExercise(true);
+}
+
+function skipWorkPhase() {
+    clearIntervalTimer();
+    endWorkPhase();
+}
+
 /* ════════════════ FOCUS MODE ════════════════ */
 function buildBlockGroups() {
     const exercises = workoutData[currentPhase].exercises;
@@ -345,6 +460,7 @@ function enterFocusMode() {
     focusRoundIdx = 0;
     syncFocusState();
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
+    clearIntervalTimer();
     document.getElementById('focusOverlay').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     startSessionTimer();
@@ -353,6 +469,7 @@ function enterFocusMode() {
 
 function exitFocusMode() {
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
+    clearIntervalTimer();
     stopSessionTimer();
     document.getElementById('focusOverlay').classList.add('hidden');
     // Clean up video iframe when exiting
@@ -439,6 +556,7 @@ function calcSessionStats() {
 
 function showSummary() {
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
+    clearIntervalTimer();
     const sessionElapsed = stopSessionTimer();
     document.getElementById('focusOverlay').classList.add('hidden');
     document.body.style.overflow = '';
@@ -591,10 +709,12 @@ function renderBlockProgress() {
     }).join('');
 }
 
-function renderFocusExercise() {
+function renderFocusExercise(skipAutoStart) {
     // Switch to exercise screen
     document.getElementById('focusScreenExercise').classList.remove('hidden');
     document.getElementById('focusScreenRest').classList.add('hidden');
+    const workScreen = document.getElementById('focusScreenWork');
+    if (workScreen) workScreen.classList.add('hidden');
 
     const data        = workoutData[currentPhase];
     const exercises   = data.exercises;
@@ -731,7 +851,16 @@ function renderFocusExercise() {
     nextBtn.className   = `focus-nav-btn${isLast ? ' finish' : ''}`;
 
     const doneBtn = document.getElementById('focusDoneBtn');
-    doneBtn.textContent = isDone ? '✓ Done' : '✓ Done';
+    if (focusIsCardio && intervalPhase === 'rest') {
+        doneBtn.textContent = isDone ? '✓ Done' : '✓ Log & Rest';
+    } else {
+        doneBtn.textContent = isDone ? '✓ Done' : '✓ Done';
+    }
+
+    // Auto-start interval timer for cardio exercises
+    if (focusIsCardio && !skipAutoStart && !isDone && intervalPhase !== 'rest') {
+        startWorkPhase();
+    }
 }
 
 function confirmFocusSet() {
@@ -759,6 +888,9 @@ function confirmFocusSet() {
     if (ex.rest !== '—' && ex.rest !== '0') {
         restSeconds = parseInt(ex.rest.split('-')[0]) || 0;
     }
+
+    // For cardio, mark that we're in rest phase of the interval cycle
+    if (ex.work) intervalPhase = 'rest';
 
     showRestScreen(restSeconds);
 }
@@ -814,10 +946,18 @@ function showRestScreen(seconds) {
         focusRestInterval = setInterval(() => {
             focusRestLeft--;
             if (restTimeEl) restTimeEl.textContent = formatTime(focusRestLeft);
+
+            // Warning beeps at 3, 2, 1 for cardio (next round incoming)
+            const ex = workoutData[currentPhase].exercises[focusExIdx];
+            if (ex.work && focusRestLeft <= 3 && focusRestLeft > 0) {
+                playBeep(660, 0.08, 1);
+            }
+
             if (focusRestLeft <= 0) {
                 clearInterval(focusRestInterval);
                 focusRestInterval = null;
                 if (restTimeEl) restTimeEl.textContent = 'Done!';
+                intervalPhase = null;
                 setTimeout(() => advanceFocusSet(), 600);
             }
         }, 1000);
@@ -872,6 +1012,7 @@ function advanceFocusSet() {
 
 function focusNavPrev() {
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
+    clearIntervalTimer();
 
     const group = focusBlockGroups[focusGroupIdx];
     if (group.exercises.length > 1) {
@@ -904,11 +1045,13 @@ function focusNavPrev() {
 
 function focusNavNext() {
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
+    clearIntervalTimer();
     advanceFocusSet();
 }
 
 function jumpFocusSet(r) {
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
+    clearIntervalTimer();
     focusRoundIdx = r;
     focusSubIdx   = 0;
     syncFocusState();
