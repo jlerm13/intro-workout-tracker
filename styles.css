@@ -693,6 +693,24 @@ body {
     flex-shrink: 0;
 }
 .focus-prog { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+/* Session timer in focus header — hidden by default, toggled by user */
+.session-timer {
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .15s;
+    letter-spacing: .02em;
+}
+.session-timer:hover { background: var(--hover); color: var(--text-secondary); }
+.session-timer.hidden { display: none; }
+
 .focus-exit {
     padding: 5px 14px;
     border: 1px solid var(--border);
@@ -1039,12 +1057,14 @@ body {
 
 .summary-stats {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--space-3);
     margin-bottom: var(--space-6);
 }
 
 .summary-stat {
-    flex: 1;
+    flex: 1 1 calc(25% - var(--space-3));
+    min-width: 80px;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);

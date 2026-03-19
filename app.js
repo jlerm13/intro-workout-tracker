@@ -25,6 +25,11 @@ let focusGroupIdx     = 0;   // current block group
 let focusSubIdx       = 0;   // exercise within group
 let focusRoundIdx     = 0;   // current round (= set index)
 
+// Session timer state
+let sessionStartTime    = null;
+let sessionTimerInterval = null;
+let sessionTimerVisible  = false;  // hidden by default
+
 /* ════════════════ LOCALSTORAGE ════════════════ */
 function saveToStorage() {
     try {
@@ -262,6 +267,53 @@ function dismissRest() {
     document.getElementById('restTimer').classList.add('hidden');
 }
 
+/* ════════════════ SESSION TIMER ════════════════ */
+function formatSessionTime(ms) {
+    const totalSec = Math.floor(ms / 1000);
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function formatSessionDuration(ms) {
+    const totalMin = Math.round(ms / 60000);
+    if (totalMin < 1) return '<1m';
+    if (totalMin < 60) return `${totalMin}m`;
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
+
+function startSessionTimer() {
+    sessionStartTime = Date.now();
+    if (sessionTimerInterval) clearInterval(sessionTimerInterval);
+    const timerEl = document.getElementById('sessionTimer');
+
+    // Load visibility preference
+    sessionTimerVisible = localStorage.getItem('wt-timer-visible') === 'true';
+    timerEl.classList.toggle('hidden', !sessionTimerVisible);
+    timerEl.textContent = '0:00';
+
+    sessionTimerInterval = setInterval(() => {
+        if (!sessionStartTime) return;
+        timerEl.textContent = formatSessionTime(Date.now() - sessionStartTime);
+    }, 1000);
+}
+
+function stopSessionTimer() {
+    if (sessionTimerInterval) { clearInterval(sessionTimerInterval); sessionTimerInterval = null; }
+    const elapsed = sessionStartTime ? Date.now() - sessionStartTime : 0;
+    sessionStartTime = null;
+    return elapsed;
+}
+
+function toggleSessionTimer() {
+    sessionTimerVisible = !sessionTimerVisible;
+    const timerEl = document.getElementById('sessionTimer');
+    timerEl.classList.toggle('hidden', !sessionTimerVisible);
+    try { localStorage.setItem('wt-timer-visible', String(sessionTimerVisible)); } catch (e) {}
+}
+
 /* ════════════════ FOCUS MODE ════════════════ */
 function buildBlockGroups() {
     const exercises = workoutData[currentPhase].exercises;
@@ -292,11 +344,13 @@ function enterFocusMode() {
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
     document.getElementById('focusOverlay').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+    startSessionTimer();
     renderFocusExercise();
 }
 
 function exitFocusMode() {
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
+    stopSessionTimer();
     document.getElementById('focusOverlay').classList.add('hidden');
     // Clean up video iframe when exiting
     const videoEmbed = document.getElementById('focusVideoEmbed');
@@ -382,6 +436,7 @@ function calcSessionStats() {
 
 function showSummary() {
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
+    const sessionElapsed = stopSessionTimer();
     document.getElementById('focusOverlay').classList.add('hidden');
     document.body.style.overflow = '';
     updateWorkout();
@@ -394,6 +449,11 @@ function showSummary() {
     document.getElementById('summaryPhaseSession').textContent =
         `Phase ${currentPhase} · Session ${currentSession} of ${data.totalSessions}`;
 
+    const durationText = sessionElapsed > 0 ? formatSessionDuration(sessionElapsed) : '—';
+    document.getElementById('summaryDuration').textContent = durationText;
+    if (sessionElapsed > 0) {
+        try { sessionStorage.setItem('wt-last-duration', durationText); } catch (e) {}
+    }
     document.getElementById('summarySets').textContent   = stats.setsCompleted;
     document.getElementById('summaryVolume').textContent =
         stats.totalVolume > 0 ? stats.totalVolume.toLocaleString() + ' lbs' : '—';
@@ -989,8 +1049,13 @@ function generateShareText() {
     const prog  = data.progression[currentSession - 1];
     const date  = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
+    // Retrieve last session duration
+    const lastDuration = sessionStorage.getItem('wt-last-duration');
+
     let text = `💪 Phase ${currentPhase} · Session ${currentSession} of ${data.totalSessions} — Done!\n`;
-    text += `📅 ${date}\n\n`;
+    text += `📅 ${date}`;
+    if (lastDuration) text += ` · ${lastDuration}`;
+    text += `\n\n`;
     text += `📊 ${stats.setsCompleted} sets`;
     if (stats.totalVolume > 0) text += ` · ${stats.totalVolume.toLocaleString()} lbs volume`;
     text += ` · ${stats.prs.length} PR${stats.prs.length !== 1 ? 's' : ''}\n`;
