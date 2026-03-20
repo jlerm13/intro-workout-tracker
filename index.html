@@ -91,9 +91,24 @@
                 </div>
             </div>
 
+            <div id="journeyNarrative" class="journey-narrative hidden">
+                <span class="journey-icon" id="journeyIcon"></span>
+                <span class="journey-text" id="journeyText"></span>
+            </div>
+
             <button class="start-workout-btn" onclick="enterFocusMode()">▶ Start Workout</button>
 
             <div id="exerciseList"></div>
+
+            <div id="chartSection" class="chart-section hidden">
+                <div class="blk-heading">Progress</div>
+                <div class="chart-tabs">
+                    <button class="chart-tab active" onclick="showChartTab('weight')">Weight</button>
+                    <button class="chart-tab" onclick="showChartTab('volume')">Volume</button>
+                </div>
+                <div id="chartWeightContainer" class="chart-container"></div>
+                <div id="chartVolumeContainer" class="chart-container hidden"></div>
+            </div>
         </div>
     </main>
 </div>
@@ -230,13 +245,28 @@
             <div id="summaryPRList"></div>
         </div>
 
-        <button class="summary-share-btn" id="shareCoachBtn" onclick="copyShareText()">📋 Share with Coach</button>
+        <div class="share-section">
+            <button class="summary-share-btn" id="shareCoachBtn" onclick="smartShare()">📤 Send to Coach</button>
+            <div id="coachSetup" class="coach-setup hidden">
+                <div class="coach-setup-label">Send directly next time?</div>
+                <div class="coach-setup-row">
+                    <select id="coachType" class="coach-type-select">
+                        <option value="none">Just copy</option>
+                        <option value="whatsapp">WhatsApp</option>
+                        <option value="email">Email</option>
+                    </select>
+                    <input type="text" id="coachValue" class="coach-value-input" placeholder="Phone or email">
+                    <button class="coach-save-btn" onclick="saveCoachContact()">Save</button>
+                </div>
+            </div>
+        </div>
         <button class="summary-cta-btn" id="summaryCTA">Continue →</button>
         <button class="summary-exit-btn" onclick="hideSummary()">Back to workout</button>
     </div>
 </div>
 
-<script src="data.js?v=4"></script>
-<script src="app.js?v=4"></script>
+<div id="toastContainer" class="toast-container"></div>
+<script src="data.js?v=5"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>
