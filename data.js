@@ -12,7 +12,7 @@ const workoutData = {
         ],
         exercises: [
             { name: "Air Dyne / Assault Bike",          type: "Warm-Up",  sets: 1, reps: "5",             work: "30s",   rest: "30",      note: "Max effort sprint for 30s" },
-            { name: "DB Goblet Squat",                  type: "Block A",  sets: 2, reps: "8-12",          tempo: "4010", rest: "60",      note: "Hold at chest, squat to comfortable depth" },
+            { name: "Leg Press",                        type: "Block A",  sets: 2, reps: "8-12",          tempo: "4010", rest: "60",      note: "Hold at chest, squat to comfortable depth" },
             { name: "DB Bench Press",                   type: "Block A",  sets: 2, reps: "8-12",          tempo: "3010", rest: "60",      note: "Control on the way down" },
             { name: "Ring Rows",                        type: "Block B",  sets: 2, reps: "8-12",          tempo: "3010", rest: "45",      note: "Start easy angle, pull chest to rings" },
             { name: "Single Leg Glute Bridge",          type: "Block B",  sets: 2, reps: "10-12/leg",     tempo: "3011", rest: "45",      note: "Shoulders on Bench. Non-working leg extended straight" },
