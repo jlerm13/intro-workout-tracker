@@ -5,10 +5,10 @@ const workoutData = {
         frequency: "EDT Upper/Lower Split · 4 Day Program",
         totalSessions: 4,
         progression: [
-            { session: 1, note: "Week 1 — Block A: 20 min · Block B: 15 min · Block C: 10 min" },
-            { session: 2, note: "Week 2 — Block A: 20 min · Block B: 15 min · Block C: 10 min" },
-            { session: 3, note: "Week 3 Deload — Block A: 8 min · Block B: 6 min · Block C: 4 min" },
-            { session: 4, note: "Week 4 — Block A: 20 min · Block B: 15 min · Block C: 10 min" }
+            { session: 1, note: "Week 1 — Block A: 13 min · Block B: 10 min · Block C: 7 min" },
+            { session: 2, note: "Week 2 — Block A: 13 min · Block B: 10 min · Block C: 7 min" },
+            { session: 3, note: "Week 3 Deload — Block A: 5 min · Block B: 6 min · Block C: 3 min" },
+            { session: 4, note: "Week 4 — Block A: 13 min · Block B: 10 min · Block C: 7 min" }
         ],
         exercises: [
             { name: "15 Degree Incline Barbell Press",    type: "Block A", sets: 5, reps: "4",  tempo: "30X0", rest: "0", note: "Use ~8RM load. A1–A2 superset: cycle between exercises with minimal rest for the full block time window." },
@@ -24,10 +24,10 @@ const workoutData = {
         frequency: "EDT Upper/Lower Split · 4 Day Program",
         totalSessions: 4,
         progression: [
-            { session: 1, note: "Week 1 — Block A: 20 min · Block B: 15 min · Block C: 10 min" },
-            { session: 2, note: "Week 2 — Block A: 20 min · Block B: 15 min · Block C: 10 min" },
-            { session: 3, note: "Week 3 Deload — Block A: 8 min · Block B: 6 min · Block C: 4 min" },
-            { session: 4, note: "Week 4 — Block A: 20 min · Block B: 15 min · Block C: 10 min" }
+            { session: 1, note: "Week 1 — Block A: 13 min · Block B: 10 min · Block C: 7 min" },
+            { session: 2, note: "Week 2 — Block A: 13 min · Block B: 10 min · Block C: 7 min" },
+            { session: 3, note: "Week 3 Deload — Block A: 5 min · Block B: 6 min · Block C: 3 min" },
+            { session: 4, note: "Week 4 — Block A: 13 min · Block B: 10 min · Block C: 7 min" }
         ],
         exercises: [
             { name: "Front Squat",                                   type: "Block A", sets: 5, reps: "4",  tempo: "30X0", rest: "0", note: "Use ~8RM load. A1–A2 superset: cycle between exercises with minimal rest for the full block time window." },
@@ -43,10 +43,10 @@ const workoutData = {
         frequency: "EDT Upper/Lower Split · 4 Day Program",
         totalSessions: 4,
         progression: [
-            { session: 1, note: "Week 1 — Block A: 20 min · Block B: 15 min · Block C: 10 min" },
-            { session: 2, note: "Week 2 — Block A: 20 min · Block B: 15 min · Block C: 10 min" },
-            { session: 3, note: "Week 3 Deload — Block A: 8 min · Block B: 6 min · Block C: 4 min" },
-            { session: 4, note: "Week 4 — Block A: 20 min · Block B: 15 min · Block C: 10 min" }
+            { session: 1, note: "Week 1 — Block A: 13 min · Block B: 10 min · Block C: 7 min" },
+            { session: 2, note: "Week 2 — Block A: 13 min · Block B: 10 min · Block C: 7 min" },
+            { session: 3, note: "Week 3 Deload — Block A: 5 min · Block B: 6 min · Block C: 3 min" },
+            { session: 4, note: "Week 4 — Block A: 13 min · Block B: 10 min · Block C: 7 min" }
         ],
         exercises: [
             { name: "Inertia Bench Press from Pins",         type: "Block A", sets: 5, reps: "3", tempo: "22X0", rest: "0", note: "Use ~6RM load. Set pins so bar is 1–2\" off chest. A1–A2 superset: cycle between exercises with minimal rest for the full block time window." },
@@ -62,10 +62,10 @@ const workoutData = {
         frequency: "EDT Upper/Lower Split · 4 Day Program",
         totalSessions: 4,
         progression: [
-            { session: 1, note: "Week 1 — Block A: 20 min · Block B: 20 min · Block C: 10 min" },
-            { session: 2, note: "Week 2 — Block A: 20 min · Block B: 20 min · Block C: 10 min" },
-            { session: 3, note: "Week 3 Deload — Block A: 8 min · Block B: 8 min · Block C: 4 min" },
-            { session: 4, note: "Week 4 — Block A: 20 min · Block B: 20 min · Block C: 10 min" }
+            { session: 1, note: "Week 1 — Block A: 13 min · Block B: 13 min · Block C: 7 min" },
+            { session: 2, note: "Week 2 — Block A: 13 min · Block B: 13 min · Block C: 7 min" },
+            { session: 3, note: "Week 3 Deload — Block A: 5 min · Block A: 4 min · Block C: 3 min" },
+            { session: 4, note: "Week 4 — Block A: 13 min · Block B: 13 min · Block C: 7 min" }
         ],
         exercises: [
             { name: "Snatch Grip Deadlift on Podium",   type: "Block A", sets: 5, reps: "3", tempo: "22X0", rest: "0", note: "Use ~6RM load. Solo block — complete as many quality sets as possible within the time window." },
