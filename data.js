@@ -1,106 +1,111 @@
 /* ════════════════ DATA ════════════════ */
 const workoutData = {
     1: {
-        name: "Phase 1 — Accumulation",
-        frequency: "2x per week for 2 weeks",
+        name: "Workout 1 — Upper Body A",
+        frequency: "EDT Upper/Lower Split · 4 Day Program",
         totalSessions: 4,
         progression: [
-            { session: 1, note: "Baseline — Learn the movements" },
-            { session: 2, note: "Add +1 set to all exercises" },
-            { session: 3, note: "Add +1 more set (up to 4 sets on main lifts)" },
-            { session: 4, note: "Taper — Keep mains at 4 sets, accessories at 3" }
+            { session: 1, note: "Week 1 — Block A: 20 min · Block B: 15 min · Block C: 10 min" },
+            { session: 2, note: "Week 2 — Block A: 20 min · Block B: 15 min · Block C: 10 min" },
+            { session: 3, note: "Week 3 Deload — Block A: 8 min · Block B: 6 min · Block C: 4 min" },
+            { session: 4, note: "Week 4 — Block A: 20 min · Block B: 15 min · Block C: 10 min" }
         ],
         exercises: [
-            { name: "Air Dyne / Assault Bike",          type: "Warm-Up",  sets: 1, reps: "5",             work: "30s",   rest: "30",      note: "Max effort sprint for 30s" },
-            { name: "Leg Press",                        type: "Block A",  sets: 2, reps: "8-12",          tempo: "4010", rest: "60",      note: "Hold at chest, squat to comfortable depth" },
-            { name: "DB Bench Press",                   type: "Block A",  sets: 2, reps: "8-12",          tempo: "3010", rest: "60",      note: "Control on the way down" },
-            { name: "Ring Rows",                        type: "Block B",  sets: 2, reps: "8-12",          tempo: "3010", rest: "45",      note: "Start easy angle, pull chest to rings" },
-            { name: "Single Leg Glute Bridge",          type: "Block B",  sets: 2, reps: "10-12/leg",     tempo: "3011", rest: "45",      note: "Shoulders on Bench. Non-working leg extended straight" },
-            { name: "Reverse Lunge",                    type: "Block C",  sets: 2, reps: "10/leg",        tempo: "3010", rest: "30",      note: "Step back, knee to 90°, drive through front heel" },
-            { name: "DB Overhead Press",                type: "Block C",  sets: 2, reps: "8-12",          tempo: "3010", rest: "30",      note: "Back supported against wall if possible" },
-            { name: "DB RDL + Row",                     type: "Block D",  sets: 2, reps: "8-12",          tempo: "3011", rest: "30",      note: "Hinge at hips, pull to lower ribs" },
-            { name: "Sit Up",                           type: "Block D",  sets: 2, reps: "12-15/side",    tempo: "3011", rest: "0",       note: "Keep lower back pressed to floor" },
-            { name: "Band Pull-Apart",                  type: "Block E",  sets: 2, reps: "12-15",         tempo: "3011", rest: "0",       note: "Arms straight, squeeze shoulder blades" },
-            { name: "Side Lying Lateral Leg Raise",     type: "Block E",  sets: 2, reps: "15-20",         tempo: "2010", rest: "0",       note: "Keep front slightly behind body, lead with heel" }
+            { name: "15 Degree Incline Barbell Press",    type: "Block A", sets: 5, reps: "4",  tempo: "30X0", rest: "0", note: "Use ~8RM load. A1–A2 superset: cycle between exercises with minimal rest for the full block time window." },
+            { name: "Narrow Supinated Chin Up",           type: "Block A", sets: 5, reps: "4",  tempo: "30X1", rest: "0", note: "Use ~8RM load. A2 of superset — go straight from A1 with minimal rest." },
+            { name: "Standing Barbell Shoulder Press",    type: "Block B", sets: 5, reps: "8",  tempo: "20X0", rest: "0", note: "Use ~16RM load. B1–B2 superset: cycle between exercises with minimal rest for the full block time window." },
+            { name: "Bent Over Supinated Barbell Row",    type: "Block B", sets: 5, reps: "8",  tempo: "2010", rest: "0", note: "Use ~16RM load. B2 of superset — go straight from B1 with minimal rest." },
+            { name: "Standing Mid Reverse Grip EZ Curl",  type: "Block C", sets: 5, reps: "10", tempo: "2010", rest: "0", note: "Use ~20RM load. C1–C2 superset: cycle between exercises with minimal rest for the full block time window." },
+            { name: "Triceps Pressdown with Rope",        type: "Block C", sets: 5, reps: "10", tempo: "2011", rest: "0", note: "Use ~20RM load. C2 of superset — go straight from C1 with minimal rest." }
         ]
     },
     2: {
-        name: "Phase 2 — Intensification",
-        frequency: "3x per week for 2 weeks",
-        totalSessions: 6,
+        name: "Workout 2 — Lower Body A",
+        frequency: "EDT Upper/Lower Split · 4 Day Program",
+        totalSessions: 4,
         progression: [
-            { session: 1, note: "Introduction to higher intensity" },
-            { session: 2, note: "Main lifts to 4 sets, accessories stay at 3" },
-            { session: 3, note: "Accessories to 4 sets, core stays at base" },
-            { session: 4, note: "Maintain 4 sets all except core" },
-            { session: 5, note: "Peak — compounds to 5 sets, accessories 4" },
-            { session: 6, note: "Taper — accessories to 3, compounds to 4" }
+            { session: 1, note: "Week 1 — Block A: 20 min · Block B: 15 min · Block C: 10 min" },
+            { session: 2, note: "Week 2 — Block A: 20 min · Block B: 15 min · Block C: 10 min" },
+            { session: 3, note: "Week 3 Deload — Block A: 8 min · Block B: 6 min · Block C: 4 min" },
+            { session: 4, note: "Week 4 — Block A: 20 min · Block B: 15 min · Block C: 10 min" }
         ],
         exercises: [
-            { name: "Air Dyne / Assault Bike",     type: "Warm-Up",  sets: 1, reps: "8",            work: "20s",    rest: "40",     note: "Max effort sprint for 20s" },
-            { name: "Bulgarian Split Squat",       type: "Block A",  sets: 3, reps: "5-8/leg",      tempo: "4010", rest: "60",      note: "Rear foot on bench, front leg does work" },
-            { name: "DB Bench Press (NG)",         type: "Block B",  sets: 3, reps: "5-8",          tempo: "3010", rest: "60",      note: "Palms face each other" },
-            { name: "Ring Rows",                   type: "Block B",  sets: 3, reps: "5-8",          tempo: "3010", rest: "60",      note: "Harder angle for strength focus" },
-            { name: "Single Leg Glute Bridge",     type: "Block C",  sets: 3, reps: "8-12/leg",     tempo: "3011", rest: "45",      note: "Add weight for progression" },
-            { name: "Romanian Deadlift",           type: "Block C",  sets: 3, reps: "8-12",         tempo: "3010", rest: "45",      note: "Hinge at hips, feel hamstring stretch" },
-            { name: "Single Arm DB Press",         type: "Block D",  sets: 3, reps: "8-12/arm",     tempo: "3010", rest: "30",      note: "Engage core for stability" },
-            { name: "Single Arm DB Row",           type: "Block D",  sets: 3, reps: "8-12/arm",     tempo: "3011", rest: "30",      note: "Opposite hand/knee on bench" },
-            { name: "Dead Bug",                    type: "Block E",  sets: 2, reps: "12-15/side",   tempo: "3011", rest: "0",       note: "Keep lower back pressed to floor" },
-            { name: "Band Pull-Apart",             type: "Block E",  sets: 2, reps: "12-15",        tempo: "3011", rest: "0",       note: "Arms straight, squeeze shoulder blades" },
-            { name: "Standing Lateral Leg Raise",  type: "Block E",  sets: 2, reps: "15-20",        tempo: "2010", rest: "0",       note: "Knee bent, squeeze at top" }
+            { name: "Front Squat",                                   type: "Block A", sets: 5, reps: "4",  tempo: "30X0", rest: "0", note: "Use ~8RM load. A1–A2 superset: cycle between exercises with minimal rest for the full block time window." },
+            { name: "Lying Leg Curl - toes DF and NEUT",            type: "Block A", sets: 5, reps: "4",  tempo: "30X1", rest: "0", note: "Use ~8RM load. A2 of superset — go straight from A1 with minimal rest." },
+            { name: "Hack Squat Machine",                            type: "Block B", sets: 5, reps: "8",  tempo: "20X0", rest: "0", note: "Use ~16RM load. B1–B2 superset: cycle between exercises with minimal rest for the full block time window." },
+            { name: "Snatch Grip Barbell 45 Degree Back Extension",  type: "Block B", sets: 5, reps: "8",  tempo: "2010", rest: "0", note: "Use ~16RM load. B2 of superset — go straight from B1 with minimal rest." },
+            { name: "Standing Calf Raise",                           type: "Block C", sets: 5, reps: "10", tempo: "2010", rest: "0", note: "Use ~20RM load. C1–C2 superset: cycle between exercises with minimal rest for the full block time window." },
+            { name: "Hanging Garhammer Raise",                       type: "Block C", sets: 5, reps: "10", tempo: "2011", rest: "0", note: "Bodyweight or ~20RM load held between feet. C2 of superset — go straight from C1 with minimal rest." }
         ]
     },
     3: {
-        name: "Phase 3 — Strength / Hypertrophy",
-        frequency: "3x per week for 3 weeks",
-        totalSessions: 9,
+        name: "Workout 3 — Upper Body B",
+        frequency: "EDT Upper/Lower Split · 4 Day Program",
+        totalSessions: 4,
         progression: [
-            { session: 1, note: "New movements — establish form at heavier loads, 3 sets all" },
-            { session: 2, note: "Strength lifts (Block A) to 4 sets — quality reps over weight" },
-            { session: 3, note: "All compounds to 4 sets — note your target weights for next week" },
-            { session: 4, note: "Maintain 4 sets — add weight where form allows" },
-            { session: 5, note: "Strength lifts peak to 5 sets — hypertrophy work at 4 sets" },
-            { session: 6, note: "Maintain peak sets — push for PR effort on Block A" },
-            { session: 7, note: "Max volume week — all compounds at 5 sets. Push hard" },
-            { session: 8, note: "Peak intensity — 5 sets Block A, 4 sets B/C. Go heavier" },
-            { session: 9, note: "Taper — reduce volume, maintain intensity. Program complete!" }
+            { session: 1, note: "Week 1 — Block A: 20 min · Block B: 15 min · Block C: 10 min" },
+            { session: 2, note: "Week 2 — Block A: 20 min · Block B: 15 min · Block C: 10 min" },
+            { session: 3, note: "Week 3 Deload — Block A: 8 min · Block B: 6 min · Block C: 4 min" },
+            { session: 4, note: "Week 4 — Block A: 20 min · Block B: 15 min · Block C: 10 min" }
         ],
         exercises: [
-            { name: "Air Dyne / Assault Bike",    type: "Warm-Up",  sets: 1, reps: "10",           work: "10s",   rest: "50",      note: "Max effort sprint for 10s" },
-            { name: "Heel-Elevated DB Squat",     type: "Block A",  sets: 3, reps: "4-6",          tempo: "4010", rest: "60",      note: "Heels elevated 1-2 inches on a plate. Knees track over toes, drive through full range" },
-            { name: "Weighted Ring Row",          type: "Block A",  sets: 3, reps: "4-6",          tempo: "3011", rest: "120",     note: "Use weight vest or hold DB on chest. Body parallel to floor — full scapular retraction at top" },
-            { name: "DB Bench Press",             type: "Block B",  sets: 3, reps: "6-10",         tempo: "3010", rest: "60",      note: "Controlled descent to chest, slight arch. Drive through sticking point" },
-            { name: "Single Leg Hip Thrust",      type: "Block B",  sets: 3, reps: "8-12/leg",     tempo: "3011", rest: "120",     note: "Shoulders on bench, DB across hip. Full extension at top — pause and squeeze glute" },
-            { name: "DB Deadlift",                type: "Block C",  sets: 3, reps: "5-8",          tempo: "3010", rest: "60",      note: "Push floor away, keep DBs close to legs. Full hip extension at top, control descent" },
-            { name: "Chest-Supported DB Row",     type: "Block C",  sets: 3, reps: "8-12",         tempo: "3011", rest: "120",     note: "Chest on incline bench, arms hang. Pull elbows back, squeeze shoulder blades hard at top" },
-            { name: "DB Overhead Press",          type: "Block D",  sets: 3, reps: "8-10",         tempo: "3010", rest: "60",      note: "Strict press — no leg drive. Core braced, press directly overhead" },
-            { name: "DB Lateral Raise",           type: "Block D",  sets: 3, reps: "12-15",        tempo: "2010", rest: "60",      note: "Slight forward lean, lead with elbows to ear height. Slow controlled descent" },
-            { name: "Pallof Press",               type: "Block E",  sets: 3, reps: "10/side",      tempo: "3010", rest: "0",       note: "Anchor band at chest height. Press straight out and resist rotation — core stays square" },
-            { name: "Band Pull-Apart",            type: "Block E",  sets: 3, reps: "12-15",        tempo: "3011", rest: "0",       note: "Arms straight, squeeze shoulder blades at full extension" },
-            { name: "Side Lying Hip Abduction",   type: "Block E",  sets: 3, reps: "15-20",        tempo: "2010", rest: "0",       note: "Keep top hip slightly forward, lead with heel. Squeeze glute at top" }
+            { name: "Inertia Bench Press from Pins",         type: "Block A", sets: 5, reps: "3", tempo: "22X0", rest: "0", note: "Use ~6RM load. Set pins so bar is 1–2\" off chest. A1–A2 superset: cycle between exercises with minimal rest for the full block time window." },
+            { name: "Mid-Neutral Grip Lean Away Pull Up",    type: "Block A", sets: 5, reps: "3", tempo: "40X0", rest: "0", note: "Use ~6RM load. A2 of superset — go straight from A1 with minimal rest." },
+            { name: "Dips",                                  type: "Block B", sets: 5, reps: "5", tempo: "30X0", rest: "0", note: "Use ~10RM load. B1–B2 superset: cycle between exercises with minimal rest for the full block time window." },
+            { name: "Seated Supinated Grip Cable Row",       type: "Block B", sets: 5, reps: "5", tempo: "2010", rest: "0", note: "Use ~10RM load. B2 of superset — go straight from B1 with minimal rest." },
+            { name: "Seated DB Hammer Curl",                 type: "Block C", sets: 5, reps: "7", tempo: "2010", rest: "0", note: "Use ~14RM load. C1–C2 superset: cycle between exercises with minimal rest for the full block time window." },
+            { name: "EZ Bar French Press",                   type: "Block C", sets: 5, reps: "7", tempo: "21X0", rest: "0", note: "Use ~14RM load. C2 of superset — go straight from C1 with minimal rest." }
+        ]
+    },
+    4: {
+        name: "Workout 4 — Lower Body B",
+        frequency: "EDT Upper/Lower Split · 4 Day Program",
+        totalSessions: 4,
+        progression: [
+            { session: 1, note: "Week 1 — Block A: 20 min · Block B: 20 min · Block C: 10 min" },
+            { session: 2, note: "Week 2 — Block A: 20 min · Block B: 20 min · Block C: 10 min" },
+            { session: 3, note: "Week 3 Deload — Block A: 8 min · Block B: 8 min · Block C: 4 min" },
+            { session: 4, note: "Week 4 — Block A: 20 min · Block B: 20 min · Block C: 10 min" }
+        ],
+        exercises: [
+            { name: "Snatch Grip Deadlift on Podium",   type: "Block A", sets: 5, reps: "3", tempo: "22X0", rest: "0", note: "Use ~6RM load. Solo block — complete as many quality sets as possible within the time window." },
+            { name: "Inertia Back Squat from Pins",     type: "Block B", sets: 5, reps: "3", tempo: "22X0", rest: "0", note: "Use ~6RM load. Set pins at belly button height. B1–B2 superset: cycle between exercises with minimal rest for the full block time window." },
+            { name: "Seated Leg Curl",                  type: "Block B", sets: 5, reps: "5", tempo: "30X0", rest: "0", note: "Use ~14RM load. B2 of superset — go straight from B1 with minimal rest." },
+            { name: "Leg Press",                        type: "Block C", sets: 5, reps: "5", tempo: "2010", rest: "0", note: "Use ~10RM load. C1–C2 superset: cycle between exercises with minimal rest for the full block time window." },
+            { name: "Dumbbell Romanian Deadlift (RDL)", type: "Block C", sets: 5, reps: "7", tempo: "3010", rest: "0", note: "Use ~14RM load. C2 of superset — go straight from C1 with minimal rest." }
         ]
     }
 };
 
 const exerciseVideos = {
-    'Air Dyne / Assault Bike':          'https://www.youtube.com/watch?v=YSrkGWpYnpo',
-    'DB Goblet Squat':                  'https://www.youtube.com/watch?v=XY8p9ijlsSQ',
-    'DB Bench Press':                   'https://www.youtube.com/watch?v=vfcYF6_yFAs',
-    'DB Bench Press (NG)':              'https://www.youtube.com/watch?v=KeUF3cx1n_o',
-    'Ring Rows':                        'https://www.youtube.com/watch?v=DTtdIfsh9lE',
-    'Single Leg Glute Bridge':          'https://www.youtube.com/shorts/319p9SfAIco',
-    'Reverse Lunge':                    'https://www.youtube.com/watch?v=Q2k3kYbtOcI',
-    'DB Overhead Press':                'https://www.youtube.com/watch?v=qEwKCR5JCog',
-    'DB Bent Over Row':                 'https://www.youtube.com/watch?v=pYcpY20QaE8',
-    'Dead Bug':                         'https://www.youtube.com/watch?v=hGeKSiZReiE',
-    'Band Pull-Apart':                  'https://www.youtube.com/watch?v=JTCBVbeWYP4',
-    'Side Lying Lateral Leg Raise':     'https://www.youtube.com/watch?v=v7VmrcipWGk',
-    'Standing Lateral Leg Raise':       'https://www.youtube.com/watch?v=rW5yoJqclEg',
-    'Bulgarian Split Squat':            'https://www.youtube.com/watch?v=2C-uNgKwPLE',
-    'Romanian Deadlift':                'https://www.youtube.com/watch?v=jEy_czb3RKA',
-    'Single Arm DB Press':              'https://www.youtube.com/watch?v=B-aVuyhvLHU',
-    'Single Arm DB Row':                'https://www.youtube.com/watch?v=dFzUjzfih7k',
-    'Sit Up':                           'https://www.youtube.com/watch?v=OmJXA7nIR2I',
-    'DB RDL + Row':                     'https://www.youtube.com/shorts/2ZGw_a5dowM',
-};
+    // Workout 1 — Upper Body A
+    '15 Degree Incline Barbell Press':                  'https://www.youtube.com/watch?v=PLACEHOLDER',
+    'Narrow Supinated Chin Up':                         'https://www.youtube.com/watch?v=PLACEHOLDER',
+    'Standing Barbell Shoulder Press':                  'https://www.youtube.com/watch?v=PLACEHOLDER',
+    'Bent Over Supinated Barbell Row':                  'https://www.youtube.com/watch?v=PLACEHOLDER',
+    'Standing Mid Reverse Grip EZ Curl':                'https://www.youtube.com/watch?v=PLACEHOLDER',
+    'Triceps Pressdown with Rope':                      'https://www.youtube.com/watch?v=PLACEHOLDER',
 
+    // Workout 2 — Lower Body A
+    'Front Squat':                                      'https://www.youtube.com/watch?v=PLACEHOLDER',
+    'Lying Leg Curl - toes DF and NEUT':               'https://www.youtube.com/watch?v=PLACEHOLDER',
+    'Hack Squat Machine':                               'https://www.youtube.com/watch?v=PLACEHOLDER',
+    'Snatch Grip Barbell 45 Degree Back Extension':     'https://www.youtube.com/watch?v=PLACEHOLDER',
+    'Standing Calf Raise':                              'https://www.youtube.com/watch?v=PLACEHOLDER',
+    'Hanging Garhammer Raise':                          'https://www.youtube.com/watch?v=PLACEHOLDER',
+
+    // Workout 3 — Upper Body B
+    'Inertia Bench Press from Pins':                    'https://www.youtube.com/watch?v=PLACEHOLDER',
+    'Mid-Neutral Grip Lean Away Pull Up':               'https://www.youtube.com/watch?v=PLACEHOLDER',
+    'Dips':                                             'https://www.youtube.com/watch?v=PLACEHOLDER',
+    'Seated Supinated Grip Cable Row':                  'https://www.youtube.com/watch?v=PLACEHOLDER',
+    'Seated DB Hammer Curl':                            'https://www.youtube.com/watch?v=PLACEHOLDER',
+    'EZ Bar French Press':                              'https://www.youtube.com/watch?v=PLACEHOLDER',
+
+    // Workout 4 — Lower Body B
+    'Snatch Grip Deadlift on Podium':                   'https://www.youtube.com/watch?v=PLACEHOLDER',
+    'Inertia Back Squat from Pins':                     'https://www.youtube.com/watch?v=PLACEHOLDER',
+    'Seated Leg Curl':                                  'https://www.youtube.com/watch?v=PLACEHOLDER',
+    'Leg Press':                                        'https://www.youtube.com/watch?v=PLACEHOLDER',
+    'Dumbbell Romanian Deadlift (RDL)':                 'https://www.youtube.com/watch?v=PLACEHOLDER',
+};
