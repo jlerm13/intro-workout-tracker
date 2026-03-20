@@ -1460,6 +1460,179 @@ body {
     margin-top: 2px;
 }
 
+/* ──────────────────── JOURNEY NARRATIVE ──────────────────── */
+.journey-narrative {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    background: var(--accent-bg);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4);
+    font-size: 14px;
+    color: var(--text);
+    margin-top: var(--space-4);
+    animation: narrativeSlideIn .3s ease;
+}
+.journey-narrative.hidden { display: none; }
+.journey-narrative.journey-pr {
+    background: #fffbeb;
+    border-left-color: #f59e0b;
+}
+.journey-icon { font-size: 18px; flex-shrink: 0; }
+.journey-text { line-height: 1.4; }
+
+@keyframes narrativeSlideIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ──────────────────── PROGRESS CHARTS ──────────────────── */
+.chart-section { margin-top: var(--space-6); padding: var(--space-4) 0; }
+.chart-section.hidden { display: none; }
+
+.chart-tabs {
+    display: flex;
+    background: rgba(55,53,47,.08);
+    border-radius: var(--radius-md);
+    padding: 3px;
+    margin-bottom: var(--space-4);
+    max-width: 200px;
+}
+.chart-tab {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .15s;
+}
+.chart-tab.active {
+    background: white;
+    color: var(--text);
+    box-shadow: var(--shadow-sm);
+}
+
+.chart-container { min-height: 200px; }
+.chart-container.hidden { display: none; }
+.chart-container svg { width: 100%; height: auto; }
+
+.chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+    margin-top: var(--space-2);
+    padding: 0 var(--space-2);
+}
+.chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+.chart-legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-full);
+    flex-shrink: 0;
+}
+
+/* ──────────────────── COACH SETUP & TOAST ──────────────────── */
+.share-section { margin-bottom: 10px; }
+
+.coach-setup {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    margin-top: var(--space-3);
+}
+.coach-setup.hidden { display: none; }
+.coach-setup-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-2);
+}
+.coach-setup-row {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+}
+.coach-type-select {
+    padding: var(--space-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-family: inherit;
+    background: var(--background);
+    color: var(--text);
+    cursor: pointer;
+}
+.coach-value-input {
+    flex: 1;
+    padding: var(--space-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-family: inherit;
+    background: var(--background);
+    color: var(--text);
+    outline: none;
+}
+.coach-value-input:focus { border-color: var(--accent); }
+.coach-save-btn {
+    padding: var(--space-2) var(--space-3);
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.toast-container {
+    position: fixed;
+    bottom: var(--space-6);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 30000;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    pointer-events: none;
+}
+.toast {
+    padding: var(--space-3) var(--space-5);
+    background: var(--text);
+    color: var(--background);
+    border-radius: var(--radius-full);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: var(--shadow-lg);
+    animation: toastIn .3s ease, toastOut .3s ease forwards;
+    pointer-events: auto;
+}
+
+@keyframes toastIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes toastOut {
+    0%, 80% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-10px); }
+}
+
 /* ──────────────────── FOCUS-VISIBLE (Keyboard A11y) ──────────────────── */
 :focus-visible {
     outline: 2px solid var(--accent);
@@ -1595,6 +1768,18 @@ body {
     .interval-start-btn { background: #059669; }
     .interval-start-btn:hover { background: #047857; }
     .cardio-kpi-inputs { background: var(--surface); border-color: var(--border-strong); }
+
+    /* Journey narrative */
+    .journey-narrative.journey-pr { background: #422006; border-left-color: #d97706; }
+
+    /* Chart tabs */
+    .chart-tab.active { background: var(--surface); color: var(--text); box-shadow: none; }
+
+    /* Coach setup */
+    .coach-setup { background: var(--surface); border-color: var(--border-strong); }
+
+    /* Toast */
+    .toast { background: #ededec; color: #191919; }
 }
 
 /* ──────────────────── RESPONSIVE: TABLET & UP ──────────────────── */

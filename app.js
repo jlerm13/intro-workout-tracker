@@ -1562,6 +1562,514 @@ function updateSidebar() {
     }
 }
 
+/* ════════════════ JOURNEY NARRATIVE ════════════════ */
+function generateJourneyNarrative() {
+    const sk = getSessionKey();
+    const candidates = [];
+
+    // Priority 1: PR hit in last session
+    if (currentSession >= 2) {
+        const prevSk = `${currentPhase}-${currentSession - 1}`;
+        const prevData = sessionData[prevSk];
+        if (prevData) {
+            const exercises = workoutData[currentPhase].exercises;
+            exercises.forEach((ex, exIdx) => {
+                let prevMax = 0;
+                Object.keys(prevData).forEach(key => {
+                    if (key.startsWith(`${prevSk}-${exIdx}-`) && key.endsWith('-weight')) {
+                        const w = parseFloat(prevData[key]);
+                        if (!isNaN(w) && w > prevMax) prevMax = w;
+                    }
+                });
+                if (prevMax <= 0) return;
+
+                // Check all sessions before last
+                let histMax = 0;
+                Object.entries(sessionData).forEach(([s, d]) => {
+                    if (s === prevSk) return;
+                    Object.keys(d).forEach(key => {
+                        if (key.startsWith(`${s}-${exIdx}-`) && key.endsWith('-weight')) {
+                            const w = parseFloat(d[key]);
+                            if (!isNaN(w) && w > histMax) histMax = w;
+                        }
+                    });
+                });
+
+                if (prevMax > histMax && histMax > 0) {
+                    candidates.push({
+                        priority: 1,
+                        text: `You set a PR on ${ex.name} at ${prevMax} lbs — up from ${histMax} lbs.`,
+                        icon: '🏆',
+                        isPR: true
+                    });
+                }
+            });
+        }
+    }
+
+    // Priority 2: Volume milestone
+    const totalVolume = getTotalVolumeForPhase(currentPhase);
+    const milestones = [25000, 10000, 5000];
+    for (const m of milestones) {
+        if (totalVolume >= m) {
+            candidates.push({
+                priority: 2,
+                text: `You've moved over ${m.toLocaleString()} lbs this phase.`,
+                icon: '📊'
+            });
+            break;
+        }
+    }
+
+    // Priority 3: Streak
+    const streak = getStreakCount();
+    if (streak >= 3) {
+        candidates.push({
+            priority: 3,
+            text: `${streak} days in a row. Consistency is the real superpower.`,
+            icon: '🔥'
+        });
+    }
+
+    // Priority 4: Session count milestone
+    let totalSessions = 0;
+    Object.keys(sessionData).forEach(sk => { if (Object.keys(sessionData[sk]).length > 0) totalSessions++; });
+    const sessionMilestones = [15, 10, 5];
+    for (const m of sessionMilestones) {
+        if (totalSessions >= m) {
+            const totalProgramSessions = workoutData[1].totalSessions + workoutData[2].totalSessions + workoutData[3].totalSessions;
+            candidates.push({
+                priority: 4,
+                text: `This is session ${totalSessions}+. ${totalSessions >= totalProgramSessions / 2 ? 'Past the halfway mark.' : 'Building momentum.'}`,
+                icon: '💪'
+            });
+            break;
+        }
+    }
+
+    // Priority 5: Phase transition
+    if (currentSession === 1 && currentPhase > 1) {
+        const phaseNames = { 2: 'Intensification', 3: 'Strength / Hypertrophy' };
+        candidates.push({
+            priority: 5,
+            text: `Welcome to Phase ${currentPhase} — ${phaseNames[currentPhase]}. Time to push heavier.`,
+            icon: '⚡'
+        });
+    }
+
+    // Priority 6: Weight increase streak
+    if (currentSession >= 3) {
+        const exercises = workoutData[currentPhase].exercises;
+        exercises.forEach((ex, exIdx) => {
+            if (ex.work) return; // skip cardio
+            const increases = getConsecutiveWeightIncreases(currentPhase, exIdx);
+            if (increases >= 3) {
+                candidates.push({
+                    priority: 6,
+                    text: `${ex.name} has climbed for ${increases} sessions straight.`,
+                    icon: '📈'
+                });
+            }
+        });
+    }
+
+    // Priority 7: Inactivity
+    if (workoutDates.length > 0) {
+        const lastDate = new Date(workoutDates[workoutDates.length - 1]);
+        const daysSince = Math.floor((new Date() - lastDate) / 86400000);
+        if (daysSince >= 3) {
+            candidates.push({
+                priority: 7,
+                text: `Pick up where you left off — last session was ${daysSince} days ago.`,
+                icon: '👋'
+            });
+        }
+    }
+
+    // Priority 8: Default first session
+    if (candidates.length === 0) {
+        if (totalSessions === 0 || (currentPhase === 1 && currentSession === 1 && !sessionData['1-1'])) {
+            candidates.push({
+                priority: 8,
+                text: "Session 1. Let's see what you're working with.",
+                icon: '🎯'
+            });
+        }
+    }
+
+    if (candidates.length === 0) return null;
+
+    // Pick highest priority (lowest number)
+    candidates.sort((a, b) => a.priority - b.priority);
+
+    // Avoid repeating same narrative within browser session
+    const hash = candidates[0].text.length + candidates[0].priority;
+    const lastHash = sessionStorage.getItem('wt-narrative-hash');
+    if (lastHash === String(hash) && candidates.length > 1) {
+        return candidates[1];
+    }
+    try { sessionStorage.setItem('wt-narrative-hash', String(hash)); } catch (e) {}
+    return candidates[0];
+}
+
+function getTotalVolumeForPhase(phase) {
+    let total = 0;
+    const data = workoutData[phase];
+    for (let s = 1; s <= data.totalSessions; s++) {
+        const sk = `${phase}-${s}`;
+        const d = sessionData[sk];
+        if (!d) continue;
+        data.exercises.forEach((ex, exIdx) => {
+            const sets = getActualSets(ex, phase, s);
+            for (let si = 0; si < sets; si++) {
+                const w = parseFloat(d[`${sk}-${exIdx}-${si}-weight`]);
+                const r = parseFloat(d[`${sk}-${exIdx}-${si}-reps`]);
+                if (!isNaN(w) && !isNaN(r)) total += w * r;
+            }
+        });
+    }
+    return total;
+}
+
+function getConsecutiveWeightIncreases(phase, exIdx) {
+    let count = 0;
+    for (let s = currentSession - 1; s >= 2; s--) {
+        const sk = `${phase}-${s}`;
+        const prevSk = `${phase}-${s - 1}`;
+        const d = sessionData[sk];
+        const pd = sessionData[prevSk];
+        if (!d || !pd) break;
+
+        let maxCur = 0, maxPrev = 0;
+        Object.keys(d).forEach(k => {
+            if (k.startsWith(`${sk}-${exIdx}-`) && k.endsWith('-weight')) {
+                const w = parseFloat(d[k]);
+                if (!isNaN(w) && w > maxCur) maxCur = w;
+            }
+        });
+        Object.keys(pd).forEach(k => {
+            if (k.startsWith(`${prevSk}-${exIdx}-`) && k.endsWith('-weight')) {
+                const w = parseFloat(pd[k]);
+                if (!isNaN(w) && w > maxPrev) maxPrev = w;
+            }
+        });
+
+        if (maxCur > maxPrev && maxPrev > 0) {
+            count++;
+        } else {
+            break;
+        }
+    }
+    return count;
+}
+
+function renderJourneyNarrative() {
+    const el = document.getElementById('journeyNarrative');
+    if (!el) return;
+    const narrative = generateJourneyNarrative();
+    if (!narrative) { el.classList.add('hidden'); return; }
+
+    el.classList.remove('hidden');
+    el.className = 'journey-narrative' + (narrative.isPR ? ' journey-pr' : '');
+    document.getElementById('journeyIcon').textContent = narrative.icon;
+    document.getElementById('journeyText').textContent = narrative.text;
+}
+
+/* ════════════════ SMART SHARE (Auto-Share to Coach) ════════════════ */
+function showToast(message, duration) {
+    duration = duration || 2500;
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    toast.style.animationDuration = `${duration}ms`;
+    container.appendChild(toast);
+    setTimeout(() => { if (toast.parentNode) toast.parentNode.removeChild(toast); }, duration);
+}
+
+function getCoachContact() {
+    try {
+        const stored = localStorage.getItem('wt-coach-contact');
+        return stored ? JSON.parse(stored) : null;
+    } catch (e) { return null; }
+}
+
+function saveCoachContact() {
+    const type = document.getElementById('coachType').value;
+    const value = document.getElementById('coachValue').value.trim();
+
+    if (type === 'none') {
+        localStorage.removeItem('wt-coach-contact');
+        showToast('Clipboard mode saved');
+    } else if (value) {
+        localStorage.setItem('wt-coach-contact', JSON.stringify({ type, value }));
+        showToast('Coach contact saved');
+    } else {
+        showToast('Enter a phone or email');
+        return;
+    }
+    const setup = document.getElementById('coachSetup');
+    if (setup) setup.classList.add('hidden');
+}
+
+function showCoachSetup() {
+    const setup = document.getElementById('coachSetup');
+    if (!setup) return;
+    const contact = getCoachContact();
+    if (contact) {
+        document.getElementById('coachType').value = contact.type;
+        document.getElementById('coachValue').value = contact.value;
+    }
+    setup.classList.remove('hidden');
+}
+
+function smartShare() {
+    const text = generateShareText();
+    const contact = getCoachContact();
+
+    // Try Web Share API first (mobile)
+    if (navigator.share) {
+        navigator.share({ text: text }).then(() => {
+            showToast('Shared!');
+        }).catch(() => {
+            // User cancelled or error — fall through to clipboard
+            clipboardShare(text);
+        });
+        return;
+    }
+
+    // Stored contact — direct link
+    if (contact) {
+        if (contact.type === 'whatsapp') {
+            const phone = contact.value.replace(/\D/g, '');
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+            showToast('Opening WhatsApp');
+            return;
+        }
+        if (contact.type === 'email') {
+            window.open(`mailto:${contact.value}?subject=${encodeURIComponent('Workout Complete!')}&body=${encodeURIComponent(text)}`, '_blank');
+            showToast('Opening email');
+            return;
+        }
+    }
+
+    // Clipboard fallback
+    clipboardShare(text);
+
+    // Show coach setup if no contact stored
+    if (!contact) {
+        showCoachSetup();
+    }
+}
+
+function clipboardShare(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard!')).catch(() => {
+            fallbackCopy(text, () => showToast('Copied to clipboard!'));
+        });
+    } else {
+        fallbackCopy(text, () => showToast('Copied to clipboard!'));
+    }
+}
+
+/* ════════════════ PROGRESS CHARTS ════════════════ */
+function getExerciseWeightHistory(phase, exIdx) {
+    const data = workoutData[phase];
+    const points = [];
+    for (let s = 1; s <= data.totalSessions; s++) {
+        const sk = `${phase}-${s}`;
+        const d = sessionData[sk];
+        if (!d) continue;
+        let maxWeight = 0;
+        const sets = getActualSets(data.exercises[exIdx], phase, s);
+        for (let si = 0; si < sets; si++) {
+            const w = parseFloat(d[`${sk}-${exIdx}-${si}-weight`]);
+            if (!isNaN(w) && w > maxWeight) maxWeight = w;
+        }
+        if (maxWeight > 0) {
+            points.push({ session: s, value: maxWeight });
+        }
+    }
+    return points;
+}
+
+function getVolumeHistory() {
+    const points = [];
+    let sessionCount = 0;
+    for (let phase = 1; phase <= 3; phase++) {
+        const data = workoutData[phase];
+        for (let s = 1; s <= data.totalSessions; s++) {
+            const sk = `${phase}-${s}`;
+            const d = sessionData[sk];
+            if (!d || Object.keys(d).length === 0) continue;
+            let vol = 0;
+            data.exercises.forEach((ex, exIdx) => {
+                const sets = getActualSets(ex, phase, s);
+                for (let si = 0; si < sets; si++) {
+                    const w = parseFloat(d[`${sk}-${exIdx}-${si}-weight`]);
+                    const r = parseFloat(d[`${sk}-${exIdx}-${si}-reps`]);
+                    if (!isNaN(w) && !isNaN(r)) vol += w * r;
+                }
+            });
+            if (vol > 0) {
+                sessionCount++;
+                points.push({ session: sessionCount, label: `P${phase}S${s}`, value: vol });
+            }
+        }
+    }
+    return points;
+}
+
+function renderSVGLineChart(containerId, seriesData, options) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const W = 800, H = 240;
+    const pad = { top: 20, right: 20, bottom: 30, left: 50 };
+    const chartW = W - pad.left - pad.right;
+    const chartH = H - pad.top - pad.bottom;
+
+    // Find global min/max
+    let allPoints = [];
+    seriesData.forEach(s => allPoints.push(...s.points));
+    if (allPoints.length === 0) { container.innerHTML = ''; return; }
+
+    const xMin = Math.min(...allPoints.map(p => p.x));
+    const xMax = Math.max(...allPoints.map(p => p.x));
+    const yMin = 0;
+    const yMax = Math.max(...allPoints.map(p => p.y)) * 1.1 || 1;
+
+    const xScale = xMax > xMin ? chartW / (xMax - xMin) : chartW;
+    const yScale = chartH / (yMax - yMin);
+
+    const toX = v => pad.left + (v - xMin) * xScale;
+    const toY = v => pad.top + chartH - (v - yMin) * yScale;
+
+    let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="font-family:inherit">`;
+
+    // Grid lines
+    const yTicks = 4;
+    for (let i = 0; i <= yTicks; i++) {
+        const val = yMin + (yMax - yMin) * (i / yTicks);
+        const y = toY(val);
+        svg += `<line x1="${pad.left}" y1="${y}" x2="${W - pad.right}" y2="${y}" stroke="var(--border)" stroke-width="1"/>`;
+        svg += `<text x="${pad.left - 8}" y="${y + 4}" text-anchor="end" fill="var(--text-muted)" font-size="10">${options.formatY ? options.formatY(val) : Math.round(val)}</text>`;
+    }
+
+    // X axis labels
+    const xLabels = options.xLabels || [];
+    xLabels.forEach(l => {
+        svg += `<text x="${toX(l.x)}" y="${H - 5}" text-anchor="middle" fill="var(--text-muted)" font-size="10">${l.label}</text>`;
+    });
+
+    // Lines + dots
+    seriesData.forEach(series => {
+        if (series.points.length < 2) {
+            // Single point — just draw dot
+            if (series.points.length === 1) {
+                const p = series.points[0];
+                svg += `<circle cx="${toX(p.x)}" cy="${toY(p.y)}" r="5" fill="${series.color}"/>`;
+            }
+            return;
+        }
+        const pathData = series.points.map((p, i) => `${i === 0 ? 'M' : 'L'}${toX(p.x).toFixed(1)},${toY(p.y).toFixed(1)}`).join(' ');
+        svg += `<polyline points="" fill="none" stroke="${series.color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="${pathData}"/>`;
+        series.points.forEach(p => {
+            svg += `<circle cx="${toX(p.x).toFixed(1)}" cy="${toY(p.y).toFixed(1)}" r="4" fill="${series.color}" stroke="var(--background)" stroke-width="2"/>`;
+        });
+    });
+
+    svg += '</svg>';
+
+    // Legend
+    let legend = '';
+    if (seriesData.length > 1) {
+        legend = '<div class="chart-legend">';
+        seriesData.forEach(s => {
+            if (s.points.length > 0) {
+                legend += `<div class="chart-legend-item"><div class="chart-legend-dot" style="background:${s.color}"></div>${s.label}</div>`;
+            }
+        });
+        legend += '</div>';
+    }
+
+    container.innerHTML = svg + legend;
+}
+
+const chartColors = ['#2383e2', '#7c3aed', '#059669', '#d97706', '#e11d48', '#0891b2', '#4f46e5', '#dc2626', '#0d9488', '#c026d3', '#ea580c'];
+
+function renderProgressCharts() {
+    const section = document.getElementById('chartSection');
+    if (!section) return;
+
+    // Check if we have 2+ sessions with data
+    let sessionsWithData = 0;
+    const data = workoutData[currentPhase];
+    for (let s = 1; s <= data.totalSessions; s++) {
+        const sk = `${currentPhase}-${s}`;
+        if (sessionData[sk] && Object.keys(sessionData[sk]).length > 0) sessionsWithData++;
+    }
+
+    if (sessionsWithData < 2) { section.classList.add('hidden'); return; }
+    section.classList.remove('hidden');
+
+    // Weight chart: per-exercise lines
+    const weightSeries = [];
+    data.exercises.forEach((ex, exIdx) => {
+        if (ex.work) return; // skip cardio
+        const history = getExerciseWeightHistory(currentPhase, exIdx);
+        if (history.length > 0) {
+            weightSeries.push({
+                label: ex.name,
+                color: chartColors[exIdx % chartColors.length],
+                points: history.map(h => ({ x: h.session, y: h.value }))
+            });
+        }
+    });
+
+    const xLabels = [];
+    for (let s = 1; s <= data.totalSessions; s++) {
+        xLabels.push({ x: s, label: `S${s}` });
+    }
+
+    renderSVGLineChart('chartWeightContainer', weightSeries, {
+        xLabels,
+        formatY: v => v + ' lbs'
+    });
+
+    // Volume chart: aggregate across all phases
+    const volHistory = getVolumeHistory();
+    if (volHistory.length >= 2) {
+        const volSeries = [{
+            label: 'Total Volume',
+            color: '#2383e2',
+            points: volHistory.map(h => ({ x: h.session, y: h.value }))
+        }];
+        const volLabels = volHistory.map(h => ({ x: h.session, label: h.label }));
+        renderSVGLineChart('chartVolumeContainer', volSeries, {
+            xLabels: volLabels,
+            formatY: v => v >= 1000 ? (v / 1000).toFixed(1) + 'k' : Math.round(v)
+        });
+    }
+}
+
+function showChartTab(tab) {
+    const weightC = document.getElementById('chartWeightContainer');
+    const volumeC = document.getElementById('chartVolumeContainer');
+    const tabs = document.querySelectorAll('.chart-tab');
+
+    if (tab === 'weight') {
+        weightC.classList.remove('hidden');
+        volumeC.classList.add('hidden');
+    } else {
+        weightC.classList.add('hidden');
+        volumeC.classList.remove('hidden');
+    }
+
+    tabs.forEach(t => t.classList.toggle('active', t.textContent.toLowerCase() === tab));
+}
+
 /* ════════════════ MAIN RENDER ════════════════ */
 function updateWorkout() {
     const data = workoutData[currentPhase];
@@ -1705,6 +2213,8 @@ function updateWorkout() {
 
     updateSidebar();
     renderHeatmap();
+    renderJourneyNarrative();
+    renderProgressCharts();
     saveToStorage();
 }
 
