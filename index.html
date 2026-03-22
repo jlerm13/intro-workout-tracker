@@ -21,14 +21,15 @@
         </div>
 
         <div class="sb-body">
-            <div class="sec-label">Phase</div>
+            <div class="sec-label">Day</div>
             <div class="phase-toggle">
-                <button class="phase-btn active" onclick="selectPhase(1)">Phase 1</button>
-                <button class="phase-btn" onclick="selectPhase(2)">Phase 2</button>
-                <button class="phase-btn" onclick="selectPhase(3)">Phase 3</button>
+                <button class="phase-btn active" onclick="selectPhase(1)">Day 1</button>
+                <button class="phase-btn" onclick="selectPhase(2)">Day 2</button>
+                <button class="phase-btn" onclick="selectPhase(3)">Day 3</button>
+                <button class="phase-btn" onclick="selectPhase(4)">Day 4</button>
             </div>
 
-            <div class="sec-label">Sessions</div>
+            <div class="sec-label">Week</div>
             <div id="sessionNav" class="session-list"></div>
 
             <!-- Primary context card: streak + start -->
@@ -82,8 +83,8 @@
 
             <div class="pg-props">
                 <div class="prop-row">
-                    <div class="prop-key">📅 Session</div>
-                    <div class="prop-val" id="propSession"><span class="prop-tag">Session 1 of 4</span></div>
+                    <div class="prop-key">📅 Week</div>
+                    <div class="prop-val" id="propSession"><span class="prop-tag">Week 1 of 4</span></div>
                 </div>
                 <div class="prop-row">
                     <div class="prop-key">🎯 Focus</div>
@@ -204,7 +205,7 @@
     <div class="summary-card">
         <div class="summary-emoji" id="summaryEmoji">🎉</div>
         <div class="summary-title" id="summaryTitle">Session Complete!</div>
-        <div class="summary-subtitle" id="summaryPhaseSession">Phase 1 · Session 1 of 4</div>
+        <div class="summary-subtitle" id="summaryPhaseSession">Day 1 · Week 1 of 4</div>
 
         <div class="summary-stats">
             <div class="summary-stat">
