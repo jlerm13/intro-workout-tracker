@@ -735,11 +735,11 @@ function showSummary() {
 
     const data           = workoutData[currentPhase];
     const isLastSession  = currentSession >= data.totalSessions;
-    const isLastPhase    = currentPhase >= 3;
+    const isLastPhase    = currentPhase >= 4;
     const stats          = calcSessionStats();
 
     document.getElementById('summaryPhaseSession').textContent =
-        `Phase ${currentPhase} · Session ${currentSession} of ${data.totalSessions}`;
+        `Day ${currentPhase} · Week ${currentSession} of ${data.totalSessions}`;
 
     const durationText = sessionElapsed > 0 ? formatSessionDuration(sessionElapsed) : '—';
     document.getElementById('summaryDuration').textContent = durationText;
@@ -771,14 +771,14 @@ function showSummary() {
         ctaBtn.onclick     = hideSummary;
     } else if (isLastSession) {
         document.getElementById('summaryEmoji').textContent  = '🎉';
-        document.getElementById('summaryTitle').textContent  = 'Phase Complete!';
-        ctaBtn.textContent = `Start Phase ${currentPhase + 1} →`;
+        document.getElementById('summaryTitle').textContent  = 'Day Complete!';
+        ctaBtn.textContent = `Start Day ${currentPhase + 1} →`;
         ctaBtn.className   = 'summary-cta-btn';
         ctaBtn.onclick     = () => { hideSummary(); selectPhase(currentPhase + 1); };
     } else {
         document.getElementById('summaryEmoji').textContent  = '🎉';
-        document.getElementById('summaryTitle').textContent  = 'Session Complete!';
-        ctaBtn.textContent = `Continue to Session ${currentSession + 1} →`;
+        document.getElementById('summaryTitle').textContent  = 'Week Complete!';
+        ctaBtn.textContent = `Continue to Week ${currentSession + 1} →`;
         ctaBtn.className   = 'summary-cta-btn';
         ctaBtn.onclick     = () => { hideSummary(); selectSession(currentSession + 1); };
     }
@@ -1384,7 +1384,7 @@ function generateShareText() {
     // Retrieve last session duration
     const lastDuration = sessionStorage.getItem('wt-last-duration');
 
-    let text = `💪 Phase ${currentPhase} · Session ${currentSession} of ${data.totalSessions} — Done!\n`;
+    let text = `💪 Day ${currentPhase} · Week ${currentSession} of ${data.totalSessions} — Done!\n`;
     text += `📅 ${date}`;
     if (lastDuration) text += ` · ${lastDuration}`;
     text += `\n\n`;
@@ -1493,9 +1493,10 @@ function renderSessionNav() {
     for (let s = 1; s <= data.totalSessions; s++) {
         const item = document.createElement('div');
         item.className = `sess-item${s === currentSession ? ' active' : ''}`;
+        const weekLabel = s === 3 ? `Week ${s} — Deload` : `Week ${s}`;
         item.innerHTML = `
             <span class="sess-icon">${s === currentSession ? '📋' : '📄'}</span>
-            <span>Session ${s}</span>
+            <span>${weekLabel}</span>
         `;
         item.onclick = () => selectSession(s);
         nav.appendChild(item);
@@ -1539,7 +1540,7 @@ function updateSidebar() {
     if (!prevContainer) return;
 
     if (currentSession === 1) {
-        prevContainer.innerHTML = `<p style="font-size:12px;color:var(--text-muted);font-style:italic;">First session — establish baseline</p>`;
+        prevContainer.innerHTML = `<p style="font-size:12px;color:var(--text-muted);font-style:italic;">First week — establish baseline</p>`;
     } else {
         const prevKey  = `${currentPhase}-${currentSession - 1}`;
         const prevData = sessionData[prevKey];
@@ -1572,7 +1573,7 @@ function updateWorkout() {
 
     const prog = data.progression[currentSession - 1];
     document.getElementById('propSession').innerHTML =
-        `<span class="prop-tag">Session ${currentSession} of ${data.totalSessions}</span>`;
+        `<span class="prop-tag">Week ${currentSession} of ${data.totalSessions}</span>`;
     document.getElementById('propFocus').textContent = prog.note;
 
     const list = document.getElementById('exerciseList');
