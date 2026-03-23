@@ -262,14 +262,8 @@ body {
     padding: 0 var(--space-5) 60px;
 }
 
-.pg-emoji {
-    padding-top: 28px;
-    font-size: 44px;
-    line-height: 1;
-    margin-bottom: var(--space-3);
-}
-
 .pg-title {
+    padding-top: 28px;
     font-size: 26px;
     font-weight: 700;
     color: var(--text);
@@ -1789,8 +1783,7 @@ input.weight-locked {
 
     .page { padding: 0 48px var(--space-20); }
 
-    .pg-emoji { padding-top: 60px; font-size: 56px; }
-    .pg-title { font-size: 38px; }
+    .pg-title { padding-top: 60px; font-size: 38px; }
 
     .prop-key { width: 160px; }
 

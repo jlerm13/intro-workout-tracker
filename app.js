@@ -1883,8 +1883,7 @@ function updateSidebar() {
 function updateWorkout() {
     const data = workoutData[currentPhase];
 
-    document.getElementById('pageTitle').innerHTML =
-        data.name + ' <span style="font-size:13px;color:var(--text-muted);font-weight:400;">v4</span>';
+    document.getElementById('pageTitle').textContent = data.name;
     document.getElementById('pageSubtitle').textContent = data.frequency;
 
     const prog = data.progression[currentSession - 1];

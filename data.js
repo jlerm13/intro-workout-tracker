@@ -2,7 +2,7 @@
 const workoutData = {
     1: {
         name: "Workout 1 — Upper Body A",
-        frequency: "EDT Upper/Lower Split · 4 Day Program",
+        frequency: "EDT Upper/Lower Split",
         totalSessions: 4,
         progression: [
             { session: 1, note: "Week 1 — Block A: 13 min · Block B: 10 min · Block C: 7 min",          blockDurations: { "Block A": 13, "Block B": 10, "Block C": 7 } },
@@ -21,7 +21,7 @@ const workoutData = {
     },
     2: {
         name: "Workout 2 — Lower Body A",
-        frequency: "EDT Upper/Lower Split · 4 Day Program",
+        frequency: "EDT Upper/Lower Split",
         totalSessions: 4,
         progression: [
             { session: 1, note: "Week 1 — Block A: 13 min · Block B: 10 min · Block C: 7 min",          blockDurations: { "Block A": 13, "Block B": 10, "Block C": 7 } },
@@ -40,7 +40,7 @@ const workoutData = {
     },
     3: {
         name: "Workout 3 — Upper Body B",
-        frequency: "EDT Upper/Lower Split · 4 Day Program",
+        frequency: "EDT Upper/Lower Split",
         totalSessions: 4,
         progression: [
             { session: 1, note: "Week 1 — Block A: 13 min · Block B: 10 min · Block C: 7 min",          blockDurations: { "Block A": 13, "Block B": 10, "Block C": 7 } },
@@ -59,7 +59,7 @@ const workoutData = {
     },
     4: {
         name: "Workout 4 — Lower Body B",
-        frequency: "EDT Upper/Lower Split · 4 Day Program",
+        frequency: "EDT Upper/Lower Split",
         totalSessions: 4,
         progression: [
             { session: 1, note: "Week 1 — Block A: 13 min · Block B: 10 min · Block C: 7 min",          blockDurations: { "Block A": 13, "Block B": 10, "Block C": 7 } },
