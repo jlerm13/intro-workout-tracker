@@ -753,6 +753,7 @@ function renderBlockView() {
     document.getElementById('focusScreenRest').classList.add('hidden');
     const workScreen = document.getElementById('focusScreenWork');
     if (workScreen) workScreen.classList.add('hidden');
+    document.getElementById('focusOverlay').classList.add('block-mode');
 
     const group = focusBlockGroups[focusGroupIdx];
 
@@ -875,7 +876,9 @@ function exitFocusMode() {
     clearIntervalTimer();
     clearBlockTimer();
     stopSessionTimer();
-    document.getElementById('focusOverlay').classList.add('hidden');
+    const overlay = document.getElementById('focusOverlay');
+    overlay.classList.add('hidden');
+    overlay.classList.remove('block-mode');
     // Clean up video iframe when exiting
     const videoEmbed = document.getElementById('focusVideoEmbed');
     if (videoEmbed) { videoEmbed.innerHTML = ''; videoEmbed.classList.add('hidden'); }

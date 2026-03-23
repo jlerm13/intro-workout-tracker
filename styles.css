@@ -738,6 +738,8 @@ body {
     margin: 0 auto;
     width: 100%;
 }
+/* Block view overrides centering so tall cards aren't clipped */
+.focus-overlay.block-mode .focus-body { justify-content: flex-start; align-items: stretch; }
 .focus-block-tag { margin-bottom: 6px; }
 .focus-ex-name {
     font-size: 28px;
