@@ -138,6 +138,14 @@
             <button class="interval-skip-btn hidden" id="intervalSkipBtn" onclick="skipWorkPhase()">Skip &rarr; Log KPIs</button>
         </div>
 
+        <!-- Screen 3: EDT Block View -->
+        <div class="focus-screen-block hidden" id="focusScreenBlock">
+            <div class="block-ex-list" id="blockExList"></div>
+            <button class="block-done-btn" id="blockDoneBtn" onclick="advanceToNextBlock()">
+                Done with <span id="blockDoneName">Block A</span> →
+            </button>
+        </div>
+
         <!-- Screen 1: Exercise -->
         <div class="focus-screen-exercise" id="focusScreenExercise">
             <div class="focus-note" id="focusNote"></div>
