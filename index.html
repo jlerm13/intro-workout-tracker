@@ -109,6 +109,19 @@
     </div>
     <div class="focus-body">
         <span class="ex-tag focus-block-tag" id="focusBlockTag"></span>
+
+        <!-- Block Timer -->
+        <div class="block-timer-bar hidden" id="blockTimerBar">
+            <div class="block-timer-top">
+                <span class="block-timer-label" id="blockTimerLabel">Block A</span>
+                <span class="block-timer-time" id="blockTimerTime">13:00</span>
+            </div>
+            <div class="block-timer-track">
+                <div class="block-timer-fill" id="blockTimerFill"></div>
+            </div>
+            <button class="block-start-btn" id="blockStartBtn" onclick="startBlockTimer()">▶ Start Block Timer</button>
+        </div>
+
         <div class="focus-ex-name" id="focusExName"></div>
         <div class="focus-set-counter" id="focusSetCounter"></div>
         <div class="focus-sets-dots" id="focusSetDots"></div>
@@ -136,9 +149,13 @@
             <div class="focus-prev" id="focusPrev"></div>
             <div class="focus-cue hidden" id="focusCue"></div>
             <div class="focus-inputs" id="focusInputs">
-                <div class="focus-input-group">
-                    <label>Weight (lbs)</label>
-                    <input class="focus-num-inp" type="number" id="focusWeight" placeholder="lbs" inputmode="decimal">
+                <div class="focus-input-group" id="weightGroup">
+                    <label id="weightLabel">Weight (lbs)</label>
+                    <div class="weight-input-row">
+                        <input class="focus-num-inp" type="number" id="focusWeight" placeholder="lbs" inputmode="decimal">
+                        <button class="weight-edit-btn hidden" id="weightEditBtn" onclick="unlockBlockWeight()" title="Edit weight">✏️</button>
+                    </div>
+                    <div class="weight-locked-hint hidden" id="weightLockedHint">locked · tap ✏️ to change</div>
                 </div>
                 <div class="focus-input-group">
                     <label>Reps</label>

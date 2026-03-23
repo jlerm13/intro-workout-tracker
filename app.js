@@ -35,6 +35,13 @@ let sessionStartTime    = null;
 let sessionTimerInterval = null;
 let sessionTimerVisible  = false;  // hidden by default
 
+// Block timer state (EDT countdown per block)
+let blockTimerInterval   = null;
+let blockTimeLeft        = 0;
+let blockTimerTotal      = 0;
+let blockTimerActive     = false;
+let lastRenderedGroupIdx = -1;     // detect block transitions
+
 /* ════════════════ LOCALSTORAGE ════════════════ */
 function saveToStorage() {
     try {
@@ -270,6 +277,80 @@ function dismissRest() {
     if (restInterval) clearInterval(restInterval);
     restInterval = null;
     document.getElementById('restTimer').classList.add('hidden');
+}
+
+/* ════════════════ BLOCK TIMER (EDT countdown per block) ════════════════ */
+function formatBlockTime(s) {
+    if (s <= 0) return '0:00';
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${sec.toString().padStart(2, '0')}`;
+}
+
+function getBlockDuration(blockType) {
+    const prog = workoutData[currentPhase].progression[currentSession - 1];
+    if (!prog || !prog.blockDurations) return 0;
+    return (prog.blockDurations[blockType] || 0) * 60; // minutes → seconds
+}
+
+function initBlockTimer() {
+    clearBlockTimer();
+    const group     = focusBlockGroups[focusGroupIdx];
+    const totalSecs = getBlockDuration(group.type);
+    blockTimerTotal = totalSecs;
+    blockTimeLeft   = totalSecs;
+    blockTimerActive = false;
+
+    const bar = document.getElementById('blockTimerBar');
+    if (!bar) return;
+    if (!totalSecs) { bar.classList.add('hidden'); return; }
+
+    bar.classList.remove('hidden', 'block-timer-done');
+    document.getElementById('blockTimerLabel').textContent = group.type;
+    document.getElementById('blockTimerTime').textContent  = formatBlockTime(totalSecs);
+    document.getElementById('blockTimerFill').style.width  = '100%';
+    const startBtn = document.getElementById('blockStartBtn');
+    startBtn.classList.remove('hidden');
+    startBtn.disabled = false;
+}
+
+function startBlockTimer() {
+    if (blockTimerActive) return;
+    blockTimerActive = true;
+    const startBtn = document.getElementById('blockStartBtn');
+    if (startBtn) startBtn.classList.add('hidden');
+    blockTimerInterval = setInterval(() => {
+        blockTimeLeft = Math.max(0, blockTimeLeft - 1);
+        updateBlockTimerDisplay();
+        if (blockTimeLeft === 0) blockTimerDone();
+    }, 1000);
+    updateBlockTimerDisplay();
+}
+
+function clearBlockTimer() {
+    if (blockTimerInterval) { clearInterval(blockTimerInterval); blockTimerInterval = null; }
+    blockTimerActive = false;
+}
+
+function blockTimerDone() {
+    clearBlockTimer();
+    const bar = document.getElementById('blockTimerBar');
+    if (bar) bar.classList.add('block-timer-done');
+    const timeEl = document.getElementById('blockTimerTime');
+    if (timeEl) timeEl.textContent = 'TIME';
+    const fillEl = document.getElementById('blockTimerFill');
+    if (fillEl) fillEl.style.width = '0%';
+    playBeep(880, 0.2, 1);
+    setTimeout(() => playBeep(880, 0.2, 1), 350);
+    setTimeout(() => playBeep(1100, 0.4, 1), 700);
+}
+
+function updateBlockTimerDisplay() {
+    const timeEl = document.getElementById('blockTimerTime');
+    const fillEl = document.getElementById('blockTimerFill');
+    if (timeEl) timeEl.textContent = formatBlockTime(blockTimeLeft);
+    if (fillEl && blockTimerTotal > 0)
+        fillEl.style.width = (blockTimeLeft / blockTimerTotal * 100) + '%';
 }
 
 /* ════════════════ SESSION TIMER ════════════════ */
@@ -603,6 +684,16 @@ function showCardioRestScreen(seconds) {
     }
 }
 
+/* ════════════════ WEIGHT LOCK (EDT weight-once per block) ════════════════ */
+function unlockBlockWeight() {
+    const inp  = document.getElementById('focusWeight');
+    const btn  = document.getElementById('weightEditBtn');
+    const hint = document.getElementById('weightLockedHint');
+    if (inp)  { inp.readOnly = false; inp.classList.remove('weight-locked'); inp.focus(); }
+    if (btn)  btn.classList.add('hidden');
+    if (hint) hint.classList.add('hidden');
+}
+
 /* ════════════════ FOCUS MODE ════════════════ */
 function buildBlockGroups() {
     const exercises = workoutData[currentPhase].exercises;
@@ -625,10 +716,11 @@ function syncFocusState() {
 }
 
 function enterFocusMode() {
-    focusBlockGroups = buildBlockGroups();
-    focusGroupIdx = 0;
-    focusSubIdx   = 0;
-    focusRoundIdx = 0;
+    focusBlockGroups     = buildBlockGroups();
+    focusGroupIdx        = 0;
+    focusSubIdx          = 0;
+    focusRoundIdx        = 0;
+    lastRenderedGroupIdx = -1;
     syncFocusState();
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
     clearIntervalTimer();
@@ -641,6 +733,7 @@ function enterFocusMode() {
 function exitFocusMode() {
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
     clearIntervalTimer();
+    clearBlockTimer();
     stopSessionTimer();
     document.getElementById('focusOverlay').classList.add('hidden');
     // Clean up video iframe when exiting
@@ -887,6 +980,12 @@ function renderFocusExercise(skipAutoStart) {
     const workScreen = document.getElementById('focusScreenWork');
     if (workScreen) workScreen.classList.add('hidden');
 
+    // Detect block transition → reset block timer
+    if (focusGroupIdx !== lastRenderedGroupIdx) {
+        lastRenderedGroupIdx = focusGroupIdx;
+        initBlockTimer();
+    }
+
     const data        = workoutData[currentPhase];
     const exercises   = data.exercises;
     const group       = focusBlockGroups[focusGroupIdx];
@@ -1004,8 +1103,25 @@ function renderFocusExercise(skipAutoStart) {
         repsInp.placeholder   = 'reps';
     }
 
-    weightInp.value = savedW;
-    repsInp.value   = savedR;
+    // EDT weight-once: lock weight after Round 1 (unless cardio)
+    const blockWeightKey = `${sk}-${focusExIdx}-block-weight`;
+    const blockWeight    = curData[blockWeightKey] || savedW;
+    const editBtn  = document.getElementById('weightEditBtn');
+    const hint     = document.getElementById('weightLockedHint');
+    if (!focusIsCardio && focusSetIdx > 0 && blockWeight) {
+        weightInp.value    = blockWeight;
+        weightInp.readOnly = true;
+        weightInp.classList.add('weight-locked');
+        if (editBtn) editBtn.classList.remove('hidden');
+        if (hint)    hint.classList.remove('hidden');
+    } else {
+        weightInp.value    = blockWeight || savedW;
+        weightInp.readOnly = false;
+        weightInp.classList.remove('weight-locked');
+        if (editBtn) editBtn.classList.add('hidden');
+        if (hint)    hint.classList.add('hidden');
+    }
+    repsInp.value = savedR;
 
     renderFocusSetDots(totalRounds);
     renderBlockProgress();
@@ -1048,8 +1164,11 @@ function confirmFocusSet() {
     const rVal        = document.getElementById('focusReps').value;
 
     if (!sessionData[sk]) sessionData[sk] = {};
-    if (wVal) sessionData[sk][`${sk}-${focusExIdx}-${focusSetIdx}-weight`] = wVal;
-    if (rVal) sessionData[sk][`${sk}-${focusExIdx}-${focusSetIdx}-reps`]   = rVal;
+    if (wVal) {
+        sessionData[sk][`${sk}-${focusExIdx}-${focusSetIdx}-weight`] = wVal;
+        if (!ex.work) sessionData[sk][`${sk}-${focusExIdx}-block-weight`] = wVal;  // EDT: lock for block
+    }
+    if (rVal) sessionData[sk][`${sk}-${focusExIdx}-${focusSetIdx}-reps`] = rVal;
 
     completedSets[`${sk}-${focusExIdx}-${focusSetIdx}`] = true;
     saveToStorage();
