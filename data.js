@@ -2,13 +2,13 @@
 const workoutData = {
     1: {
         name: "Workout 1 — Upper Body A",
-        frequency: "EDT Upper/Lower Split · 4 Day Program",
+        frequency: "EDT Upper/Lower Split",
         totalSessions: 4,
         progression: [
-            { session: 1, note: "Week 1 — Block A: 13 min · Block B: 10 min · Block C: 7 min" },
-            { session: 2, note: "Week 2 — Block A: 13 min · Block B: 10 min · Block C: 7 min" },
-            { session: 3, note: "Week 3 Deload — Block A: 5 min · Block B: 6 min · Block C: 3 min" },
-            { session: 4, note: "Week 4 — Block A: 13 min · Block B: 10 min · Block C: 7 min" }
+            { session: 1, note: "Week 1 — Block A: 13 min · Block B: 10 min · Block C: 7 min",          blockDurations: { "Block A": 13, "Block B": 10, "Block C": 7 } },
+            { session: 2, note: "Week 2 — Block A: 13 min · Block B: 10 min · Block C: 7 min",          blockDurations: { "Block A": 13, "Block B": 10, "Block C": 7 } },
+            { session: 3, note: "Week 3 Deload — Block A: 5 min · Block B: 6 min · Block C: 3 min",     blockDurations: { "Block A": 5,  "Block B": 6,  "Block C": 3 } },
+            { session: 4, note: "Week 4 — Block A: 13 min · Block B: 10 min · Block C: 7 min",          blockDurations: { "Block A": 13, "Block B": 10, "Block C": 7 } }
         ],
         exercises: [
             { name: "15 Degree Incline Barbell Press",    type: "Block A", sets: 5, reps: "4",  tempo: "30X0", rest: "0", note: "Use ~8RM load. A1–A2 superset: cycle between exercises with minimal rest for the full block time window." },
@@ -21,13 +21,13 @@ const workoutData = {
     },
     2: {
         name: "Workout 2 — Lower Body A",
-        frequency: "EDT Upper/Lower Split · 4 Day Program",
+        frequency: "EDT Upper/Lower Split",
         totalSessions: 4,
         progression: [
-            { session: 1, note: "Week 1 — Block A: 13 min · Block B: 10 min · Block C: 7 min" },
-            { session: 2, note: "Week 2 — Block A: 13 min · Block B: 10 min · Block C: 7 min" },
-            { session: 3, note: "Week 3 Deload — Block A: 5 min · Block B: 6 min · Block C: 3 min" },
-            { session: 4, note: "Week 4 — Block A: 13 min · Block B: 10 min · Block C: 7 min" }
+            { session: 1, note: "Week 1 — Block A: 13 min · Block B: 10 min · Block C: 7 min",          blockDurations: { "Block A": 13, "Block B": 10, "Block C": 7 } },
+            { session: 2, note: "Week 2 — Block A: 13 min · Block B: 10 min · Block C: 7 min",          blockDurations: { "Block A": 13, "Block B": 10, "Block C": 7 } },
+            { session: 3, note: "Week 3 Deload — Block A: 5 min · Block B: 6 min · Block C: 3 min",     blockDurations: { "Block A": 5,  "Block B": 6,  "Block C": 3 } },
+            { session: 4, note: "Week 4 — Block A: 13 min · Block B: 10 min · Block C: 7 min",          blockDurations: { "Block A": 13, "Block B": 10, "Block C": 7 } }
         ],
         exercises: [
             { name: "Straight Bar Box Squat",                        type: "Block A", sets: 5, reps: "4",  tempo: "30X0", rest: "0", note: "Use ~8RM load. Box height keeps you out of anterior hip pinch — sit back under control, pause lightly on box, drive up. A1–A2 superset." },
@@ -40,13 +40,13 @@ const workoutData = {
     },
     3: {
         name: "Workout 3 — Upper Body B",
-        frequency: "EDT Upper/Lower Split · 4 Day Program",
+        frequency: "EDT Upper/Lower Split",
         totalSessions: 4,
         progression: [
-            { session: 1, note: "Week 1 — Block A: 13 min · Block B: 10 min · Block C: 7 min" },
-            { session: 2, note: "Week 2 — Block A: 13 min · Block B: 10 min · Block C: 7 min" },
-            { session: 3, note: "Week 3 Deload — Block A: 5 min · Block B: 6 min · Block C: 3 min" },
-            { session: 4, note: "Week 4 — Block A: 13 min · Block B: 10 min · Block C: 7 min" }
+            { session: 1, note: "Week 1 — Block A: 13 min · Block B: 10 min · Block C: 7 min",          blockDurations: { "Block A": 13, "Block B": 10, "Block C": 7 } },
+            { session: 2, note: "Week 2 — Block A: 13 min · Block B: 10 min · Block C: 7 min",          blockDurations: { "Block A": 13, "Block B": 10, "Block C": 7 } },
+            { session: 3, note: "Week 3 Deload — Block A: 5 min · Block B: 6 min · Block C: 3 min",     blockDurations: { "Block A": 5,  "Block B": 6,  "Block C": 3 } },
+            { session: 4, note: "Week 4 — Block A: 13 min · Block B: 10 min · Block C: 7 min",          blockDurations: { "Block A": 13, "Block B": 10, "Block C": 7 } }
         ],
         exercises: [
             { name: "Inertia Bench Press from Pins",         type: "Block A", sets: 5, reps: "3", tempo: "22X0", rest: "0", note: "Use ~6RM load. Set pins so bar is 1–2\" off chest. A1–A2 superset: cycle between exercises with minimal rest for the full block time window." },
@@ -59,13 +59,13 @@ const workoutData = {
     },
     4: {
         name: "Workout 4 — Lower Body B",
-        frequency: "EDT Upper/Lower Split · 4 Day Program",
+        frequency: "EDT Upper/Lower Split",
         totalSessions: 4,
         progression: [
-            { session: 1, note: "Week 1 — Block A: 13 min · Block B: 13 min · Block C: 7 min" },
-            { session: 2, note: "Week 2 — Block A: 13 min · Block B: 13 min · Block C: 7 min" },
-            { session: 3, note: "Week 3 Deload — Block A: 5 min · Block A: 4 min · Block C: 3 min" },
-            { session: 4, note: "Week 4 — Block A: 13 min · Block B: 13 min · Block C: 7 min" }
+            { session: 1, note: "Week 1 — Block A: 13 min · Block B: 10 min · Block C: 7 min",          blockDurations: { "Block A": 13, "Block B": 10, "Block C": 7 } },
+            { session: 2, note: "Week 2 — Block A: 13 min · Block B: 10 min · Block C: 7 min",          blockDurations: { "Block A": 13, "Block B": 10, "Block C": 7 } },
+            { session: 3, note: "Week 3 Deload — Block A: 5 min · Block B: 6 min · Block C: 3 min",     blockDurations: { "Block A": 5,  "Block B": 6,  "Block C": 3 } },
+            { session: 4, note: "Week 4 — Block A: 13 min · Block B: 10 min · Block C: 7 min",          blockDurations: { "Block A": 13, "Block B": 10, "Block C": 7 } }
         ],
         exercises: [
             { name: "Barbell Deadlift from Blocks",  type: "Block A", sets: 5, reps: "3",      tempo: "22X0", rest: "0", note: "Use ~6RM load. Set blocks high enough to avoid excessive hip flexion — conventional stance. A1–A2 superset." },

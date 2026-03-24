@@ -77,17 +77,16 @@
     <!-- ════════════════ MAIN CONTENT ════════════════ -->
     <main class="main">
         <div class="page">
-            <div class="pg-emoji">🏋️</div>
-            <h1 class="pg-title" id="pageTitle">Phase 1 — Accumulation <span style="font-size:13px;color:var(--text-muted);font-weight:400;"></span></h1>
+            <h1 class="pg-title" id="pageTitle">Phase 1 — Accumulation</h1>
             <p class="pg-subtitle" id="pageSubtitle">2x per week for 2 weeks</p>
 
             <div class="pg-props">
                 <div class="prop-row">
-                    <div class="prop-key">📅 Week</div>
+                    <div class="prop-key">Week</div>
                     <div class="prop-val" id="propSession"><span class="prop-tag">Week 1 of 4</span></div>
                 </div>
                 <div class="prop-row">
-                    <div class="prop-key">🎯 Focus</div>
+                    <div class="prop-key">Focus</div>
                     <div class="prop-val" id="propFocus">Baseline — Learn the movements</div>
                 </div>
             </div>
@@ -109,6 +108,19 @@
     </div>
     <div class="focus-body">
         <span class="ex-tag focus-block-tag" id="focusBlockTag"></span>
+
+        <!-- Block Timer -->
+        <div class="block-timer-bar hidden" id="blockTimerBar">
+            <div class="block-timer-top">
+                <span class="block-timer-label" id="blockTimerLabel">Block A</span>
+                <span class="block-timer-time" id="blockTimerTime">13:00</span>
+            </div>
+            <div class="block-timer-track">
+                <div class="block-timer-fill" id="blockTimerFill"></div>
+            </div>
+            <button class="block-start-btn" id="blockStartBtn" onclick="startBlockTimer()">▶ Start Block Timer</button>
+        </div>
+
         <div class="focus-ex-name" id="focusExName"></div>
         <div class="focus-set-counter" id="focusSetCounter"></div>
         <div class="focus-sets-dots" id="focusSetDots"></div>
@@ -125,6 +137,14 @@
             <button class="interval-skip-btn hidden" id="intervalSkipBtn" onclick="skipWorkPhase()">Skip &rarr; Log KPIs</button>
         </div>
 
+        <!-- Screen 3: EDT Block View -->
+        <div class="focus-screen-block hidden" id="focusScreenBlock">
+            <div class="block-ex-list" id="blockExList"></div>
+            <button class="block-done-btn" id="blockDoneBtn" onclick="advanceToNextBlock()">
+                Done with <span id="blockDoneName">Block A</span> →
+            </button>
+        </div>
+
         <!-- Screen 1: Exercise -->
         <div class="focus-screen-exercise" id="focusScreenExercise">
             <div class="focus-note" id="focusNote"></div>
@@ -136,9 +156,13 @@
             <div class="focus-prev" id="focusPrev"></div>
             <div class="focus-cue hidden" id="focusCue"></div>
             <div class="focus-inputs" id="focusInputs">
-                <div class="focus-input-group">
-                    <label>Weight (lbs)</label>
-                    <input class="focus-num-inp" type="number" id="focusWeight" placeholder="lbs" inputmode="decimal">
+                <div class="focus-input-group" id="weightGroup">
+                    <label id="weightLabel">Weight (lbs)</label>
+                    <div class="weight-input-row">
+                        <input class="focus-num-inp" type="number" id="focusWeight" placeholder="lbs" inputmode="decimal">
+                        <button class="weight-edit-btn hidden" id="weightEditBtn" onclick="unlockBlockWeight()" title="Edit weight">✏️</button>
+                    </div>
+                    <div class="weight-locked-hint hidden" id="weightLockedHint">locked · tap ✏️ to change</div>
                 </div>
                 <div class="focus-input-group">
                     <label>Reps</label>

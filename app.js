@@ -35,6 +35,13 @@ let sessionStartTime    = null;
 let sessionTimerInterval = null;
 let sessionTimerVisible  = false;  // hidden by default
 
+// Block timer state (EDT countdown per block)
+let blockTimerInterval   = null;
+let blockTimeLeft        = 0;
+let blockTimerTotal      = 0;
+let blockTimerActive     = false;
+let lastRenderedGroupIdx = -1;     // detect block transitions
+
 /* ════════════════ LOCALSTORAGE ════════════════ */
 function saveToStorage() {
     try {
@@ -270,6 +277,82 @@ function dismissRest() {
     if (restInterval) clearInterval(restInterval);
     restInterval = null;
     document.getElementById('restTimer').classList.add('hidden');
+}
+
+/* ════════════════ BLOCK TIMER (EDT countdown per block) ════════════════ */
+function formatBlockTime(s) {
+    if (s <= 0) return '0:00';
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${sec.toString().padStart(2, '0')}`;
+}
+
+function getBlockDuration(blockType) {
+    const prog = workoutData[currentPhase].progression[currentSession - 1];
+    if (!prog || !prog.blockDurations) return 0;
+    return (prog.blockDurations[blockType] || 0) * 60; // minutes → seconds
+}
+
+function initBlockTimer() {
+    clearBlockTimer();
+    const group     = focusBlockGroups[focusGroupIdx];
+    const totalSecs = getBlockDuration(group.type);
+    blockTimerTotal = totalSecs;
+    blockTimeLeft   = totalSecs;
+    blockTimerActive = false;
+
+    const bar = document.getElementById('blockTimerBar');
+    if (!bar) return;
+    if (!totalSecs) { bar.classList.add('hidden'); return; }
+
+    bar.classList.remove('hidden', 'block-timer-done');
+    document.getElementById('blockTimerLabel').textContent = group.type;
+    document.getElementById('blockTimerTime').textContent  = formatBlockTime(totalSecs);
+    document.getElementById('blockTimerFill').style.width  = '100%';
+    const startBtn = document.getElementById('blockStartBtn');
+    startBtn.classList.remove('hidden');
+    startBtn.disabled = false;
+}
+
+function startBlockTimer() {
+    if (blockTimerActive) return;
+    blockTimerActive = true;
+    const startBtn = document.getElementById('blockStartBtn');
+    if (startBtn) startBtn.classList.add('hidden');
+    blockTimerInterval = setInterval(() => {
+        blockTimeLeft = Math.max(0, blockTimeLeft - 1);
+        updateBlockTimerDisplay();
+        if (blockTimeLeft === 0) blockTimerDone();
+    }, 1000);
+    updateBlockTimerDisplay();
+}
+
+function clearBlockTimer() {
+    if (blockTimerInterval) { clearInterval(blockTimerInterval); blockTimerInterval = null; }
+    blockTimerActive = false;
+}
+
+function blockTimerDone() {
+    clearBlockTimer();
+    const bar = document.getElementById('blockTimerBar');
+    if (bar) bar.classList.add('block-timer-done');
+    const timeEl = document.getElementById('blockTimerTime');
+    if (timeEl) timeEl.textContent = 'TIME';
+    const fillEl = document.getElementById('blockTimerFill');
+    if (fillEl) fillEl.style.width = '0%';
+    playBeep(880, 0.2, 1);
+    setTimeout(() => playBeep(880, 0.2, 1), 350);
+    setTimeout(() => playBeep(1100, 0.4, 1), 700);
+    const doneBtn = document.getElementById('blockDoneBtn');
+    if (doneBtn) doneBtn.classList.add('block-done-btn-ready');
+}
+
+function updateBlockTimerDisplay() {
+    const timeEl = document.getElementById('blockTimerTime');
+    const fillEl = document.getElementById('blockTimerFill');
+    if (timeEl) timeEl.textContent = formatBlockTime(blockTimeLeft);
+    if (fillEl && blockTimerTotal > 0)
+        fillEl.style.width = (blockTimeLeft / blockTimerTotal * 100) + '%';
 }
 
 /* ════════════════ SESSION TIMER ════════════════ */
@@ -603,6 +686,155 @@ function showCardioRestScreen(seconds) {
     }
 }
 
+/* ════════════════ EDT BLOCK VIEW ════════════════ */
+function getBlockSets(exIdx) {
+    const sk = getSessionKey();
+    return parseInt((sessionData[sk] || {})[`${sk}-${exIdx}-block-sets`]) || 0;
+}
+
+function getPrevBlockSets(exIdx) {
+    if (currentSession < 2) return null;
+    const prevSk   = `${currentPhase}-${currentSession - 1}`;
+    const prevData = sessionData[prevSk];
+    if (!prevData) return null;
+    const val = parseInt(prevData[`${prevSk}-${exIdx}-block-sets`]);
+    return isNaN(val) ? null : val;
+}
+
+function getBlockWeight(exIdx) {
+    const sk    = getSessionKey();
+    const curWt = (sessionData[sk] || {})[`${sk}-${exIdx}-block-weight`];
+    if (curWt) return curWt;
+    if (currentSession >= 2) {
+        const prevSk = `${currentPhase}-${currentSession - 1}`;
+        const prevWt = (sessionData[prevSk] || {})[`${prevSk}-${exIdx}-block-weight`];
+        if (prevWt) return prevWt;
+    }
+    return '';
+}
+
+function saveBlockWeight(exIdx, value) {
+    const sk = getSessionKey();
+    if (!sessionData[sk]) sessionData[sk] = {};
+    sessionData[sk][`${sk}-${exIdx}-block-weight`] = value;
+    saveToStorage();
+}
+
+function incrementBlockSet(exIdx) {
+    const sk = getSessionKey();
+    if (!sessionData[sk]) sessionData[sk] = {};
+    sessionData[sk][`${sk}-${exIdx}-block-sets`] = getBlockSets(exIdx) + 1;
+    completedSets[`${sk}-${exIdx}-0`] = true;
+    saveToStorage();
+    recordWorkoutDate();
+    const counterEl = document.getElementById(`block-counter-${exIdx}`);
+    const vsEl      = document.getElementById(`block-vs-${exIdx}`);
+    if (counterEl) {
+        counterEl.textContent = getBlockSets(exIdx);
+        counterEl.classList.add('block-set-plus-pulse');
+        setTimeout(() => counterEl.classList.remove('block-set-plus-pulse'), 300);
+    }
+    if (vsEl) vsEl.innerHTML = buildDeltaHTML(exIdx);
+}
+
+function buildDeltaHTML(exIdx) {
+    const cur  = getBlockSets(exIdx);
+    const prev = getPrevBlockSets(exIdx);
+    if (prev === null) return cur > 0 ? `<span class="block-set-delta-same">${cur} sets logged</span>` : '<span>first week</span>';
+    const delta = cur - prev;
+    const sign  = delta > 0 ? '+' : '';
+    const cls   = delta > 0 ? 'up' : delta < 0 ? 'down' : 'same';
+    return `last week: ${prev} &nbsp;<span class="block-set-delta-${cls}">${sign}${delta}</span>`;
+}
+
+function renderBlockView() {
+    document.getElementById('focusScreenBlock').classList.remove('hidden');
+    document.getElementById('focusScreenExercise').classList.add('hidden');
+    document.getElementById('focusScreenRest').classList.add('hidden');
+    const workScreen = document.getElementById('focusScreenWork');
+    if (workScreen) workScreen.classList.add('hidden');
+    document.getElementById('focusOverlay').classList.add('block-mode');
+
+    const group = focusBlockGroups[focusGroupIdx];
+
+    if (focusGroupIdx !== lastRenderedGroupIdx) {
+        lastRenderedGroupIdx = focusGroupIdx;
+        initBlockTimer();
+    }
+
+    document.getElementById('focusProgText').textContent = group.type;
+    document.getElementById('blockDoneName').textContent = group.type;
+    renderBlockProgress();
+
+    const listEl = document.getElementById('blockExList');
+    listEl.innerHTML = group.exercises.map(exIdx => {
+        const ex     = workoutData[currentPhase].exercises[exIdx];
+        const sets   = getBlockSets(exIdx);
+        const weight = getBlockWeight(exIdx);
+        const wLabel = weight ? `${weight} lbs` : 'Set weight ✏️';
+        return `
+        <div class="block-ex-card">
+            <div class="block-ex-name">${ex.name}</div>
+            <div class="block-ex-weight-row" id="block-weight-row-${exIdx}">
+                <span class="block-ex-weight-val" id="block-weight-val-${exIdx}">${wLabel}</span>
+                ${weight ? `<button class="block-ex-edit-btn" onclick="editBlockWeight(${exIdx})" title="Edit weight">✏️</button>` : ''}
+            </div>
+            <div class="block-set-counter" id="block-counter-${exIdx}">${sets}</div>
+            <div class="block-set-vs" id="block-vs-${exIdx}">${buildDeltaHTML(exIdx)}</div>
+            <button class="block-set-plus" onclick="incrementBlockSet(${exIdx})">+</button>
+        </div>`;
+    }).join('');
+
+    document.getElementById('focusPrevBtn').style.display = 'none';
+    document.getElementById('focusNextBtn').style.display = 'none';
+}
+
+function editBlockWeight(exIdx) {
+    const row = document.getElementById(`block-weight-row-${exIdx}`);
+    if (!row) return;
+    const current = getBlockWeight(exIdx);
+    row.innerHTML = `
+        <input class="block-ex-weight-input" id="block-weight-inp-${exIdx}"
+               type="number" inputmode="decimal" value="${current}" placeholder="lbs">
+        <button class="block-ex-edit-btn" onclick="saveBlockWeightEdit(${exIdx})">✓</button>`;
+    const inp = document.getElementById(`block-weight-inp-${exIdx}`);
+    if (inp) { inp.focus(); inp.select(); }
+}
+
+function saveBlockWeightEdit(exIdx) {
+    const inp = document.getElementById(`block-weight-inp-${exIdx}`);
+    if (!inp) return;
+    const val = inp.value.trim();
+    if (val) saveBlockWeight(exIdx, val);
+    const row     = document.getElementById(`block-weight-row-${exIdx}`);
+    const display = val ? `${val} lbs` : 'Set weight ✏️';
+    row.innerHTML = `
+        <span class="block-ex-weight-val" id="block-weight-val-${exIdx}">${display}</span>
+        <button class="block-ex-edit-btn" onclick="editBlockWeight(${exIdx})" title="Edit weight">✏️</button>`;
+}
+
+function advanceToNextBlock() {
+    if (focusGroupIdx < focusBlockGroups.length - 1) {
+        focusGroupIdx++;
+        focusSubIdx   = 0;
+        focusRoundIdx = 0;
+        syncFocusState();
+        renderBlockView();
+    } else {
+        showSummary();
+    }
+}
+
+/* ════════════════ WEIGHT LOCK (EDT weight-once per block) ════════════════ */
+function unlockBlockWeight() {
+    const inp  = document.getElementById('focusWeight');
+    const btn  = document.getElementById('weightEditBtn');
+    const hint = document.getElementById('weightLockedHint');
+    if (inp)  { inp.readOnly = false; inp.classList.remove('weight-locked'); inp.focus(); }
+    if (btn)  btn.classList.add('hidden');
+    if (hint) hint.classList.add('hidden');
+}
+
 /* ════════════════ FOCUS MODE ════════════════ */
 function buildBlockGroups() {
     const exercises = workoutData[currentPhase].exercises;
@@ -625,24 +857,28 @@ function syncFocusState() {
 }
 
 function enterFocusMode() {
-    focusBlockGroups = buildBlockGroups();
-    focusGroupIdx = 0;
-    focusSubIdx   = 0;
-    focusRoundIdx = 0;
+    focusBlockGroups     = buildBlockGroups();
+    focusGroupIdx        = 0;
+    focusSubIdx          = 0;
+    focusRoundIdx        = 0;
+    lastRenderedGroupIdx = -1;
     syncFocusState();
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
     clearIntervalTimer();
     document.getElementById('focusOverlay').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     startSessionTimer();
-    renderFocusExercise();
+    renderBlockView();
 }
 
 function exitFocusMode() {
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
     clearIntervalTimer();
+    clearBlockTimer();
     stopSessionTimer();
-    document.getElementById('focusOverlay').classList.add('hidden');
+    const overlay = document.getElementById('focusOverlay');
+    overlay.classList.add('hidden');
+    overlay.classList.remove('block-mode');
     // Clean up video iframe when exiting
     const videoEmbed = document.getElementById('focusVideoEmbed');
     if (videoEmbed) { videoEmbed.innerHTML = ''; videoEmbed.classList.add('hidden'); }
@@ -725,6 +961,54 @@ function calcSessionStats() {
     return { setsCompleted, totalVolume, prs };
 }
 
+function buildScoreboardHTML() {
+    const exercises = workoutData[currentPhase].exercises;
+    const prevSk    = currentSession >= 2 ? `${currentPhase}-${currentSession - 1}` : null;
+    const prevData  = prevSk ? (sessionData[prevSk] || {}) : null;
+
+    let totalCur = 0, totalPrev = 0, hasPrev = false;
+
+    const rows = focusBlockGroups.map(group => {
+        const headerRow = `<div class="sb-block-header">${group.type}</div>`;
+        const exRows = group.exercises.map(exIdx => {
+            const ex      = exercises[exIdx];
+            const cur     = getBlockSets(exIdx);
+            const prevVal = prevData ? (parseInt(prevData[`${prevSk}-${exIdx}-block-sets`]) || 0) : null;
+            totalCur += cur;
+            if (prevVal !== null) { totalPrev += prevVal; hasPrev = true; }
+
+            let deltaHTML = '';
+            if (prevVal !== null) {
+                const d = cur - prevVal;
+                const cls  = d > 0 ? 'up' : d < 0 ? 'down' : 'same';
+                const sign = d > 0 ? '+' : '';
+                deltaHTML = `<span class="sb-ex-delta block-set-delta-${cls}">${sign}${d} (was ${prevVal})</span>`;
+            }
+            return `<div class="sb-ex-row">
+                <span class="sb-ex-name">${ex.name}</span>
+                <span class="sb-ex-sets">${cur} sets${deltaHTML}</span>
+            </div>`;
+        }).join('');
+        return headerRow + exRows;
+    }).join('');
+
+    const totalDelta = hasPrev
+        ? (() => {
+            const d = totalCur - totalPrev;
+            const cls  = d > 0 ? 'up' : d < 0 ? 'down' : 'same';
+            const sign = d > 0 ? '+' : '';
+            return `<span class="sb-ex-delta block-set-delta-${cls}">${sign}${d} from last week (${totalPrev})</span>`;
+        })()
+        : '';
+
+    return `<div class="summary-scoreboard">${rows}
+        <div class="sb-total-row">
+            <span>Total</span>
+            <span>${totalCur} sets &nbsp;${totalDelta}</span>
+        </div>
+    </div>`;
+}
+
 function showSummary() {
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
     clearIntervalTimer();
@@ -746,20 +1030,17 @@ function showSummary() {
     if (sessionElapsed > 0) {
         try { sessionStorage.setItem('wt-last-duration', durationText); } catch (e) {}
     }
-    document.getElementById('summarySets').textContent   = stats.setsCompleted;
-    document.getElementById('summaryVolume').textContent =
-        stats.totalVolume > 0 ? stats.totalVolume.toLocaleString() + ' lbs' : '—';
-    document.getElementById('summaryPRCount').textContent = stats.prs.length;
+    // EDT scoreboard: total sets this week
+    const totalSets = focusBlockGroups.reduce((sum, g) =>
+        sum + g.exercises.reduce((s, ei) => s + getBlockSets(ei), 0), 0);
+    document.getElementById('summarySets').textContent = totalSets;
+    document.getElementById('summaryVolume').textContent = '—';
+    document.getElementById('summaryPRCount').textContent = '—';
 
-    // PRs section
+    // Scoreboard: per-block, per-exercise set count vs last week
     const prSection = document.getElementById('summaryPRSection');
-    if (stats.prs.length > 0) {
-        document.getElementById('summaryPRList').innerHTML =
-            stats.prs.map(p => `<div class="summary-pr-item">🏆 ${p.name} — ${p.weight} lbs</div>`).join('');
-        prSection.style.display = '';
-    } else {
-        prSection.style.display = 'none';
-    }
+    prSection.style.display = '';
+    document.getElementById('summaryPRList').innerHTML = buildScoreboardHTML();
 
     // CTA
     const ctaBtn = document.getElementById('summaryCTA');
@@ -887,6 +1168,12 @@ function renderFocusExercise(skipAutoStart) {
     const workScreen = document.getElementById('focusScreenWork');
     if (workScreen) workScreen.classList.add('hidden');
 
+    // Detect block transition → reset block timer
+    if (focusGroupIdx !== lastRenderedGroupIdx) {
+        lastRenderedGroupIdx = focusGroupIdx;
+        initBlockTimer();
+    }
+
     const data        = workoutData[currentPhase];
     const exercises   = data.exercises;
     const group       = focusBlockGroups[focusGroupIdx];
@@ -1004,8 +1291,25 @@ function renderFocusExercise(skipAutoStart) {
         repsInp.placeholder   = 'reps';
     }
 
-    weightInp.value = savedW;
-    repsInp.value   = savedR;
+    // EDT weight-once: lock weight after Round 1 (unless cardio)
+    const blockWeightKey = `${sk}-${focusExIdx}-block-weight`;
+    const blockWeight    = curData[blockWeightKey] || savedW;
+    const editBtn  = document.getElementById('weightEditBtn');
+    const hint     = document.getElementById('weightLockedHint');
+    if (!focusIsCardio && focusSetIdx > 0 && blockWeight) {
+        weightInp.value    = blockWeight;
+        weightInp.readOnly = true;
+        weightInp.classList.add('weight-locked');
+        if (editBtn) editBtn.classList.remove('hidden');
+        if (hint)    hint.classList.remove('hidden');
+    } else {
+        weightInp.value    = blockWeight || savedW;
+        weightInp.readOnly = false;
+        weightInp.classList.remove('weight-locked');
+        if (editBtn) editBtn.classList.add('hidden');
+        if (hint)    hint.classList.add('hidden');
+    }
+    repsInp.value = savedR;
 
     renderFocusSetDots(totalRounds);
     renderBlockProgress();
@@ -1048,8 +1352,11 @@ function confirmFocusSet() {
     const rVal        = document.getElementById('focusReps').value;
 
     if (!sessionData[sk]) sessionData[sk] = {};
-    if (wVal) sessionData[sk][`${sk}-${focusExIdx}-${focusSetIdx}-weight`] = wVal;
-    if (rVal) sessionData[sk][`${sk}-${focusExIdx}-${focusSetIdx}-reps`]   = rVal;
+    if (wVal) {
+        sessionData[sk][`${sk}-${focusExIdx}-${focusSetIdx}-weight`] = wVal;
+        if (!ex.work) sessionData[sk][`${sk}-${focusExIdx}-block-weight`] = wVal;  // EDT: lock for block
+    }
+    if (rVal) sessionData[sk][`${sk}-${focusExIdx}-${focusSetIdx}-reps`] = rVal;
 
     completedSets[`${sk}-${focusExIdx}-${focusSetIdx}`] = true;
     saveToStorage();
@@ -1384,18 +1691,26 @@ function generateShareText() {
     // Retrieve last session duration
     const lastDuration = sessionStorage.getItem('wt-last-duration');
 
+    const totalSets = focusBlockGroups.reduce((sum, g) =>
+        sum + g.exercises.reduce((s, ei) => s + getBlockSets(ei), 0), 0);
+
     let text = `💪 Day ${currentPhase} · Week ${currentSession} of ${data.totalSessions} — Done!\n`;
     text += `📅 ${date}`;
     if (lastDuration) text += ` · ${lastDuration}`;
     text += `\n\n`;
-    text += `📊 ${stats.setsCompleted} sets`;
-    if (stats.totalVolume > 0) text += ` · ${stats.totalVolume.toLocaleString()} lbs volume`;
-    text += ` · ${stats.prs.length} PR${stats.prs.length !== 1 ? 's' : ''}\n`;
+    text += `📊 ${totalSets} total sets\n`;
 
-    if (stats.prs.length > 0) {
-        text += `\n🏆 PRs\n`;
-        stats.prs.forEach(p => { text += `  • ${p.name} — ${p.weight} lbs\n`; });
-    }
+    // Block scoreboard
+    focusBlockGroups.forEach(group => {
+        text += `\n${group.type}\n`;
+        group.exercises.forEach(exIdx => {
+            const ex   = workoutData[currentPhase].exercises[exIdx];
+            const sets = getBlockSets(exIdx);
+            const prev = getPrevBlockSets(exIdx);
+            const delta = prev !== null ? ` (${sets >= prev ? '+' : ''}${sets - prev} vs last wk)` : '';
+            text += `  • ${ex.name}: ${sets} sets${delta}\n`;
+        });
+    });
 
     // RPE summary
     const sk         = getSessionKey();
@@ -1544,22 +1859,23 @@ function updateSidebar() {
     } else {
         const prevKey  = `${currentPhase}-${currentSession - 1}`;
         const prevData = sessionData[prevKey];
-        let html = '';
-        if (prevData && Object.keys(prevData).length > 0) {
-            data.exercises.slice(0, 5).forEach((ex, idx) => {
-                const w = prevData[`${prevKey}-${idx}-0-weight`] || '—';
-                const r = prevData[`${prevKey}-${idx}-0-reps`]   || '—';
-                if (w !== '—' || r !== '—') {
-                    html += `
-                        <div class="prev-item">
-                            <div class="prev-name">${ex.name}</div>
-                            <div class="prev-data">Set 1: ${w} lbs × ${r} reps</div>
-                        </div>`;
-                }
-            });
+        if (!prevData || Object.keys(prevData).length === 0) {
+            prevContainer.innerHTML = `<p style="font-size:12px;color:var(--text-muted);font-style:italic;">No data from previous week</p>`;
+        } else {
+            // EDT scoreboard: sets per block
+            const groups = buildBlockGroups();
+            const html = groups.map(group => {
+                const setNums = group.exercises.map(exIdx => {
+                    const val = parseInt(prevData[`${prevKey}-${exIdx}-block-sets`]);
+                    return isNaN(val) ? '—' : String(val);
+                }).join(' / ');
+                return `<div class="prev-item">
+                    <div class="prev-name">${group.type}</div>
+                    <div class="prev-data">${setNums} sets</div>
+                </div>`;
+            }).join('');
+            prevContainer.innerHTML = html;
         }
-        prevContainer.innerHTML = html ||
-            `<p style="font-size:12px;color:var(--text-muted);font-style:italic;">No data from previous session</p>`;
     }
 }
 
@@ -1567,8 +1883,7 @@ function updateSidebar() {
 function updateWorkout() {
     const data = workoutData[currentPhase];
 
-    document.getElementById('pageTitle').innerHTML =
-        data.name + ' <span style="font-size:13px;color:var(--text-muted);font-weight:400;">v4</span>';
+    document.getElementById('pageTitle').textContent = data.name;
     document.getElementById('pageSubtitle').textContent = data.frequency;
 
     const prog = data.progression[currentSession - 1];
