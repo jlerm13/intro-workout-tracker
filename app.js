@@ -29,6 +29,7 @@ let focusBlockGroups  = [];  // [{type, exercises: [indices]}]
 let focusGroupIdx     = 0;   // current block group
 let focusSubIdx       = 0;   // exercise within group
 let focusRoundIdx     = 0;   // current round (= set index)
+let straightSetsBlocks = new Set(); // block types toggled to straight-sets mode (in-memory, per session)
 
 // Session timer state
 let sessionStartTime    = null;
@@ -40,6 +41,7 @@ let blockTimerInterval   = null;
 let blockTimeLeft        = 0;
 let blockTimerTotal      = 0;
 let blockTimerActive     = false;
+let blockTimerStartWallTime = null;  // wall-clock anchor — immune to browser throttling
 let lastRenderedGroupIdx = -1;     // detect block transitions
 
 /* ════════════════ LOCALSTORAGE ════════════════ */
@@ -287,16 +289,17 @@ function formatBlockTime(s) {
     return `${m}:${sec.toString().padStart(2, '0')}`;
 }
 
-function getBlockDuration(blockType) {
+function getBlockDuration(blockType, halved = false) {
     const prog = workoutData[currentPhase].progression[currentSession - 1];
     if (!prog || !prog.blockDurations) return 0;
-    return (prog.blockDurations[blockType] || 0) * 60; // minutes → seconds
+    const mins = prog.blockDurations[blockType] || 0;
+    return Math.round(halved ? mins / 2 * 60 : mins * 60);
 }
 
 function initBlockTimer() {
     clearBlockTimer();
     const group     = focusBlockGroups[focusGroupIdx];
-    const totalSecs = getBlockDuration(group.type);
+    const totalSecs = getBlockDuration(group.type, group.halved || false);
     blockTimerTotal = totalSecs;
     blockTimeLeft   = totalSecs;
     blockTimerActive = false;
@@ -306,7 +309,8 @@ function initBlockTimer() {
     if (!totalSecs) { bar.classList.add('hidden'); return; }
 
     bar.classList.remove('hidden', 'block-timer-done');
-    document.getElementById('blockTimerLabel').textContent = group.type;
+    const label = group.halved ? `${group.type} (${group.subLabel})` : group.type;
+    document.getElementById('blockTimerLabel').textContent = label;
     document.getElementById('blockTimerTime').textContent  = formatBlockTime(totalSecs);
     document.getElementById('blockTimerFill').style.width  = '100%';
     const startBtn = document.getElementById('blockStartBtn');
@@ -317,10 +321,14 @@ function initBlockTimer() {
 function startBlockTimer() {
     if (blockTimerActive) return;
     blockTimerActive = true;
-    const startBtn = document.getElementById('blockStartBtn');
-    if (startBtn) startBtn.classList.add('hidden');
+    document.getElementById('blockStartBtn')?.classList.add('hidden');
+    // Anchor to wall clock — accounts for any time already elapsed before hitting Start
+    blockTimerStartWallTime = Date.now() - (blockTimerTotal - blockTimeLeft) * 1000;
+    localStorage.setItem('wt-block-timer', JSON.stringify({
+        startWall: blockTimerStartWallTime, total: blockTimerTotal
+    }));
     blockTimerInterval = setInterval(() => {
-        blockTimeLeft = Math.max(0, blockTimeLeft - 1);
+        blockTimeLeft = Math.max(0, blockTimerTotal - Math.floor((Date.now() - blockTimerStartWallTime) / 1000));
         updateBlockTimerDisplay();
         if (blockTimeLeft === 0) blockTimerDone();
     }, 1000);
@@ -330,6 +338,8 @@ function startBlockTimer() {
 function clearBlockTimer() {
     if (blockTimerInterval) { clearInterval(blockTimerInterval); blockTimerInterval = null; }
     blockTimerActive = false;
+    blockTimerStartWallTime = null;
+    localStorage.removeItem('wt-block-timer');
 }
 
 function blockTimerDone() {
@@ -775,9 +785,24 @@ function renderBlockView() {
         initBlockTimer();
     }
 
-    document.getElementById('focusProgText').textContent = group.type;
-    document.getElementById('blockDoneName').textContent = group.type;
+    const progLabel = group.halved ? `${group.type} (${group.subLabel})` : group.type;
+    document.getElementById('focusProgText').textContent = progLabel;
+    document.getElementById('blockDoneName').textContent = progLabel;
     renderBlockProgress();
+
+    // Straight-sets toggle — visible when block has 2 exercises OR is already split
+    const canSplit  = group.exercises.length > 1;
+    const isSplit   = !!group.halved;
+    const toggleEl  = document.getElementById('blockSplitToggle');
+    if (toggleEl) {
+        if (canSplit || isSplit) {
+            toggleEl.textContent = isSplit ? '⇄ Back to superset' : '⇄ Straight sets';
+            toggleEl.classList.remove('hidden');
+            toggleEl.onclick = () => toggleStraightSets(group.type);
+        } else {
+            toggleEl.classList.add('hidden');
+        }
+    }
 
     const listEl = document.getElementById('blockExList');
     listEl.innerHTML = group.exercises.map(exIdx => {
@@ -803,6 +828,21 @@ function renderBlockView() {
 
     document.getElementById('focusPrevBtn').style.display = 'none';
     document.getElementById('focusNextBtn').style.display = 'none';
+}
+
+function toggleStraightSets(blockType) {
+    const currentFirstEx = focusBlockGroups[focusGroupIdx].exercises[0];
+    if (straightSetsBlocks.has(blockType)) {
+        straightSetsBlocks.delete(blockType);
+    } else {
+        straightSetsBlocks.add(blockType);
+    }
+    clearBlockTimer();
+    lastRenderedGroupIdx = -1;
+    focusBlockGroups = buildBlockGroups();
+    const newIdx = focusBlockGroups.findIndex(g => g.exercises.includes(currentFirstEx));
+    focusGroupIdx = newIdx >= 0 ? newIdx : 0;
+    renderBlockView();
 }
 
 function editBlockWeight(exIdx) {
@@ -854,17 +894,28 @@ function unlockBlockWeight() {
 /* ════════════════ FOCUS MODE ════════════════ */
 function buildBlockGroups() {
     const exercises = workoutData[currentPhase].exercises;
-    const groups = [];
+    const merged = [];
     let current = null;
     exercises.forEach((ex, idx) => {
         if (!current || current.type !== ex.type) {
             current = { type: ex.type, exercises: [idx] };
-            groups.push(current);
+            merged.push(current);
         } else {
             current.exercises.push(idx);
         }
     });
-    return groups;
+    // Split any block toggled to straight-sets into individual sub-groups
+    const result = [];
+    merged.forEach(g => {
+        if (straightSetsBlocks.has(g.type) && g.exercises.length > 1) {
+            g.exercises.forEach((exIdx, i) =>
+                result.push({ type: g.type, exercises: [exIdx], halved: true, subLabel: `${g.type.replace('Block ','')}${i + 1}` })
+            );
+        } else {
+            result.push(g);
+        }
+    });
+    return result;
 }
 
 function syncFocusState() {
@@ -873,6 +924,8 @@ function syncFocusState() {
 }
 
 function enterFocusMode() {
+    straightSetsBlocks   = new Set();
+    localStorage.removeItem('wt-block-timer');
     focusBlockGroups     = buildBlockGroups();
     focusGroupIdx        = 0;
     focusSubIdx          = 0;
@@ -2044,4 +2097,19 @@ document.addEventListener('DOMContentLoaded', () => {
     loadFromStorage();
     updateWorkout();
     renderHeatmap();
+});
+
+// Re-sync block timer on app re-entry (handles browser tab throttling on mobile)
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    const saved = localStorage.getItem('wt-block-timer');
+    if (!saved || !blockTimerActive) return;
+    const { startWall, total } = JSON.parse(saved);
+    blockTimerStartWallTime = startWall;
+    blockTimeLeft = Math.max(0, total - Math.floor((Date.now() - startWall) / 1000));
+    if (blockTimeLeft === 0) {
+        blockTimerDone();
+    } else {
+        updateBlockTimerDisplay();
+    }
 });
