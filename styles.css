@@ -1547,6 +1547,18 @@ input.weight-locked {
 .block-set-delta-up   { color: #16a34a; font-weight: 600; }
 .block-set-delta-down { color: #dc2626; font-weight: 600; }
 .block-set-delta-same { color: var(--text-muted); }
+.block-set-btns {
+    display: flex; align-items: center; gap: 20px; margin-top: 4px;
+}
+.block-set-minus {
+    width: 52px; height: 52px;
+    border-radius: var(--radius-full);
+    background: transparent; color: var(--text-secondary);
+    border: 1.5px solid var(--border); font-size: 28px; font-weight: 300;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: opacity .1s, transform .1s;
+}
+.block-set-minus:active { opacity: .6; transform: scale(.94); }
 .block-set-plus {
     width: 72px; height: 72px;
     border-radius: var(--radius-full);

@@ -737,6 +737,19 @@ function incrementBlockSet(exIdx) {
     if (vsEl) vsEl.innerHTML = buildDeltaHTML(exIdx);
 }
 
+function decrementBlockSet(exIdx) {
+    const current = getBlockSets(exIdx);
+    if (current <= 0) return;
+    const sk = getSessionKey();
+    if (!sessionData[sk]) sessionData[sk] = {};
+    sessionData[sk][`${sk}-${exIdx}-block-sets`] = current - 1;
+    saveToStorage();
+    const counterEl = document.getElementById(`block-counter-${exIdx}`);
+    const vsEl      = document.getElementById(`block-vs-${exIdx}`);
+    if (counterEl) counterEl.textContent = getBlockSets(exIdx);
+    if (vsEl) vsEl.innerHTML = buildDeltaHTML(exIdx);
+}
+
 function buildDeltaHTML(exIdx) {
     const cur  = getBlockSets(exIdx);
     const prev = getPrevBlockSets(exIdx);
@@ -781,7 +794,10 @@ function renderBlockView() {
             </div>
             <div class="block-set-counter" id="block-counter-${exIdx}">${sets}</div>
             <div class="block-set-vs" id="block-vs-${exIdx}">${buildDeltaHTML(exIdx)}</div>
-            <button class="block-set-plus" onclick="incrementBlockSet(${exIdx})">+</button>
+            <div class="block-set-btns">
+                <button class="block-set-minus" onclick="decrementBlockSet(${exIdx})">−</button>
+                <button class="block-set-plus" onclick="incrementBlockSet(${exIdx})">+</button>
+            </div>
         </div>`;
     }).join('');
 
