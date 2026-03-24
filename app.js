@@ -809,13 +809,13 @@ function renderBlockView() {
         const ex     = workoutData[currentPhase].exercises[exIdx];
         const sets   = getBlockSets(exIdx);
         const weight = getBlockWeight(exIdx);
-        const wLabel = weight ? `${weight} lbs` : 'Set weight ✏️';
+        const wLabel = weight ? `${weight} lbs` : 'Set weight';
         return `
         <div class="block-ex-card">
             <div class="block-ex-name">${ex.name}</div>
-            <div class="block-ex-weight-row" id="block-weight-row-${exIdx}">
+            <div class="block-ex-weight-row" id="block-weight-row-${exIdx}" onclick="editBlockWeight(${exIdx})" style="cursor:pointer">
                 <span class="block-ex-weight-val" id="block-weight-val-${exIdx}">${wLabel}</span>
-                ${weight ? `<button class="block-ex-edit-btn" onclick="editBlockWeight(${exIdx})" title="Edit weight">✏️</button>` : ''}
+                <button class="block-ex-edit-btn" title="Edit weight">✏️</button>
             </div>
             <div class="block-set-counter" id="block-counter-${exIdx}">${sets}</div>
             <div class="block-set-vs" id="block-vs-${exIdx}">${buildDeltaHTML(exIdx)}</div>
