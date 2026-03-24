@@ -16,7 +16,7 @@ const workoutData = {
             { name: "Standing Barbell Shoulder Press",    type: "Block B", sets: 5, reps: "8",  tempo: "20X0", rest: "0", note: "Use ~16RM load. B1–B2 superset: cycle between exercises with minimal rest for the full block time window." },
             { name: "Bent Over Supinated Barbell Row",    type: "Block B", sets: 5, reps: "8",  tempo: "2010", rest: "0", note: "Use ~16RM load. B2 of superset — go straight from B1 with minimal rest." },
             { name: "Standing Mid Reverse Grip EZ Curl",  type: "Block C", sets: 5, reps: "10", tempo: "2010", rest: "0", note: "Use ~20RM load. C1–C2 superset: cycle between exercises with minimal rest for the full block time window." },
-            { name: "Triceps Pressdown with Rope",        type: "Block C", sets: 5, reps: "10", tempo: "2011", rest: "0", note: "Use ~20RM load. C2 of superset — go straight from C1 with minimal rest." }
+            { name: "Triceps Extension with Rope",        type: "Block C", sets: 5, reps: "10", tempo: "2011", rest: "0", note: "Use ~20RM load. C2 of superset — go straight from C1 with minimal rest." }
         ]
     },
     2: {
@@ -73,41 +73,41 @@ const workoutData = {
             { name: "Barbell RDL",                   type: "Block B", sets: 5, reps: "5",       tempo: "3010", rest: "0", note: "Use ~10RM load. Chase hamstring load, not the floor — limit range where spinal position stays clean. B1–B2 superset." },
             { name: "Seated Leg Curl",               type: "Block B", sets: 5, reps: "5",       tempo: "30X0", rest: "0", note: "Use ~14RM load. Keep pelvis anchored, avoid lumbar extension. B2 of superset." },
             { name: "Low Box Step-Up",               type: "Block C", sets: 5, reps: "5/leg",   tempo: "2010", rest: "0", note: "Use ~10RM load. Clean force acceptance without pelvic shift — minimize push-off from trail leg. C1–C2 superset." },
-            { name: "Copenhagen Plank",              type: "Block C", sets: 5, reps: "20s/side", tempo: "—",   rest: "0", note: "Bodyweight. Short lever first — adductor strength, frontal-plane control, pelvis stability. C2 of superset." }
+            { name: "Bent Knee Copenhagen Plank",    type: "Block C", sets: 5, reps: "20s/side", tempo: "—",   rest: "0", note: "Bodyweight. Short lever first — adductor strength, frontal-plane control, pelvis stability. C2 of superset." }
         ]
     }
 };
 
 const exerciseVideos = {
     // Workout 1 — Upper Body A
-    '15 Degree Incline Barbell Press':                  'https://www.youtube.com/watch?v=PLACEHOLDER',
-    'Narrow Supinated Chin Up':                         'https://www.youtube.com/watch?v=PLACEHOLDER',
-    'Standing Barbell Shoulder Press':                  'https://www.youtube.com/watch?v=PLACEHOLDER',
-    'Bent Over Supinated Barbell Row':                  'https://www.youtube.com/watch?v=PLACEHOLDER',
-    'Standing Mid Reverse Grip EZ Curl':                'https://www.youtube.com/watch?v=PLACEHOLDER',
-    'Triceps Pressdown with Rope':                      'https://www.youtube.com/watch?v=PLACEHOLDER',
+    '15 Degree Incline Barbell Press':                  'https://www.youtube.com/watch?v=6mnUZeG8M1U',
+    'Narrow Supinated Chin Up':                         'https://www.youtube.com/watch?v=nMngQ4nxUU0',
+    'Standing Barbell Shoulder Press':                  'https://www.youtube.com/watch?v=G2qpTG1Eh40',
+    'Bent Over Supinated Barbell Row':                  'https://www.youtube.com/watch?v=mTQ_qg37MJk',
+    'Standing Mid Reverse Grip EZ Curl':                'https://www.youtube.com/watch?v=wMsQbYYKHpg',
+    'Triceps Extension with Rope':                      'https://www.youtube.com/watch?v=osFW51jFGgU',
 
     // Workout 2 — Lower Body A
-    'Straight Bar Box Squat':                           'https://www.youtube.com/watch?v=PLACEHOLDER',
-    'Lying Leg Curl - toes DF and NEUT':               'https://www.youtube.com/watch?v=PLACEHOLDER',
-    'Front-Foot Elevated Split Squat':                  'https://www.youtube.com/watch?v=PLACEHOLDER',
-    'Snatch Grip Barbell 45 Degree Back Extension':     'https://www.youtube.com/watch?v=PLACEHOLDER',
-    'Dead Bug':                                         'https://www.youtube.com/watch?v=PLACEHOLDER',
-    'Suitcase Carry':                                   'https://www.youtube.com/watch?v=PLACEHOLDER',
+    'Straight Bar Box Squat':                           'https://www.youtube.com/shorts/XQmZ44xQSw4',
+    'Lying Leg Curl - toes DF and NEUT':                'https://www.youtube.com/watch?v=aOBfuvvWxV0',
+    'Front-Foot Elevated Split Squat':                  'https://www.youtube.com/watch?v=72Yzbn5bywY',
+    'Snatch Grip Barbell 45 Degree Back Extension':     'https://www.youtube.com/shorts/OdkJ2PcESLk',
+    'Dead Bug':                                         'https://www.youtube.com/watch?v=wCwn7-Z-XjE',
+    'Suitcase Carry':                                   'https://www.youtube.com/watch?v=3RKKnZhhelE',
 
     // Workout 3 — Upper Body B
-    'Inertia Bench Press from Pins':                    'https://www.youtube.com/watch?v=PLACEHOLDER',
-    'Mid-Neutral Grip Lean Away Pull Up':               'https://www.youtube.com/watch?v=PLACEHOLDER',
-    'Dips':                                             'https://www.youtube.com/watch?v=PLACEHOLDER',
-    'Seated Supinated Grip Cable Row':                  'https://www.youtube.com/watch?v=PLACEHOLDER',
-    'Seated DB Hammer Curl':                            'https://www.youtube.com/watch?v=PLACEHOLDER',
-    'EZ Bar French Press':                              'https://www.youtube.com/watch?v=PLACEHOLDER',
+    'Inertia Bench Press from Pins':                    'https://www.youtube.com/watch?v=Xptt2lbpbhM',
+    'Mid-Neutral Grip Lean Away Pull Up':               'https://www.youtube.com/watch?v=-P3mjZxbwnA',
+    'Dips':                                             'https://www.youtube.com/watch?v=2hnLB6O860c',
+    'Seated Supinated Grip Cable Row':                  'https://www.youtube.com/watch?v=QrPJP_9tJ94',
+    'Seated DB Hammer Curl':                            'https://www.youtube.com/watch?v=smR4aFVmLmg',
+    'EZ Bar French Press':                              'https://www.youtube.com/watch?v=b06Q4Capvac',
 
     // Workout 4 — Lower Body B
-    'Barbell Deadlift from Blocks':                     'https://www.youtube.com/watch?v=PLACEHOLDER',
-    'Lateral Step-Down':                                'https://www.youtube.com/watch?v=PLACEHOLDER',
-    'Barbell RDL':                                      'https://www.youtube.com/watch?v=PLACEHOLDER',
-    'Seated Leg Curl':                                  'https://www.youtube.com/watch?v=PLACEHOLDER',
-    'Low Box Step-Up':                                  'https://www.youtube.com/watch?v=PLACEHOLDER',
-    'Copenhagen Plank':                                 'https://www.youtube.com/watch?v=PLACEHOLDER',
+    'Barbell Deadlift from Blocks':                     'https://www.youtube.com/watch?v=iVpVk8x-VDQ',
+    'Lateral Step-Down':                                'https://www.youtube.com/watch?v=S5onhmaz_nQ',
+    'Barbell RDL':                                      'https://www.youtube.com/watch?v=mtVxGtW38g0',
+    'Seated Leg Curl':                                  'https://www.youtube.com/watch?v=Orxowest56U',
+    'Low Box Step-Up':                                  'https://www.youtube.com/watch?v=qVzZ9zJZo_c',
+    'Bent Knee Copenhagen Plank':                       'https://www.youtube.com/watch?v=JGS8ZWHFO2Y',
 };
