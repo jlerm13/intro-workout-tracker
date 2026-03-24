@@ -1579,6 +1579,15 @@ input.weight-locked {
 .block-done-btn:hover { background: var(--hover); color: var(--text); }
 .block-done-btn.block-done-btn-ready { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
 
+.block-split-toggle {
+    align-self: flex-end; margin-bottom: var(--space-2);
+    font-size: 12px; color: var(--text-muted); background: none;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 4px 10px; cursor: pointer; font-family: inherit;
+}
+.block-split-toggle:active { opacity: .7; }
+.block-split-toggle.hidden { display: none; }
+
 /* ──────────────────── EDT SUMMARY SCOREBOARD ──────────────────── */
 .summary-scoreboard { width: 100%; display: flex; flex-direction: column; gap: var(--space-2); margin: var(--space-3) 0; text-align: left; }
 .sb-block-header {
