@@ -330,18 +330,6 @@ body {
     margin-bottom: var(--space-1);
 }
 
-/* ──────────────────── EXERCISE LIST HEADER ──────────────────── */
-.ex-list-header {
-    display: grid;
-    grid-template-columns: 28px 36px 1fr 54px 44px 52px 38px 28px;
-    gap: 0 8px;
-    padding: 6px 6px 6px 6px;
-    margin-top: var(--space-3);
-    font-size: 10px; font-weight: 600; text-transform: uppercase;
-    letter-spacing: .07em; color: var(--text-muted);
-    border-bottom: 1px solid var(--border);
-}
-
 /* ──────────────────── EXERCISE BLOCK ──────────────────── */
 .ex-block { border-radius: var(--radius-md); margin-bottom: 2px; }
 .ex-block.ex-done { opacity: .65; }
@@ -1901,12 +1889,9 @@ input.weight-locked {
 
 /* On small screens hide Tempo and Rest columns — Order, Name, Time, Reps, Video remain */
 @media (max-width: 520px) {
-    .ex-list-header,
     .ex-row {
         grid-template-columns: 28px 36px 1fr 54px 44px 28px;
     }
     .ex-col-tempo,
-    .ex-col-rest,
-    .exh-tempo,
-    .exh-rest { display: none; }
+    .ex-col-rest { display: none; }
 }

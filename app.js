@@ -2040,19 +2040,10 @@ function updateWorkout() {
         return `${letter}${typeCount[letter]}`;
     });
 
-    // Single column header row at top of list
-    const header = document.createElement('div');
-    header.className = 'ex-list-header';
-    header.innerHTML = `
-        <span></span>
-        <span class="exh-order">Order</span>
-        <span class="exh-name">Exercise</span>
-        <span class="exh-time">Time</span>
-        <span class="exh-reps">Reps</span>
-        <span class="exh-tempo">Tempo</span>
-        <span class="exh-rest">Rest</span>
-        <span></span>`;
-    list.appendChild(header);
+    // Default all exercises to collapsed on first render
+    data.exercises.forEach((_, idx) => {
+        if (cardCollapsed[idx] === undefined) cardCollapsed[idx] = true;
+    });
 
     let lastType = null;
 
