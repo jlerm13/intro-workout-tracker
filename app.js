@@ -2136,6 +2136,10 @@ document.addEventListener('DOMContentLoaded', () => {
     loadFromStorage();
     updateWorkout();
     renderHeatmap();
+    const rationaleEl = document.getElementById('phaseRationaleBody');
+    if (rationaleEl && typeof programDescription !== 'undefined') {
+        rationaleEl.textContent = programDescription;
+    }
 });
 
 // Re-sync block timer on app re-entry (handles browser tab throttling on mobile)

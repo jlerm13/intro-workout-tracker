@@ -1069,6 +1069,40 @@ body {
 .focus-nav-btn.finish { background: var(--success); color: white; border-color: var(--success); }
 .focus-nav-btn.finish:hover { background: #0a6556; }
 
+.phase-rationale {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: var(--space-5);
+}
+.phase-rationale-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 34px;
+    padding: var(--space-1) var(--space-2);
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+}
+.phase-rationale-toggle::-webkit-details-marker { display: none; }
+.phase-rationale-toggle::after {
+    content: '▶';
+    font-size: 9px;
+    color: var(--text-muted);
+    transition: transform .15s;
+}
+.phase-rationale[open] .phase-rationale-toggle::after { transform: rotate(90deg); }
+.phase-rationale-toggle:hover { background: var(--hover); }
+.phase-rationale-body {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    padding: 0 var(--space-2) var(--space-4);
+    margin: 0;
+}
+
 .start-workout-btn {
     display: inline-flex;
     align-items: center;

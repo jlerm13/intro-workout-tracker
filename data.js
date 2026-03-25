@@ -1,4 +1,6 @@
 /* ════════════════ DATA ════════════════ */
+const programDescription = `This EDT phase supports return to training after double hip labrum surgery by intensifying work without relying on repeated deep hip flexion under fatigue. Lower-body exercise selection shifts stress toward positions the athlete can load cleanly, using a moderate-stance straight-bar box squat for controlled bilateral squatting and a block deadlift for posterior-chain hinge strength. Secondary work centers on split squats, step-ups or lateral step-downs, RDLs, leg curls, 45-degree back extensions, Copenhagen planks, carries, and trunk-control drills to rebuild adductor strength, hamstring support, pelvic control, single-leg force acceptance, and usable hip IR/ER in standing. The phase is designed to restore lower-body durability and athletic loading capacity while minimizing anterior hip irritation and compensation as density and intensity rise.`;
+
 const workoutData = {
     1: {
         name: "Workout 1 — Upper Body A",
