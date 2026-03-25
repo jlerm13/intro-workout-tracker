@@ -1987,6 +1987,36 @@ function updateSidebar() {
     }
 }
 
+/* ════════════════ MESO TABLE ════════════════ */
+function buildMesoTable(ex, exIdx) {
+    const data = workoutData[currentPhase];
+    const rows = data.progression.map((prog, i) => {
+        const weekNum    = i + 1;
+        const isCurrent  = weekNum === currentSession;
+        const isPast     = weekNum < currentSession;
+        const blockMins  = prog.blockDurations?.[ex.type] || 0;
+        const timeLabel  = blockMins ? `${blockMins} min` : '—';
+        const isDeload   = prog.note.toLowerCase().includes('deload');
+        const prevSk     = `${currentPhase}-${weekNum}`;
+        const logged     = isPast
+            ? (parseInt((sessionData[prevSk] || {})[`${prevSk}-${exIdx}-block-sets`]) || null)
+            : null;
+        return { weekNum, isCurrent, isPast, timeLabel, isDeload, logged };
+    });
+
+    return `<div class="meso-table">
+        <div class="meso-header">
+            <span>Week</span><span>Time</span><span>Sets logged</span>
+        </div>
+        ${rows.map(r => `
+        <div class="meso-row${r.isCurrent ? ' meso-current' : ''}${r.isDeload ? ' meso-deload' : ''}">
+            <span class="meso-wk">Wk ${r.weekNum}${r.isDeload ? ' · deload' : ''}</span>
+            <span class="meso-time">${r.timeLabel}</span>
+            <span class="meso-sets">${r.isCurrent ? 'current' : (r.logged !== null ? `${r.logged} sets` : '—')}</span>
+        </div>`).join('')}
+    </div>`;
+}
+
 /* ════════════════ MAIN RENDER ════════════════ */
 function updateWorkout() {
     const data = workoutData[currentPhase];
@@ -2002,15 +2032,42 @@ function updateWorkout() {
     const list = document.getElementById('exerciseList');
     list.innerHTML = '';
 
+    // Compute position labels (A1, A2, B1…) from exercise type ordering
+    const typeCount = {};
+    const positionLabel = data.exercises.map(ex => {
+        const letter = ex.type.replace('Block ', '').replace('Warm-Up', 'WU');
+        typeCount[letter] = (typeCount[letter] || 0) + 1;
+        return `${letter}${typeCount[letter]}`;
+    });
+
+    // Single column header row at top of list
+    const header = document.createElement('div');
+    header.className = 'ex-list-header';
+    header.innerHTML = `
+        <span></span>
+        <span class="exh-order">Order</span>
+        <span class="exh-name">Exercise</span>
+        <span class="exh-time">Time</span>
+        <span class="exh-reps">Reps</span>
+        <span class="exh-tempo">Tempo</span>
+        <span class="exh-rest">Rest</span>
+        <span></span>`;
+    list.appendChild(header);
+
     let lastType = null;
 
     data.exercises.forEach((ex, idx) => {
-        const sk         = getSessionKey();
-        const isDone     = !!completedExercises[getExerciseKey(idx)];
-        const isOpen     = !cardCollapsed[idx];
-        const videoUrl   = exerciseVideos[ex.name];
-        const actualSets = getActualSets(ex, currentPhase, currentSession);
-        const setsChanged = actualSets !== ex.sets;
+        const sk          = getSessionKey();
+        const isDone      = !!completedExercises[getExerciseKey(idx)];
+        const isOpen      = !cardCollapsed[idx];
+        const videoUrl    = exerciseVideos[ex.name];
+        const actualSets  = getActualSets(ex, currentPhase, currentSession);
+        const isCardio    = !!ex.work;
+        const posLabel    = positionLabel[idx];
+        const blockMins   = prog.blockDurations?.[ex.type] || 0;
+        const timeLabel   = isCardio ? (ex.work || '—') : (blockMins ? `${blockMins} min` : '—');
+        const restLabel   = ex.rest === '0' ? 'Min' : (ex.rest || '—');
+        const shortNote   = ex.note ? ex.note.split('.')[0] + '.' : '';
 
         // Section heading on block type change
         if (ex.type !== lastType) {
@@ -2021,25 +2078,22 @@ function updateWorkout() {
             lastType = ex.type;
         }
 
-        // Build set rows
-        const isCardio = !!ex.work;
+        // Build set rows (unchanged tracking table)
         let setRowsHtml = '';
         for (let s = 0; s < actualSets; s++) {
-            const wKey      = `${sk}-${idx}-${s}-weight`;
-            const rKey      = `${sk}-${idx}-${s}-reps`;
-            const curData   = sessionData[sk] || {};
-            const prev      = getPrevData(idx, s);
-            // Show current session data as value; previous session data as placeholder
-            const wVal      = curData[wKey] || '';
-            const rVal      = curData[rKey] || '';
-            const wPlaceholder = isCardio ? 'm' : (prev && prev.weight !== '—' ? prev.weight : 'lbs');
-            const rPlaceholder = isCardio ? 'cals'   : (prev && prev.reps   !== '—' ? prev.reps   : 'reps');
-            const hasRest   = ex.rest !== '—' && ex.rest !== '0';
-            const setDone   = !!completedSets[`${sk}-${idx}-${s}`];
-            const cue       = getProgressionCue(idx, s);
+            const wKey       = `${sk}-${idx}-${s}-weight`;
+            const rKey       = `${sk}-${idx}-${s}-reps`;
+            const curData    = sessionData[sk] || {};
+            const prev       = getPrevData(idx, s);
+            const wVal       = curData[wKey] || '';
+            const rVal       = curData[rKey] || '';
+            const wPH        = isCardio ? 'm'    : (prev && prev.weight !== '—' ? prev.weight : 'lbs');
+            const rPH        = isCardio ? 'cals' : (prev && prev.reps   !== '—' ? prev.reps   : 'reps');
+            const hasRest    = ex.rest !== '—' && ex.rest !== '0';
+            const setDone    = !!completedSets[`${sk}-${idx}-${s}`];
+            const cue        = getProgressionCue(idx, s);
             const currentRpe = rpeData[`${sk}-${idx}-${s}`];
-
-            const rpeSel = (rpe) => currentRpe === rpe ? ` sel ${rpe}` : '';
+            const rpeSel     = (rpe) => currentRpe === rpe ? ` sel ${rpe}` : '';
 
             setRowsHtml += `
                 <tr class="set-row${setDone ? ' confirmed' : ''}" id="setrow-${idx}-${s}">
@@ -2048,12 +2102,12 @@ function updateWorkout() {
                         ${cue ? `<div class="prog-cue prog-cue-${cue.type}">${cue.text}</div>` : ''}
                     </td>
                     <td>
-                        <input class="num-inp" id="winp-${idx}-${s}" type="number" placeholder="${wPlaceholder}" value="${wVal}"
+                        <input class="num-inp" id="winp-${idx}-${s}" type="number" placeholder="${wPH}" value="${wVal}"
                                ${isCardio ? '' : `oninput="checkPR(${idx}, this.value, 'pr-${idx}-${s}')"`}
                                onchange="updateWeight(${idx}, ${s}, this.value)">
                         ${isCardio ? '' : `<span class="pr-badge" id="pr-${idx}-${s}" style="display:none">🏆 PR</span>`}
                     </td>
-                    <td><input class="num-inp" id="rinp-${idx}-${s}" type="number" placeholder="${rPlaceholder}" value="${rVal}"
+                    <td><input class="num-inp" id="rinp-${idx}-${s}" type="number" placeholder="${rPH}" value="${rVal}"
                                onchange="updateReps(${idx}, ${s}, this.value)"></td>
                     <td>${hasRest ? `<button class="rest-btn" onclick="startRest('${ex.rest}')">⏱ Rest</button>` : ''}</td>
                     <td>
@@ -2073,42 +2127,33 @@ function updateWorkout() {
         const block = document.createElement('div');
         block.className = 'ex-block';
         block.id        = `block-${idx}`;
-        if (isDone) block.style.opacity = '0.65';
+        if (isDone) block.classList.add('ex-done');
 
         block.innerHTML = `
-            <div class="ex-row">
-                <div class="ex-toggle${isOpen ? ' open' : ''}" id="toggle-${idx}" onclick="toggleCard(${idx})">
+            <div class="ex-row" onclick="toggleCard(${idx})">
+                <div class="ex-toggle${isOpen ? ' open' : ''}" id="toggle-${idx}">
                     <span class="arr">▶</span>
                 </div>
-                <div class="ex-title">
+                <span class="ex-order">${posLabel}</span>
+                <div class="ex-name-col">
                     <span class="ex-name${isDone ? ' done' : ''}" id="name-${idx}">${ex.name}</span>
-                    <span class="ex-tag ${getTagClass(ex.type)}">${ex.type}</span>
+                    <span class="ex-note-inline">${shortNote}</span>
                 </div>
-                <div class="ex-actions">
-                    ${videoUrl ? `<a href="${videoUrl}" target="_blank" class="vid-btn">▶ Video</a>` : ''}
-                </div>
+                <span class="ex-col-val ex-col-time">${timeLabel}</span>
+                <span class="ex-col-val ex-col-reps">${isCardio ? '—' : ex.reps}</span>
+                <span class="ex-col-val ex-col-tempo">${ex.tempo}</span>
+                <span class="ex-col-val ex-col-rest">${restLabel}</span>
+                <span class="ex-col-video" onclick="event.stopPropagation()">
+                    ${videoUrl ? `<a href="${videoUrl}" target="_blank" class="vid-btn">▶</a>` : ''}
+                </span>
             </div>
             <div class="ex-body${isOpen ? '' : ' hidden'}" id="body-${idx}">
+                ${isCardio ? `
                 <div class="ex-props">
-                    ${isCardio ? `
                     <div class="xprop"><span class="xprop-lbl">Rounds</span><span class="xprop-val">${actualSets}</span></div>
                     <div class="xprop"><span class="xprop-lbl">Work</span><span class="xprop-val">${ex.work}</span></div>
                     <div class="xprop"><span class="xprop-lbl">Rest</span><span class="xprop-val">${ex.rest}s</span></div>
-                    ` : `
-                    <div class="xprop">
-                        <span class="xprop-lbl">Sets</span>
-                        <span class="xprop-val">${actualSets}</span>
-                        ${setsChanged ? `<span class="sets-changed">↑ from ${ex.sets}</span>` : ''}
-                    </div>
-                    <div class="xprop"><span class="xprop-lbl">Reps</span><span class="xprop-val">${ex.reps}</span></div>
-                    <div class="xprop"><span class="xprop-lbl">Tempo</span><span class="xprop-val">${ex.tempo}</span></div>
-                    <div class="xprop"><span class="xprop-lbl">Rest</span><span class="xprop-val">${ex.rest}</span></div>
-                    `}
-                </div>
-                <div class="callout">
-                    <span class="callout-ico">💡</span>
-                    <span class="callout-txt">${ex.note}</span>
-                </div>
+                </div>` : buildMesoTable(ex, idx)}
                 <div class="sets-lbl">${isCardio ? 'Round Tracking' : 'Set Tracking'}</div>
                 <table class="sets-tbl">
                     <thead>
@@ -2116,8 +2161,7 @@ function updateWorkout() {
                             <th></th>
                             <th>${isCardio ? 'Distance (m)' : 'Weight'}</th>
                             <th>${isCardio ? 'Calories' : 'Reps'}</th>
-                            <th></th>
-                            <th></th>
+                            <th></th><th></th>
                         </tr>
                     </thead>
                     <tbody>${setRowsHtml}</tbody>
