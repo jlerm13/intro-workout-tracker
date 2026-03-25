@@ -330,60 +330,74 @@ body {
     margin-bottom: var(--space-1);
 }
 
+/* ──────────────────── EXERCISE LIST HEADER ──────────────────── */
+.ex-list-header {
+    display: grid;
+    grid-template-columns: 28px 36px 1fr 54px 44px 52px 38px 28px;
+    gap: 0 8px;
+    padding: 6px 6px 6px 6px;
+    margin-top: var(--space-3);
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .07em; color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+}
+
 /* ──────────────────── EXERCISE BLOCK ──────────────────── */
 .ex-block { border-radius: var(--radius-md); margin-bottom: 2px; }
+.ex-block.ex-done { opacity: .65; }
 
 .ex-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: 28px 36px 1fr 54px 44px 52px 38px 28px;
+    gap: 0 8px;
     align-items: center;
-    gap: var(--space-1);
-    padding: 5px var(--space-1);
+    padding: 7px 6px;
     border-radius: var(--radius-md);
-    cursor: default;
+    cursor: pointer;
     transition: background .1s;
+    min-height: 44px;
 }
 .ex-row:hover { background: var(--hover); }
 
 .ex-toggle {
-    width: 22px; height: 22px;
     display: flex; align-items: center; justify-content: center;
-    color: var(--text-muted);
-    font-size: 9px;
-    cursor: pointer;
-    border-radius: 3px;
-    flex-shrink: 0;
-    transition: all .1s;
-    position: relative;
+    color: var(--text-muted); font-size: 9px;
+    border-radius: 3px; transition: all .1s;
 }
-/* Enlarge touch target to 44px minimum */
-.ex-toggle::before {
-    content: '';
-    position: absolute;
-    inset: -11px;
-}
-.ex-toggle:hover { background: rgba(55,53,47,.1); color: var(--text); }
 .ex-toggle .arr { display: inline-block; transition: transform .15s; }
 .ex-toggle.open .arr { transform: rotate(90deg); }
 
-
-.ex-title {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    min-width: 0;
+.ex-order {
+    font-size: 12px; font-weight: 700;
+    color: var(--text-secondary); letter-spacing: .02em;
 }
 
-.ex-name { font-size: 14px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ex-name.done { color: var(--text-muted); text-decoration: line-through; text-decoration-color: var(--text-muted); }
+.ex-name-col {
+    min-width: 0;
+    display: flex; flex-direction: column; gap: 1px;
+}
+.ex-name {
+    font-size: 14px; font-weight: 500; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ex-name.done { color: var(--text-muted); text-decoration: line-through; }
+.ex-note-inline {
+    font-size: 11px; color: var(--text-muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    line-height: 1.3;
+}
 
-.ex-tag {
-    font-size: 11px;
-    font-weight: 500;
-    padding: 1px 7px;
-    border-radius: 3px;
+.ex-col-val {
+    font-size: 13px; color: var(--text);
+    font-variant-numeric: tabular-nums;
     white-space: nowrap;
-    flex-shrink: 0;
+}
+
+.ex-col-video { display: flex; align-items: center; justify-content: flex-end; }
+
+.ex-tag {  /* kept for any legacy references */
+    font-size: 11px; font-weight: 500; padding: 1px 7px;
+    border-radius: 3px; white-space: nowrap; flex-shrink: 0;
 }
 .tag-warmup { background: #fef3c7; color: #92400e; }
 .tag-a { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
@@ -392,29 +406,53 @@ body {
 .tag-d { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
 .tag-e { background: #ffe4e6; color: #9f1239; border: 1px solid #fecdd3; }
 
-.ex-actions {
-    display: flex;
-    align-items: center;
-    gap: var(--space-1);
-    flex-shrink: 0;
-    opacity: 1;
-}
+.ex-actions { display: none; } /* replaced by ex-col-video */
 
 .vid-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-1);
-    padding: 3px var(--space-2);
-    border-radius: var(--radius-sm);
-    font-size: 12px;
-    color: var(--text-secondary);
-    text-decoration: none;
+    display: inline-flex; align-items: center;
+    width: 24px; height: 24px; border-radius: var(--radius-sm);
+    font-size: 11px; color: var(--text-muted);
+    text-decoration: none; justify-content: center;
     transition: background .1s, color .1s;
 }
-.vid-btn:hover { background: rgba(55,53,47,.1); color: var(--text); }
+.vid-btn:hover { background: rgba(55,53,47,.08); color: var(--text); }
 
-.ex-body { padding: var(--space-1) var(--space-1) 14px 44px; }
+.ex-body { padding: var(--space-2) var(--space-2) 14px var(--space-2); }
 .ex-body.hidden { display: none; }
+
+/* ──────────────────── MESO TABLE ──────────────────── */
+.meso-table {
+    margin: var(--space-2) 0 var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    font-size: 12px;
+}
+.meso-header {
+    display: grid; grid-template-columns: 1fr 72px 96px;
+    padding: 5px 12px;
+    background: var(--surface);
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .06em; color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+}
+.meso-row {
+    display: grid; grid-template-columns: 1fr 72px 96px;
+    padding: 7px 12px;
+    border-top: 1px solid var(--border);
+    color: var(--text-secondary);
+    transition: background .1s;
+}
+.meso-row:first-of-type { border-top: none; }
+.meso-current {
+    background: var(--accent-bg);
+    color: var(--text); font-weight: 500;
+}
+.meso-deload .meso-time { color: #d97706; font-weight: 500; }
+.meso-wk { font-weight: 500; color: var(--text); }
+.meso-deload .meso-wk { color: var(--text-muted); font-style: italic; font-weight: 400; }
+.meso-sets { color: var(--text-muted); }
+.meso-current .meso-sets { color: var(--accent); font-style: italic; }
 
 .ex-props {
     display: flex;
@@ -1859,4 +1897,16 @@ input.weight-locked {
 /* ──────────────────── RESPONSIVE: DESKTOP ──────────────────── */
 @media (min-width: 1025px) {
     .page { padding: 0 96px var(--space-20); }
+}
+
+/* On small screens hide Tempo and Rest columns — Order, Name, Time, Reps, Video remain */
+@media (max-width: 520px) {
+    .ex-list-header,
+    .ex-row {
+        grid-template-columns: 28px 36px 1fr 54px 44px 28px;
+    }
+    .ex-col-tempo,
+    .ex-col-rest,
+    .exh-tempo,
+    .exh-rest { display: none; }
 }
