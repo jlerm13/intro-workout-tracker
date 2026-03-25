@@ -54,7 +54,23 @@ function saveToStorage() {
         localStorage.setItem('wt-completed-sets', JSON.stringify(completedSets));
         localStorage.setItem('wt-workout-dates',  JSON.stringify(workoutDates));
         localStorage.setItem('wt-rpe-data',       JSON.stringify(rpeData));
-    } catch (e) { /* ignore quota errors */ }
+    } catch (e) {
+        showSaveError();
+    }
+}
+
+function showSaveError() {
+    let toast = document.getElementById('saveErrorToast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'saveErrorToast';
+        toast.textContent = '⚠️ Could not save — storage full. Free up space on your device.';
+        toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#dc2626;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;z-index:99999;max-width:320px;text-align:center;';
+        document.body.appendChild(toast);
+    }
+    toast.style.display = 'block';
+    clearTimeout(toast._hideTimer);
+    toast._hideTimer = setTimeout(() => { toast.style.display = 'none'; }, 6000);
 }
 
 function loadFromStorage() {
@@ -82,8 +98,14 @@ function loadFromStorage() {
 }
 
 /* ════════════════ WORKOUT DATE TRACKING ════════════════ */
+function localDateStr(d = new Date()) {
+    // Use local calendar date — toISOString() converts to UTC and can shift the date
+    // for users in UTC− timezones who work out after 5 PM
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 function recordWorkoutDate() {
-    const today = new Date().toISOString().split('T')[0];
+    const today = localDateStr();
     if (!workoutDates.includes(today)) {
         workoutDates.push(today);
         saveToStorage();
@@ -149,13 +171,13 @@ function renderHeatmap() {
     if (!grid) return;
 
     const today    = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = localDateStr(today);
 
     const days = [];
     for (let i = 27; i >= 0; i--) {
         const d = new Date(today);
         d.setDate(d.getDate() - i);
-        days.push(d.toISOString().split('T')[0]);
+        days.push(localDateStr(d));
     }
 
     grid.innerHTML = days.map(d => {
@@ -809,13 +831,13 @@ function renderBlockView() {
         const ex     = workoutData[currentPhase].exercises[exIdx];
         const sets   = getBlockSets(exIdx);
         const weight = getBlockWeight(exIdx);
-        const wLabel = weight ? `${weight} lbs` : 'Set weight ✏️';
+        const wLabel = weight ? `${weight} lbs` : 'Set weight';
         return `
         <div class="block-ex-card">
             <div class="block-ex-name">${ex.name}</div>
-            <div class="block-ex-weight-row" id="block-weight-row-${exIdx}">
+            <div class="block-ex-weight-row" id="block-weight-row-${exIdx}" onclick="editBlockWeight(${exIdx})" style="cursor:pointer">
                 <span class="block-ex-weight-val" id="block-weight-val-${exIdx}">${wLabel}</span>
-                ${weight ? `<button class="block-ex-edit-btn" onclick="editBlockWeight(${exIdx})" title="Edit weight">✏️</button>` : ''}
+                <button class="block-ex-edit-btn" title="Edit weight">✏️</button>
             </div>
             <div class="block-set-counter" id="block-counter-${exIdx}">${sets}</div>
             <div class="block-set-vs" id="block-vs-${exIdx}">${buildDeltaHTML(exIdx)}</div>
@@ -851,8 +873,9 @@ function editBlockWeight(exIdx) {
     const current = getBlockWeight(exIdx);
     row.innerHTML = `
         <input class="block-ex-weight-input" id="block-weight-inp-${exIdx}"
-               type="number" inputmode="decimal" value="${current}" placeholder="lbs">
-        <button class="block-ex-edit-btn" onclick="saveBlockWeightEdit(${exIdx})">✓</button>`;
+               type="number" inputmode="decimal" value="${current}" placeholder="lbs"
+               onblur="saveBlockWeightEdit(${exIdx})">
+        <button class="block-ex-edit-btn" onmousedown="event.preventDefault()" onclick="saveBlockWeightEdit(${exIdx})">✓</button>`;
     const inp = document.getElementById(`block-weight-inp-${exIdx}`);
     if (inp) { inp.focus(); inp.select(); }
 }
@@ -863,7 +886,7 @@ function saveBlockWeightEdit(exIdx) {
     const val = inp.value.trim();
     if (val) saveBlockWeight(exIdx, val);
     const row     = document.getElementById(`block-weight-row-${exIdx}`);
-    const display = val ? `${val} lbs` : 'Set weight ✏️';
+    const display = val ? `${val} lbs` : 'Set weight';
     row.innerHTML = `
         <span class="block-ex-weight-val" id="block-weight-val-${exIdx}">${display}</span>
         <button class="block-ex-edit-btn" onclick="editBlockWeight(${exIdx})" title="Edit weight">✏️</button>`;
@@ -1223,9 +1246,23 @@ function renderFocusOnDeck() {
 function renderBlockProgress() {
     const el = document.getElementById('focusBlockProgress');
     if (!el) return;
-    el.innerHTML = focusBlockGroups.map((g, i) => {
+    // Deduplicate by type so straight-sets split of Block A still shows one "A" node
+    const seen = new Set();
+    const deduped = focusBlockGroups.map((g, i) => ({ g, i })).filter(({ g }) => {
+        if (seen.has(g.type)) return false;
+        seen.add(g.type);
+        return true;
+    });
+    el.innerHTML = deduped.map(({ g, i }) => {
         const label = g.type.replace('Block ', '').replace('Warm-Up', 'WU');
-        const cls   = i < focusGroupIdx ? 'bp-done' : i === focusGroupIdx ? 'bp-current' : '';
+        // Mark done if all groups of this type are behind focusGroupIdx
+        const allIdxForType = focusBlockGroups.reduce((acc, fg, fi) => {
+            if (fg.type === g.type) acc.push(fi);
+            return acc;
+        }, []);
+        const allDone    = allIdxForType.every(fi => fi < focusGroupIdx);
+        const isCurrent  = allIdxForType.includes(focusGroupIdx);
+        const cls = allDone ? 'bp-done' : isCurrent ? 'bp-current' : '';
         return `<div class="bp-node ${cls}">${label}</div>`;
     }).join('');
 }
@@ -1798,7 +1835,7 @@ function generateShareText() {
     // Streak
     let streak = 0;
     const check = new Date();
-    while (workoutDates.includes(check.toISOString().split('T')[0])) {
+    while (workoutDates.includes(localDateStr(check))) {
         streak++;
         check.setDate(check.getDate() - 1);
     }
@@ -1838,6 +1875,7 @@ function fallbackCopy(text, cb) {
 
 /* ════════════════ NAVIGATION ════════════════ */
 function selectPhase(phase) {
+    if (!document.getElementById('focusOverlay').classList.contains('hidden')) exitFocusMode();
     currentPhase   = phase;
     currentSession = 1;
     cardCollapsed  = {};
@@ -1848,6 +1886,7 @@ function selectPhase(phase) {
 }
 
 function selectSession(session) {
+    if (!document.getElementById('focusOverlay').classList.contains('hidden')) exitFocusMode();
     currentSession = session;
     cardCollapsed  = {};
     updateWorkout();
@@ -1890,7 +1929,7 @@ function renderSessionNav() {
 function getStreakCount() {
     let streak = 0;
     const check = new Date();
-    while (workoutDates.includes(check.toISOString().split('T')[0])) {
+    while (workoutDates.includes(localDateStr(check))) {
         streak++;
         check.setDate(check.getDate() - 1);
     }
@@ -2097,6 +2136,10 @@ document.addEventListener('DOMContentLoaded', () => {
     loadFromStorage();
     updateWorkout();
     renderHeatmap();
+    const rationaleEl = document.getElementById('phaseRationaleBody');
+    if (rationaleEl && typeof programDescription !== 'undefined') {
+        rationaleEl.textContent = programDescription;
+    }
 });
 
 // Re-sync block timer on app re-entry (handles browser tab throttling on mobile)
