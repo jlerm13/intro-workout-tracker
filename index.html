@@ -6,7 +6,7 @@
     <title>Home Gym Workout Tracker</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=2">
     <script>
         // Apply saved theme before paint to avoid a flash of the wrong skin
         (function () {
@@ -56,9 +56,10 @@
         <div class="sb-body">
             <div class="sec-label">Phase</div>
             <div class="phase-toggle">
-                <button class="phase-btn active" onclick="selectPhase(1)">Phase 1</button>
-                <button class="phase-btn" onclick="selectPhase(2)">Phase 2</button>
-                <button class="phase-btn" onclick="selectPhase(3)">Phase 3</button>
+                <button class="phase-btn active" onclick="selectPhase(1)">Wk 1-2</button>
+                <button class="phase-btn" onclick="selectPhase(2)">Wk 3-4</button>
+                <button class="phase-btn" onclick="selectPhase(3)">Wk 5-6</button>
+                <button class="phase-btn" onclick="selectPhase(4)">Deload</button>
             </div>
 
             <div class="sec-label">Sessions</div>
@@ -71,7 +72,7 @@
                 <div class="prog-bar-bg">
                     <div class="prog-bar-fill" id="progressFill"></div>
                 </div>
-                <div class="prog-text" id="progressText">0 of 11 complete</div>
+                <div class="prog-text" id="progressText">0 of 8 complete</div>
                 <button class="sb-start-btn" onclick="enterFocusMode()">Start Workout</button>
                 <div class="sb-session-focus" id="sessionNote"></div>
             </div>
@@ -96,7 +97,7 @@
                         <div class="heatmap-grid" id="heatmapGrid"></div>
                     </div>
                     <div class="sb-card">
-                        <div class="sb-card-label">Previous Session</div>
+                        <div class="sb-card-label">Last Workout</div>
                         <div id="prevContent">
                             <p style="font-size:12px;color:var(--text-muted);font-style:italic;">No previous session data</p>
                         </div>
@@ -110,17 +111,21 @@
     <main class="main">
         <div class="page">
             <div class="pg-emoji">🏋️</div>
-            <h1 class="pg-title" id="pageTitle">Phase 1 — Accumulation <span style="font-size:13px;color:var(--text-muted);font-weight:400;"></span></h1>
-            <p class="pg-subtitle" id="pageSubtitle">2x per week for 2 weeks</p>
+            <h1 class="pg-title" id="pageTitle">Weeks 1-2 — Foundation <span style="font-size:13px;color:var(--text-muted);font-weight:400;"></span></h1>
+            <p class="pg-subtitle" id="pageSubtitle">2x per week · 2 sets per exercise · 3 reps in reserve</p>
 
             <div class="pg-props">
                 <div class="prop-row">
                     <div class="prop-key">📅 Session</div>
-                    <div class="prop-val" id="propSession"><span class="prop-tag">Session 1 of 4</span></div>
+                    <div class="prop-val" id="propSession"><span class="prop-tag">Session 1 of 4 · Workout A</span></div>
                 </div>
                 <div class="prop-row">
                     <div class="prop-key">🎯 Focus</div>
-                    <div class="prop-val" id="propFocus">Baseline — Learn the movements</div>
+                    <div class="prop-val" id="propFocus">Workout A baseline — learn the movements, stop 3 reps shy of failure</div>
+                </div>
+                <div class="prop-row">
+                    <div class="prop-key">🔋 Effort</div>
+                    <div class="prop-val" id="propRIR"><span class="rir-pill">🔋 3 RIR</span></div>
                 </div>
             </div>
 
@@ -142,6 +147,47 @@
                 <div id="chartWeightContainer" class="chart-container"></div>
                 <div id="chartVolumeContainer" class="chart-container hidden"></div>
             </div>
+
+            <div id="bodyCompSection" class="body-comp-section">
+                <div class="blk-heading">Body Comp</div>
+                <div class="bc-grid">
+                    <div class="bc-card">
+                        <div class="bc-card-label">Daily Weigh-In</div>
+                        <div class="bc-input-row">
+                            <input type="date" id="bwDate" class="bc-date-inp">
+                            <input type="number" id="bwInput" class="bc-num-inp" placeholder="lbs" step="0.1" inputmode="decimal">
+                            <button class="bc-save-btn" onclick="saveBodyweight()">Save</button>
+                        </div>
+                        <div class="bc-stats-row">
+                            <div class="bc-stat"><div class="bc-stat-val" id="bwToday">—</div><div class="bc-stat-lbl">Today</div></div>
+                            <div class="bc-stat"><div class="bc-stat-val" id="bwAvg7">—</div><div class="bc-stat-lbl">7-Day Avg</div></div>
+                            <div class="bc-stat"><div class="bc-stat-val" id="bwTrend">—</div><div class="bc-stat-lbl">Weekly Trend</div></div>
+                        </div>
+                        <div id="bwSparkline" class="bc-sparkline"></div>
+                    </div>
+                    <div class="bc-card">
+                        <div class="bc-card-label">Weekly Waist</div>
+                        <div class="bc-input-row">
+                            <input type="date" id="waistDate" class="bc-date-inp">
+                            <input type="number" id="waistInput" class="bc-num-inp" placeholder="in" step="0.1" inputmode="decimal">
+                            <button class="bc-save-btn" onclick="saveWaist()">Save</button>
+                        </div>
+                        <div class="bc-stats-row">
+                            <div class="bc-stat"><div class="bc-stat-val" id="waistLatest">—</div><div class="bc-stat-lbl">Latest</div></div>
+                        </div>
+                        <div class="bc-waist-delta" id="waistDelta"></div>
+                    </div>
+                    <div class="bc-card bc-guidance">
+                        <div class="bc-card-label">Guidance</div>
+                        <ul class="bc-guide-list">
+                            <li>Protein: ~1.6 g per kg of bodyweight per day</li>
+                            <li>A modest 300–500 kcal deficit is enough for fat loss without overwhelming recovery</li>
+                            <li>Aim for 7–9 hours of sleep — recovery drives the training adaptation</li>
+                            <li>Adjust calories only after ~2 weeks of trend data, not a single weigh-in</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 </div>
@@ -149,7 +195,7 @@
 <!-- ════════════════ FOCUS MODE ════════════════ -->
 <div class="focus-overlay hidden" id="focusOverlay">
     <div class="focus-header">
-        <span class="focus-prog" id="focusProgText">Exercise 1 of 11</span>
+        <span class="focus-prog" id="focusProgText">Workout</span>
         <div class="focus-block-progress" id="focusBlockProgress"></div>
         <button class="session-timer" id="sessionTimer" onclick="toggleSessionTimer()" title="Click to show/hide timer">⏱</button>
         <button class="focus-exit" onclick="exitFocusMode()">✕ Exit</button>
@@ -299,7 +345,7 @@
 </div>
 
 <div id="toastContainer" class="toast-container"></div>
-<script src="data.js?v=5"></script>
-<script src="app.js?v=5"></script>
+<script src="data.js?v=6"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>
