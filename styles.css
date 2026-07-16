@@ -1864,17 +1864,41 @@ body {
 [data-theme="ferrari"] .rest-timer { background: #111; }
 [data-theme="ferrari"] .rest-timer.done { background: #7a1610; }
 
-/* Tags — dark plates */
-[data-theme="ferrari"] .tag-warmup { background: #303030; color: #f6e500; }
-[data-theme="ferrari"] .tag-a { background: #303030; color: #ffffff; border-color: #555; }
-[data-theme="ferrari"] .tag-b { background: #303030; color: #ffffff; border-color: #555; }
-[data-theme="ferrari"] .tag-c { background: #303030; color: #ffffff; border-color: #555; }
-[data-theme="ferrari"] .tag-d { background: #303030; color: #ffffff; border-color: #555; }
-[data-theme="ferrari"] .tag-e { background: #4c0f0a; color: #f4a29a; border-color: var(--accent); }
+/* Tags — uniform neutral badge-pills. Per DESIGN.md, Rosso Corsa is
+   reserved for CTAs/Cavallino/race-position and yellow is Hypersail-only,
+   so category tags carry no saturated hue. They differentiate by the
+   block letter + the section header above them, not by color. */
+[data-theme="ferrari"] .ex-tag {
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    font-weight: 600;
+}
+[data-theme="ferrari"] .tag-warmup,
+[data-theme="ferrari"] .tag-a,
+[data-theme="ferrari"] .tag-b,
+[data-theme="ferrari"] .tag-c,
+[data-theme="ferrari"] .tag-d,
+[data-theme="ferrari"] .tag-e {
+    background: #303030;
+    color: #b8b8b8;
+    border: 1px solid var(--border);
+}
 
 [data-theme="ferrari"] .summary-pr-section { background: #4c0f0a; border-color: var(--accent); }
 [data-theme="ferrari"] .summary-pr-title { color: #f4a29a; }
 
+/* Resting "Done"/"Mark Done" affordance — the base 1.5px ink-at-20%
+   border is invisible on near-black. Swap to a crisp white hairline
+   (button-outline-on-dark) so the target reads before hover/tap. */
+[data-theme="ferrari"] .set-done-btn {
+    border-color: rgba(255,255,255,.22);
+    color: #cfcfcf;
+}
+[data-theme="ferrari"] .set-done-btn:hover {
+    border-color: rgba(255,255,255,.45);
+    background: rgba(255,255,255,.06);
+    color: #ffffff;
+}
 [data-theme="ferrari"] .set-done-btn.confirmed { background: #063d22; border-color: #03904a; color: #34d399; }
 [data-theme="ferrari"] .set-row.confirmed td { background: rgba(3,144,74,.08); }
 
