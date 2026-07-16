@@ -1782,6 +1782,169 @@ body {
     .toast { background: #ededec; color: #191919; }
 }
 
+/* ══════════════════════════════════════════════════════════════════ */
+/* FERRARI THEME (A/B variant "B") — cinematic editorial skin.          */
+/* Activated via <html data-theme="ferrari">. Near-black canvas,        */
+/* Rosso Corsa accent, sharp 0px corners, uppercase tracked CTAs.       */
+/* Mirrors the dark-mode override map so hard-coded colors stay legible.*/
+/* ══════════════════════════════════════════════════════════════════ */
+:root[data-theme="ferrari"] {
+    /* Rosso Corsa is the single brand voltage */
+    --text:           #ffffff;
+    --text-secondary: #969696;
+    --text-muted:     #8f8f8f;
+    --background:     #181818;   /* near-black, never pure black */
+    --surface:       #303030;    /* canvas-elevated */
+    --border:        rgba(255,255,255,.12);
+    --border-strong: rgba(255,255,255,.22);
+    --hover:         rgba(255,255,255,.06);
+    --accent:        #da291c;    /* Rosso Corsa */
+    --accent-bg:     rgba(218,41,28,.16);
+    --success:       #03904a;
+    --warning:       #f6e500;
+
+    /* Sharp-by-default geometry — the brand button shape */
+    --radius-sm:   2px;
+    --radius-md:   0px;
+    --radius-lg:   0px;
+
+    --shadow-sm:  0 1px 3px rgba(0,0,0,.5);
+    --shadow-md:  0 4px 12px rgba(0,0,0,.6);
+    --shadow-lg:  0 4px 24px rgba(0,0,0,.6);
+    --shadow-xl:  0 20px 60px rgba(0,0,0,.7);
+}
+
+[data-theme="ferrari"] body { color-scheme: dark; }
+
+/* Cinematic editorial hero — the display headline carries the brand */
+[data-theme="ferrari"] .pg-title {
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    font-size: 34px;
+}
+[data-theme="ferrari"] .ws-name,
+[data-theme="ferrari"] .pg-subtitle { letter-spacing: .01em; }
+
+/* Uppercase, tracked, sharp CTAs — the Ferrari button voice */
+[data-theme="ferrari"] .sb-start-btn,
+[data-theme="ferrari"] .focus-continue-btn,
+[data-theme="ferrari"] .focus-nav-btn,
+[data-theme="ferrari"] .interval-start-btn,
+[data-theme="ferrari"] .summary-share-btn,
+[data-theme="ferrari"] .theme-toggle {
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    font-weight: 700;
+    border-radius: 0;
+}
+
+/* Primary CTA fills in Rosso Corsa */
+[data-theme="ferrari"] .sb-start-btn { background: var(--accent); color: #fff; }
+
+/* ── Hard-coded surface overrides (mirrors dark-mode map) ── */
+[data-theme="ferrari"] .ws-icon { background: var(--accent); }
+
+[data-theme="ferrari"] .num-inp,
+[data-theme="ferrari"] .focus-num-inp,
+[data-theme="ferrari"] .sb-card,
+[data-theme="ferrari"] .sb-context-card,
+[data-theme="ferrari"] .summary-card,
+[data-theme="ferrari"] .focus-overlay {
+    background: var(--surface);
+    color: var(--text);
+}
+[data-theme="ferrari"] .focus-overlay { background: var(--background); }
+
+[data-theme="ferrari"] .phase-btn.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: none;
+}
+
+[data-theme="ferrari"] .rest-timer { background: #111; }
+[data-theme="ferrari"] .rest-timer.done { background: #7a1610; }
+
+/* Tags — dark plates */
+[data-theme="ferrari"] .tag-warmup { background: #303030; color: #f6e500; }
+[data-theme="ferrari"] .tag-a { background: #303030; color: #ffffff; border-color: #555; }
+[data-theme="ferrari"] .tag-b { background: #303030; color: #ffffff; border-color: #555; }
+[data-theme="ferrari"] .tag-c { background: #303030; color: #ffffff; border-color: #555; }
+[data-theme="ferrari"] .tag-d { background: #303030; color: #ffffff; border-color: #555; }
+[data-theme="ferrari"] .tag-e { background: #4c0f0a; color: #f4a29a; border-color: var(--accent); }
+
+[data-theme="ferrari"] .summary-pr-section { background: #4c0f0a; border-color: var(--accent); }
+[data-theme="ferrari"] .summary-pr-title { color: #f4a29a; }
+
+[data-theme="ferrari"] .set-done-btn.confirmed { background: #063d22; border-color: #03904a; color: #34d399; }
+[data-theme="ferrari"] .set-row.confirmed td { background: rgba(3,144,74,.08); }
+
+[data-theme="ferrari"] .focus-cue-up { color: #34d399; background: #063d22; }
+[data-theme="ferrari"] .focus-cue-hold { color: #f6e500; background: #303030; }
+
+[data-theme="ferrari"] .focus-rpe-btn.easy.selected,
+[data-theme="ferrari"] .rpe-mini-btn.easy.sel  { background: #063d22; color: #34d399; border-color: #03904a; }
+[data-theme="ferrari"] .focus-rpe-btn.solid.selected,
+[data-theme="ferrari"] .rpe-mini-btn.solid.sel { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+[data-theme="ferrari"] .focus-rpe-btn.hard.selected,
+[data-theme="ferrari"] .rpe-mini-btn.hard.sel  { background: #4c0f0a; color: #f4a29a; border-color: var(--accent); }
+
+[data-theme="ferrari"] .pr-badge { background: #4c0f0a; color: #f4a29a; }
+
+[data-theme="ferrari"] .prog-cue-up { color: #34d399; }
+[data-theme="ferrari"] .prog-cue-hold { color: #f6e500; }
+
+[data-theme="ferrari"] .focus-tempo { background: #303030; border-color: #555; color: #f6e500; }
+
+[data-theme="ferrari"] .bp-node { background: var(--surface); color: var(--text-muted); border-color: var(--border); }
+[data-theme="ferrari"] .bp-node.bp-current { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+[data-theme="ferrari"] .bp-node.bp-done { background: #063d22; color: #34d399; border-color: #03904a; }
+
+[data-theme="ferrari"] .summary-share-btn.copied { background: #063d22; border-color: #03904a; color: #34d399; }
+[data-theme="ferrari"] .focus-video-toggle.open { border-color: var(--accent); background: var(--accent-bg); }
+
+[data-theme="ferrari"] .heatmap-day { background: rgba(255,255,255,.08); }
+[data-theme="ferrari"] .heatmap-day.active { background: var(--accent); opacity: .9; }
+
+[data-theme="ferrari"] .focus-on-deck { background: var(--surface); border-color: var(--border-strong); }
+
+[data-theme="ferrari"] .interval-phase-label.ready { background: var(--surface); color: var(--text-muted); border-color: var(--border-strong); }
+[data-theme="ferrari"] .interval-phase-label.countdown { background: #303030; color: #f6e500; border-color: #555; }
+[data-theme="ferrari"] .interval-phase-label.go { background: #063d22; color: #34d399; border-color: #03904a; }
+[data-theme="ferrari"] .interval-phase-label.rest-label { background: #303030; color: #f6e500; border-color: #555; }
+[data-theme="ferrari"] .interval-work-bar-fill { background: var(--accent); }
+[data-theme="ferrari"] .interval-start-btn { background: var(--accent); }
+[data-theme="ferrari"] .interval-start-btn:hover { background: #b01e0a; }
+[data-theme="ferrari"] .cardio-kpi-inputs { background: var(--surface); border-color: var(--border-strong); }
+
+[data-theme="ferrari"] .journey-narrative.journey-pr { background: #4c0f0a; border-left-color: var(--accent); }
+[data-theme="ferrari"] .chart-tab.active { background: var(--surface); color: var(--text); box-shadow: none; }
+[data-theme="ferrari"] .coach-setup { background: var(--surface); border-color: var(--border-strong); }
+[data-theme="ferrari"] .toast { background: #ffffff; color: #181818; }
+
+/* ── Theme toggle control ── */
+.theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: calc(100% - 8px);
+    margin: 4px;
+    padding: 8px;
+    min-height: 40px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background .1s, color .1s;
+}
+.theme-toggle:hover { background: var(--hover); color: var(--text); }
+
 /* ──────────────────── RESPONSIVE: TABLET & UP ──────────────────── */
 @media (min-width: 769px) {
     .app { flex-direction: row; }
