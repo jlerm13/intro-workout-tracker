@@ -36,26 +36,29 @@ let sessionTimerInterval = null;
 let sessionTimerVisible  = false;  // hidden by default
 
 /* ════════════════ LOCALSTORAGE ════════════════ */
+// v2 program uses a clean 'wt2-' prefix so old-program logs (wt-*) are left
+// untouched. Only workout-dates is seeded once from the old prefix so the
+// streak/heatmap survives the switch.
 function saveToStorage() {
     try {
-        localStorage.setItem('wt-sessionData',    JSON.stringify(sessionData));
-        localStorage.setItem('wt-completed',      JSON.stringify(completedExercises));
-        localStorage.setItem('wt-phase',          String(currentPhase));
-        localStorage.setItem('wt-session',        String(currentSession));
-        localStorage.setItem('wt-completed-sets', JSON.stringify(completedSets));
-        localStorage.setItem('wt-workout-dates',  JSON.stringify(workoutDates));
-        localStorage.setItem('wt-rpe-data',       JSON.stringify(rpeData));
+        localStorage.setItem('wt2-sessionData',    JSON.stringify(sessionData));
+        localStorage.setItem('wt2-completed',      JSON.stringify(completedExercises));
+        localStorage.setItem('wt2-phase',          String(currentPhase));
+        localStorage.setItem('wt2-session',        String(currentSession));
+        localStorage.setItem('wt2-completed-sets', JSON.stringify(completedSets));
+        localStorage.setItem('wt2-workout-dates',  JSON.stringify(workoutDates));
+        localStorage.setItem('wt2-rpe-data',       JSON.stringify(rpeData));
     } catch (e) { /* ignore quota errors */ }
 }
 
 function loadFromStorage() {
     try {
-        const sd = localStorage.getItem('wt-sessionData');
-        const ce = localStorage.getItem('wt-completed');
-        const ph = localStorage.getItem('wt-phase');
-        const se = localStorage.getItem('wt-session');
-        const cs = localStorage.getItem('wt-completed-sets');
-        const wd = localStorage.getItem('wt-workout-dates');
+        const sd = localStorage.getItem('wt2-sessionData');
+        const ce = localStorage.getItem('wt2-completed');
+        const ph = localStorage.getItem('wt2-phase');
+        const se = localStorage.getItem('wt2-session');
+        const cs = localStorage.getItem('wt2-completed-sets');
+        const wd = localStorage.getItem('wt2-workout-dates');
         if (sd) sessionData        = JSON.parse(sd);
         if (ce) completedExercises = JSON.parse(ce);
         if (ph) {
@@ -66,8 +69,15 @@ function loadFromStorage() {
         }
         if (se) currentSession = parseInt(se);
         if (cs) completedSets  = JSON.parse(cs);
-        if (wd) workoutDates   = JSON.parse(wd);
-        const rd = localStorage.getItem('wt-rpe-data');
+        if (wd) {
+            workoutDates = JSON.parse(wd);
+        } else {
+            const legacyWd = localStorage.getItem('wt-workout-dates');
+            if (legacyWd) {
+                try { workoutDates = JSON.parse(legacyWd); } catch (e2) {}
+            }
+        }
+        const rd = localStorage.getItem('wt2-rpe-data');
         if (rd) rpeData = JSON.parse(rd);
     } catch (e) { /* ignore parse errors */ }
 }
@@ -82,10 +92,52 @@ function recordWorkoutDate() {
     }
 }
 
+/* ════════════════ SESSION / LETTER HELPERS ════════════════ */
+// exIdx only identifies one exercise WITHIN a workout letter (A or B) — the
+// same index means a different exercise depending on which letter is
+// active. Every history lookup below must restrict its scan to sessions
+// sharing the current letter, or it will mix Workout A and B data.
+function getSessionLetter(phase, session) { return workoutData[phase].sessionsPlan[session - 1]; }
+function getSessionExercises(phase, session) { return workoutData[phase].workouts[getSessionLetter(phase, session)]; }
+function getCurrentExercises() { return getSessionExercises(currentPhase, currentSession); }
+
+// Chronological list of every session in the program, in phase order.
+function getAllSessionRefs() {
+    const refs = [];
+    Object.keys(workoutData).map(Number).sort((a, b) => a - b).forEach(p => {
+        for (let s = 1; s <= workoutData[p].totalSessions; s++) {
+            refs.push({ phase: p, session: s, letter: getSessionLetter(p, s), sk: `${p}-${s}` });
+        }
+    });
+    return refs;
+}
+
+// The n-th previous session sharing the same workout letter (n=1 = most
+// recent). Crosses phase-block boundaries. Returns null if none exists.
+function getPrevSameLetterKey(phase, session, n) {
+    n = n || 1;
+    const refs = getAllSessionRefs();
+    const idx = refs.findIndex(r => r.phase === phase && r.session === session);
+    if (idx === -1) return null;
+    const letter = refs[idx].letter;
+    let count = 0;
+    for (let i = idx - 1; i >= 0; i--) {
+        if (refs[i].letter === letter && ++count === n) return refs[i].sk;
+    }
+    return null;
+}
+
+function sessionKeysForLetter(letter) {
+    return getAllSessionRefs().filter(r => r.letter === letter).map(r => r.sk);
+}
+
 /* ════════════════ PERSONAL RECORD DETECTION ════════════════ */
 function getExercisePR(exIdx) {
     let maxWeight = 0;
-    Object.entries(sessionData).forEach(([sk, data]) => {
+    const letter = getSessionLetter(currentPhase, currentSession);
+    sessionKeysForLetter(letter).forEach(sk => {
+        const data = sessionData[sk];
+        if (!data) return;
         Object.entries(data).forEach(([key, val]) => {
             if (key.startsWith(`${sk}-${exIdx}-`) && key.endsWith('-weight')) {
                 const w = parseFloat(val);
@@ -128,7 +180,7 @@ function confirmSet(exIdx, setIdx) {
         if (rInp && rInp.value) updateReps(exIdx, setIdx, rInp.value);
         recordWorkoutDate();
         // Auto-start rest timer
-        const ex = workoutData[currentPhase].exercises[exIdx];
+        const ex = getCurrentExercises()[exIdx];
         if (ex.rest !== '—' && ex.rest !== '0') startRest(ex.rest);
     }
     saveToStorage();
@@ -157,66 +209,10 @@ function renderHeatmap() {
 }
 
 /* ════════════════ SET PROGRESSION ════════════════ */
-// Returns the actual number of sets for an exercise given the current phase + session,
-// reflecting the progression rules described in each session note.
-function getActualSets(exercise, phase, session) {
-    const base   = exercise.sets;
-    const type   = exercise.type;
-    const isMain = type === 'Block A';
-    const isCore = type === 'Block E';
-    const isWarm = type === 'Warm-Up';
-
-    // Cardio warm-up: reps = number of rounds
-    if (isWarm && exercise.work) return parseInt(exercise.reps) || base;
-    // Non-cardio warm-up never changes
-    if (isWarm) return base;
-
-    if (phase === 1) {
-        // Base = 2 for all
-        switch (session) {
-            case 1: return base;          // 2 — baseline
-            case 2: return base + 1;      // 3 — add +1 set to all
-            case 3: return 4;             // 4 — add +1 more (all reach 4)
-            case 4:                       // taper
-                if (isMain) return 4;
-                if (isCore) return base;
-                return 3;
-            default: return base;
-        }
-    }
-
-    if (phase === 2) {
-        // Base = 3 for most, 2 for Block E
-        switch (session) {
-            case 1: return base;
-            case 2: return isMain ? 4 : base;
-            case 3: return isCore ? base : 4;
-            case 4: return isCore ? base : 4;
-            case 5: return isMain ? 5 : (isCore ? base : 4);
-            case 6: return isMain ? 4 : (isCore ? base : 3);
-            default: return base;
-        }
-    }
-
-    if (phase === 3) {
-        // Base = 3 for all. Block A = strength lifts, Block E = core/accessory
-        const isStrengthA = type === 'Block A';
-        switch (session) {
-            case 1: return base;                                           // 3 all — learn loads
-            case 2: return isStrengthA ? 4 : base;                        // A→4
-            case 3: return isCore ? base : 4;                             // B/C/D→4
-            case 4: return isCore ? base : 4;                             // maintain
-            case 5: return isStrengthA ? 5 : (isCore ? base : 4);        // A→5, B/C/D→4
-            case 6: return isStrengthA ? 5 : (isCore ? base : 4);        // maintain peak
-            case 7: return isCore ? base : 5;                             // max volume — all→5
-            case 8: return isStrengthA ? 5 : (isCore ? base : 4);        // slight pull-back
-            case 9: return isStrengthA ? 4 : base;                        // taper
-            default: return base;
-        }
-    }
-
-    return base;
-}
+// Set counts are baked into each phase-block's copy of the exercise data —
+// double progression (reps, then load) drives change within a block instead
+// of adding sets every session.
+function getActualSets(exercise) { return exercise.sets; }
 
 /* ════════════════ REST TIMER ════════════════ */
 function formatTime(s) {
@@ -358,7 +354,7 @@ function clearIntervalTimer() {
 }
 
 function showReadyScreen() {
-    const ex = workoutData[currentPhase].exercises[focusExIdx];
+    const ex = getCurrentExercises()[focusExIdx];
     if (!ex.work) return;
 
     clearIntervalTimer();
@@ -418,7 +414,7 @@ function runCountdown() {
 }
 
 function startWorkPhase() {
-    const ex = workoutData[currentPhase].exercises[focusExIdx];
+    const ex = getCurrentExercises()[focusExIdx];
     if (!ex.work) return;
 
     clearIntervalTimer();
@@ -481,7 +477,7 @@ function startWorkPhase() {
 function endWorkPhase() {
     intervalPhase = 'rest';
 
-    const ex = workoutData[currentPhase].exercises[focusExIdx];
+    const ex = getCurrentExercises()[focusExIdx];
     let restSeconds = 0;
     if (ex.rest !== '—' && ex.rest !== '0') {
         restSeconds = parseInt(ex.rest.split('-')[0]) || 0;
@@ -517,8 +513,8 @@ function showCardioRestScreen(seconds) {
     document.getElementById('focusScreenRest').classList.remove('hidden');
 
     const group       = focusBlockGroups[focusGroupIdx];
-    const firstEx     = workoutData[currentPhase].exercises[group.exercises[0]];
-    const totalRounds = getActualSets(firstEx, currentPhase, currentSession);
+    const firstEx     = getCurrentExercises()[group.exercises[0]];
+    const totalRounds = getActualSets(firstEx);
 
     // Show cardio KPI inputs
     const kpiContainer = document.getElementById('cardioKpiInputs');
@@ -605,7 +601,7 @@ function showCardioRestScreen(seconds) {
 
 /* ════════════════ FOCUS MODE ════════════════ */
 function buildBlockGroups() {
-    const exercises = workoutData[currentPhase].exercises;
+    const exercises = getCurrentExercises();
     const groups = [];
     let current = null;
     exercises.forEach((ex, idx) => {
@@ -660,7 +656,7 @@ function toggleFocusVideo() {
         toggle.classList.remove('open');
         toggle.textContent = '▶ Watch form';
     } else {
-        const ex       = workoutData[currentPhase].exercises[focusExIdx];
+        const ex       = getCurrentExercises()[focusExIdx];
         const videoUrl = exerciseVideos[ex.name];
         if (!videoUrl) return;
         const videoId = new URL(videoUrl).searchParams.get('v');
@@ -674,9 +670,10 @@ function toggleFocusVideo() {
 
 /* ════════════════ PROGRESS SUMMARY ════════════════ */
 function calcSessionStats() {
-    const sk      = getSessionKey();
-    const data    = workoutData[currentPhase];
-    const curData = sessionData[sk] || {};
+    const sk        = getSessionKey();
+    const exercises = getCurrentExercises();
+    const letter    = getSessionLetter(currentPhase, currentSession);
+    const curData   = sessionData[sk] || {};
 
     // Count completed sets for this session
     let setsCompleted = 0;
@@ -686,8 +683,9 @@ function calcSessionStats() {
 
     // Total volume: sum weight × reps for all sets with data
     let totalVolume = 0;
-    data.exercises.forEach((ex, exIdx) => {
-        const actualSets = getActualSets(ex, currentPhase, currentSession);
+    exercises.forEach((ex, exIdx) => {
+        if (ex.noLog) return;
+        const actualSets = getActualSets(ex);
         for (let s = 0; s < actualSets; s++) {
             const w = parseFloat(curData[`${sk}-${exIdx}-${s}-weight`]);
             const r = parseFloat(curData[`${sk}-${exIdx}-${s}-reps`]);
@@ -695,10 +693,12 @@ function calcSessionStats() {
         }
     });
 
-    // PRs: current session max weight > all previous sessions' max for that exercise
+    // PRs: current session max weight > all previous SAME-LETTER sessions' max
     const prs = [];
-    data.exercises.forEach((ex, exIdx) => {
-        const actualSets = getActualSets(ex, currentPhase, currentSession);
+    const letterKeys = sessionKeysForLetter(letter);
+    exercises.forEach((ex, exIdx) => {
+        if (ex.noLog) return;
+        const actualSets = getActualSets(ex);
         let currentMax = 0;
         for (let s = 0; s < actualSets; s++) {
             const w = parseFloat(curData[`${sk}-${exIdx}-${s}-weight`]);
@@ -707,8 +707,10 @@ function calcSessionStats() {
         if (currentMax <= 0) return;
 
         let histMax = 0;
-        Object.entries(sessionData).forEach(([prevSk, prevData]) => {
+        letterKeys.forEach(prevSk => {
             if (prevSk === sk) return;
+            const prevData = sessionData[prevSk];
+            if (!prevData) return;
             Object.keys(prevData).forEach(key => {
                 if (key.startsWith(`${prevSk}-${exIdx}-`) && key.endsWith('-weight')) {
                     const pw = parseFloat(prevData[key]);
@@ -735,7 +737,8 @@ function showSummary() {
 
     const data           = workoutData[currentPhase];
     const isLastSession  = currentSession >= data.totalSessions;
-    const isLastPhase    = currentPhase >= 3;
+    const maxPhase       = Math.max(...Object.keys(workoutData).map(Number));
+    const isLastPhase    = currentPhase >= maxPhase;
     const stats          = calcSessionStats();
 
     document.getElementById('summaryPhaseSession').textContent =
@@ -790,35 +793,6 @@ function hideSummary() {
     document.getElementById('summaryOverlay').classList.add('hidden');
 }
 
-function tempoToCue(tempo) {
-    if (!tempo || tempo.length !== 4) return null;
-    const ecc   = parseInt(tempo[0]);  // eccentric (lowering)
-    const pBot  = parseInt(tempo[1]);  // pause at bottom
-    const con   = parseInt(tempo[2]);  // concentric (lifting)
-    const pTop  = parseInt(tempo[3]);  // pause at top
-
-    const parts = [];
-    // Eccentric phase
-    if (ecc >= 4)      parts.push(`${ecc}s down — slow negative`);
-    else if (ecc >= 3) parts.push(`${ecc}s down — controlled`);
-    else if (ecc >= 2) parts.push(`${ecc}s down`);
-
-    // Bottom pause
-    if (pBot >= 2)      parts.push(`${pBot}s pause at bottom`);
-    else if (pBot === 1) parts.push('brief pause at bottom');
-
-    // Concentric phase
-    if (con === 0)      parts.push('explode up');
-    else if (con === 1) parts.push('drive up');
-    else if (con >= 2)  parts.push(`${con}s up — controlled`);
-
-    // Top pause
-    if (pTop >= 2)      parts.push(`${pTop}s squeeze at top`);
-    else if (pTop === 1) parts.push('squeeze at top');
-
-    return parts.join(', ');
-}
-
 function renderFocusSetDots(totalRounds) {
     const sk    = getSessionKey();
     const group = focusBlockGroups[focusGroupIdx];
@@ -834,29 +808,30 @@ function renderFocusSetDots(totalRounds) {
 function renderFocusOnDeck() {
     const el = document.getElementById('focusOnDeck');
     if (!el) return;
+    const exercises   = getCurrentExercises();
     const group       = focusBlockGroups[focusGroupIdx];
     const isSuperset  = group.exercises.length > 1;
-    const firstEx     = workoutData[currentPhase].exercises[group.exercises[0]];
-    const totalRounds = getActualSets(firstEx, currentPhase, currentSession);
+    const firstEx     = exercises[group.exercises[0]];
+    const totalRounds = getActualSets(firstEx);
     let nextEx = null, nextLabel = 'Up Next', nextPrev = null;
 
     if (isSuperset && focusSubIdx < group.exercises.length - 1) {
         // Next exercise in superset pair
         const nextExIdx = group.exercises[focusSubIdx + 1];
-        nextEx    = workoutData[currentPhase].exercises[nextExIdx];
+        nextEx    = exercises[nextExIdx];
         nextLabel = 'Up Next';
         nextPrev  = getPrevData(nextExIdx, focusRoundIdx);
     } else if (focusRoundIdx < totalRounds - 1) {
         // More rounds — show what's coming (first exercise in next round)
         const nextExIdx = group.exercises[0];
-        nextEx    = workoutData[currentPhase].exercises[nextExIdx];
+        nextEx    = exercises[nextExIdx];
         nextLabel = `Next: Round ${focusRoundIdx + 2} of ${totalRounds}`;
         nextPrev  = getPrevData(nextExIdx, focusRoundIdx + 1);
     } else if (focusGroupIdx < focusBlockGroups.length - 1) {
         // Next block
         const nextGroup = focusBlockGroups[focusGroupIdx + 1];
         const nextExIdx = nextGroup.exercises[0];
-        nextEx    = workoutData[currentPhase].exercises[nextExIdx];
+        nextEx    = exercises[nextExIdx];
         nextLabel = `Next: ${nextGroup.type}`;
         nextPrev  = getPrevData(nextExIdx, 0);
     }
@@ -888,12 +863,13 @@ function renderFocusExercise(skipAutoStart) {
     if (workScreen) workScreen.classList.add('hidden');
 
     const data        = workoutData[currentPhase];
-    const exercises   = data.exercises;
+    const exercises   = getCurrentExercises();
     const group       = focusBlockGroups[focusGroupIdx];
     const isSuperset  = group.exercises.length > 1;
     const ex          = exercises[focusExIdx];
     const firstEx     = exercises[group.exercises[0]];
-    const totalRounds = getActualSets(firstEx, currentPhase, currentSession);
+    const totalRounds = getActualSets(firstEx);
+    const rirText     = (data.progression[currentSession - 1] || {}).rir || '';
     const sk          = getSessionKey();
     const curData     = sessionData[sk] || {};
     const wKey        = `${sk}-${focusExIdx}-${focusSetIdx}-weight`;
@@ -921,24 +897,29 @@ function renderFocusExercise(skipAutoStart) {
     document.getElementById('focusExName').textContent   = ex.name;
 
     const focusIsCardio = !!ex.work;
-    if (isSuperset) {
+    if (ex.noLog) {
+        document.getElementById('focusSetCounter').textContent = ex.reps && ex.reps !== '—' ? ex.reps : '';
+    } else if (isSuperset) {
         document.getElementById('focusSetCounter').textContent =
-            `Exercise ${focusSubIdx + 1} of ${group.exercises.length} · Round ${focusRoundIdx + 1} · ${ex.reps} reps`;
+            `Exercise ${focusSubIdx + 1} of ${group.exercises.length} · Round ${focusRoundIdx + 1} · ${ex.reps} reps` +
+            (rirText ? ` · ${rirText}` : '');
     } else {
         document.getElementById('focusSetCounter').textContent =
-            focusIsCardio
+            (focusIsCardio
                 ? `Round ${focusSetIdx + 1} of ${totalRounds}`
-                : `Set ${focusSetIdx + 1} of ${totalRounds} · ${ex.reps} reps`;
+                : `Set ${focusSetIdx + 1} of ${totalRounds} · ${ex.reps} reps`) +
+            (rirText ? ` · ${rirText}` : '');
     }
 
-    // Show note, tempo, and previous data as separate lines
+    // Show note, cue, and previous data as separate lines
     const noteEl = document.getElementById('focusNote');
-    const tempoCueText = tempoToCue(ex.tempo);
     const noteLines = [];
     if (ex.note) noteLines.push(ex.note);
-    if (tempoCueText) noteLines.push(tempoCueText);
+    if (ex.cue) noteLines.push(ex.cue);
     // Fold "First time" / "Last time" into the note block
-    if (prev && prev.weight !== '—') {
+    if (ex.noLog) {
+        // Warm-up / conditioning cards carry no set history
+    } else if (prev && prev.weight !== '—') {
         noteLines.push(focusIsCardio
             ? `Last time: ${prev.weight}m · ${prev.reps} cal`
             : `Last time: ${prev.weight} lbs × ${prev.reps} reps`);
@@ -992,6 +973,9 @@ function renderFocusExercise(skipAutoStart) {
     const labels = focusInputs.querySelectorAll('label');
     const weightInp = document.getElementById('focusWeight');
     const repsInp   = document.getElementById('focusReps');
+    focusInputs.classList.toggle('hidden', !!ex.noLog);
+    const doneBtnEl = document.getElementById('focusDoneBtn');
+    if (doneBtnEl) doneBtnEl.textContent = ex.noLog ? '✓ Mark Done' : '✓ Done';
     if (focusIsCardio) {
         labels[0].textContent = 'Distance (m)';
         labels[1].textContent = 'Calories';
@@ -1021,9 +1005,6 @@ function renderFocusExercise(skipAutoStart) {
     nextBtn.textContent = isLast ? 'Finish ✓' : 'Next →';
     nextBtn.className   = `focus-nav-btn${isLast ? ' finish' : ''}`;
 
-    const doneBtn = document.getElementById('focusDoneBtn');
-    doneBtn.textContent = isDone ? '✓ Done' : '✓ Done';
-
     // Auto-start interval for cardio exercises
     if (focusIsCardio && !skipAutoStart && !isDone && intervalPhase !== 'rest') {
         if (focusRoundIdx === 0) {
@@ -1038,10 +1019,11 @@ function renderFocusExercise(skipAutoStart) {
 }
 
 function confirmFocusSet() {
-    const ex          = workoutData[currentPhase].exercises[focusExIdx];
+    const exercises   = getCurrentExercises();
+    const ex          = exercises[focusExIdx];
     const group       = focusBlockGroups[focusGroupIdx];
-    const firstEx     = workoutData[currentPhase].exercises[group.exercises[0]];
-    const totalRounds = getActualSets(firstEx, currentPhase, currentSession);
+    const firstEx     = exercises[group.exercises[0]];
+    const totalRounds = getActualSets(firstEx);
     const isSuperset  = group.exercises.length > 1;
     const sk          = getSessionKey();
     const wVal        = document.getElementById('focusWeight').value;
@@ -1078,14 +1060,14 @@ function showRestScreen(seconds) {
     const kpiContainer = document.getElementById('cardioKpiInputs');
     if (kpiContainer) kpiContainer.classList.add('hidden');
 
-    // Only show RPE on the final set of the current exercise
+    // Only show RPE on the final set of the current exercise (never for noLog cards)
     const sk = getSessionKey();
     const group       = focusBlockGroups[focusGroupIdx];
-    const firstEx     = workoutData[currentPhase].exercises[group.exercises[0]];
-    const totalRounds = getActualSets(firstEx, currentPhase, currentSession);
+    const firstEx     = getCurrentExercises()[group.exercises[0]];
+    const totalRounds = getActualSets(firstEx);
     const isLastSet   = focusRoundIdx === totalRounds - 1;
     const rpeEl       = document.getElementById('focusRPE');
-    if (rpeEl) rpeEl.style.display = isLastSet ? '' : 'none';
+    if (rpeEl) rpeEl.style.display = (isLastSet && !firstEx.noLog) ? '' : 'none';
 
     // RPE button state for this set
     const currentRpe = rpeData[`${sk}-${focusExIdx}-${focusSetIdx}`];
@@ -1126,7 +1108,7 @@ function showRestScreen(seconds) {
             if (restTimeEl) restTimeEl.textContent = formatTime(focusRestLeft);
 
             // Warning beeps at 3, 2, 1 for cardio (next round incoming)
-            const ex = workoutData[currentPhase].exercises[focusExIdx];
+            const ex = getCurrentExercises()[focusExIdx];
             if (ex.work && focusRestLeft <= 3 && focusRestLeft > 0) {
                 playBeep(660, 0.08, 1);
             }
@@ -1149,7 +1131,7 @@ function showRestScreen(seconds) {
 function skipFocusRest() {
     if (focusRestInterval) { clearInterval(focusRestInterval); focusRestInterval = null; }
     // Save cardio KPIs if present before skipping
-    const ex = workoutData[currentPhase].exercises[focusExIdx];
+    const ex = getCurrentExercises()[focusExIdx];
     if (ex.work) {
         saveCardioKPIs();
         intervalPhase = null;
@@ -1161,8 +1143,8 @@ function skipFocusRest() {
 
 function advanceFocusSet() {
     const group       = focusBlockGroups[focusGroupIdx];
-    const firstEx     = workoutData[currentPhase].exercises[group.exercises[0]];
-    const totalRounds = getActualSets(firstEx, currentPhase, currentSession);
+    const firstEx     = getCurrentExercises()[group.exercises[0]];
+    const totalRounds = getActualSets(firstEx);
 
     if (group.exercises.length > 1) {
         // SUPERSET — advance within round, then to next round, then next group
@@ -1211,8 +1193,8 @@ function focusNavPrev() {
             focusGroupIdx--;
             const pg = focusBlockGroups[focusGroupIdx];
             focusSubIdx   = pg.exercises.length - 1;
-            const pfe     = workoutData[currentPhase].exercises[pg.exercises[0]];
-            focusRoundIdx = getActualSets(pfe, currentPhase, currentSession) - 1;
+            const pfe     = getCurrentExercises()[pg.exercises[0]];
+            focusRoundIdx = getActualSets(pfe) - 1;
         }
     } else {
         if (focusRoundIdx > 0) {
@@ -1221,8 +1203,8 @@ function focusNavPrev() {
             focusGroupIdx--;
             const pg = focusBlockGroups[focusGroupIdx];
             focusSubIdx   = pg.exercises.length - 1;
-            const pfe     = workoutData[currentPhase].exercises[pg.exercises[0]];
-            focusRoundIdx = getActualSets(pfe, currentPhase, currentSession) - 1;
+            const pfe     = getCurrentExercises()[pg.exercises[0]];
+            focusRoundIdx = getActualSets(pfe) - 1;
         }
     }
     syncFocusState();
@@ -1290,13 +1272,14 @@ function getExerciseKey(i) { return `${getSessionKey()}-${i}`; }
 
 function getTagClass(type) {
     const map = { 'Warm-Up': 'tag-warmup', 'Block A': 'tag-a', 'Block B': 'tag-b',
-                  'Block C': 'tag-c', 'Block D': 'tag-d', 'Block E': 'tag-e' };
+                  'Block C': 'tag-c', 'Block D': 'tag-d', 'Block E': 'tag-e',
+                  'Block F': 'tag-f', 'Conditioning': 'tag-cond' };
     return map[type] || 'tag-e';
 }
 
 function getPrevData(exIdx, setIdx) {
-    if (currentSession < 2) return null;
-    const prevKey  = `${currentPhase}-${currentSession - 1}`;
+    const prevKey = getPrevSameLetterKey(currentPhase, currentSession, 1);
+    if (!prevKey) return null;
     const prevData = sessionData[prevKey];
     if (!prevData) return null;
     const w = prevData[`${prevKey}-${exIdx}-${setIdx}-weight`];
@@ -1313,42 +1296,40 @@ function getSuggestion(exIdx, setIdx) {
     return `Try ${w + 2.5} lbs × ${r} or ${w} lbs × ${r + 1}`;
 }
 
-/* ════════════════ PROGRESSION CUE ════════════════ */
+/* ════════════════ PROGRESSION CUE (double progression) ════════════════ */
+// Parses a rep-range string ("6-10", "10/side", "12-15/side") into [lo, hi].
+function parseRepRange(reps) {
+    if (!reps) return null;
+    const m = reps.match(/(\d+)(?:-(\d+))?/);
+    if (!m) return null;
+    const lo = parseInt(m[1]);
+    const hi = m[2] ? parseInt(m[2]) : lo;
+    return [lo, hi];
+}
+
 function getProgressionCue(exIdx, setIdx) {
-    if (currentSession < 2) return null;
+    const prevKey = getPrevSameLetterKey(currentPhase, currentSession, 1);
+    if (!prevKey) return null;
+    const prevData = sessionData[prevKey];
+    if (!prevData) return null;
 
-    const prev1 = getPrevData(exIdx, setIdx);
-    if (!prev1 || prev1.weight === '—') return null;
-
-    const w1 = parseFloat(prev1.weight);
+    const w1 = parseFloat(prevData[`${prevKey}-${exIdx}-${setIdx}-weight`]);
+    const r1 = parseInt(prevData[`${prevKey}-${exIdx}-${setIdx}-reps`]);
     if (isNaN(w1) || w1 <= 0) return null;
 
-    // Check two sessions back for same-weight pattern
-    let w2 = null;
-    if (currentSession >= 3) {
-        const prevKey2  = `${currentPhase}-${currentSession - 2}`;
-        const prevData2 = sessionData[prevKey2];
-        if (prevData2) {
-            const w2val = prevData2[`${prevKey2}-${exIdx}-${setIdx}-weight`];
-            if (w2val) w2 = parseFloat(w2val);
-        }
-    }
+    const ex    = getCurrentExercises()[exIdx];
+    const range = ex ? parseRepRange(ex.reps) : null;
 
-    if (w2 !== null && !isNaN(w2)) {
-        if (Math.abs(w1 - w2) < 0.5) {
-            // Same weight two sessions in a row → push harder
-            return { text: `↑ Ready for ${w1 + 5} lbs`, type: 'up' };
-        }
-        if (w1 < w2) {
-            // Weight dropped — encourage holding
-            return { text: `Hold at ${w1} lbs`, type: 'hold' };
-        }
-        // Weight went up — keep climbing
-        return { text: `↑ Try ${w1 + 2.5} lbs`, type: 'up' };
+    // Hit the top of the rep range last time → add load, drop back to the bottom
+    if (range && !isNaN(r1) && r1 >= range[1]) {
+        const newW = Math.round(w1 * 1.0375 * 2) / 2; // ~2.5-5% bump, rounded to nearest 0.5 lb
+        return { text: `↑ Try ${newW} lbs × ${range[0]}`, type: 'up' };
     }
-
-    // Only one session of history
-    return { text: `Try ${w1 + 2.5} lbs`, type: 'neutral' };
+    // Otherwise: same weight, one more rep
+    if (!isNaN(r1)) {
+        return { text: `Try ${w1} lbs × ${r1 + 1}`, type: 'neutral' };
+    }
+    return { text: `Try ${w1} lbs`, type: 'neutral' };
 }
 
 /* ════════════════ RPE ════════════════ */
@@ -1376,17 +1357,19 @@ function setFocusRPE(rpe) {
 
 /* ════════════════ SHARE WITH COACH ════════════════ */
 function generateShareText() {
-    const data  = workoutData[currentPhase];
-    const stats = calcSessionStats();
-    const prog  = data.progression[currentSession - 1];
-    const date  = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    const data   = workoutData[currentPhase];
+    const stats  = calcSessionStats();
+    const prog   = data.progression[currentSession - 1];
+    const letter = getSessionLetter(currentPhase, currentSession);
+    const date   = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
     // Retrieve last session duration
     const lastDuration = sessionStorage.getItem('wt-last-duration');
 
-    let text = `💪 Phase ${currentPhase} · Session ${currentSession} of ${data.totalSessions} — Done!\n`;
+    let text = `💪 ${data.name} · Workout ${letter} · Session ${currentSession} of ${data.totalSessions} — Done!\n`;
     text += `📅 ${date}`;
     if (lastDuration) text += ` · ${lastDuration}`;
+    if (prog.rir) text += ` · ${prog.rir}`;
     text += `\n\n`;
     text += `📊 ${stats.setsCompleted} sets`;
     if (stats.totalVolume > 0) text += ` · ${stats.totalVolume.toLocaleString()} lbs volume`;
@@ -1471,10 +1454,10 @@ function selectSession(session) {
 
 /* ════════════════ PROGRESS ════════════════ */
 function updateCompletionProgress() {
-    const data  = workoutData[currentPhase];
-    const total = data.exercises.length;
+    const exercises = getCurrentExercises();
+    const total = exercises.length;
     let done = 0;
-    data.exercises.forEach((_, i) => {
+    exercises.forEach((_, i) => {
         if (completedExercises[getExerciseKey(i)]) done++;
     });
     const pct  = total > 0 ? (done / total) * 100 : 0;
@@ -1491,11 +1474,12 @@ function renderSessionNav() {
     if (!nav) return;
     nav.innerHTML = '';
     for (let s = 1; s <= data.totalSessions; s++) {
+        const letter = getSessionLetter(currentPhase, s);
         const item = document.createElement('div');
         item.className = `sess-item${s === currentSession ? ' active' : ''}`;
         item.innerHTML = `
             <span class="sess-icon">${s === currentSession ? '📋' : '📄'}</span>
-            <span>Session ${s}</span>
+            <span>Session ${s} · ${letter}</span>
         `;
         item.onclick = () => selectSession(s);
         nav.appendChild(item);
@@ -1521,8 +1505,9 @@ function toggleSidebarDetails() {
 }
 
 function updateSidebar() {
-    const data = workoutData[currentPhase];
-    const prog = data.progression[currentSession - 1];
+    const data   = workoutData[currentPhase];
+    const prog   = data.progression[currentSession - 1];
+    const letter = getSessionLetter(currentPhase, currentSession);
 
     const noteEl = document.getElementById('sessionNote');
     if (noteEl) noteEl.textContent = `📋 ${prog.note}`;
@@ -1538,14 +1523,16 @@ function updateSidebar() {
     const prevContainer = document.getElementById('prevContent');
     if (!prevContainer) return;
 
-    if (currentSession === 1) {
-        prevContainer.innerHTML = `<p style="font-size:12px;color:var(--text-muted);font-style:italic;">First session — establish baseline</p>`;
+    const prevKey = getPrevSameLetterKey(currentPhase, currentSession, 1);
+    if (!prevKey) {
+        prevContainer.innerHTML = `<p style="font-size:12px;color:var(--text-muted);font-style:italic;">First Workout ${letter} — establish baseline</p>`;
     } else {
-        const prevKey  = `${currentPhase}-${currentSession - 1}`;
         const prevData = sessionData[prevKey];
         let html = '';
+        const exercises = getCurrentExercises();
         if (prevData && Object.keys(prevData).length > 0) {
-            data.exercises.slice(0, 5).forEach((ex, idx) => {
+            exercises.slice(0, 5).forEach((ex, idx) => {
+                if (ex.noLog) return;
                 const w = prevData[`${prevKey}-${idx}-0-weight`] || '—';
                 const r = prevData[`${prevKey}-${idx}-0-reps`]   || '—';
                 if (w !== '—' || r !== '—') {
@@ -1558,7 +1545,7 @@ function updateSidebar() {
             });
         }
         prevContainer.innerHTML = html ||
-            `<p style="font-size:12px;color:var(--text-muted);font-style:italic;">No data from previous session</p>`;
+            `<p style="font-size:12px;color:var(--text-muted);font-style:italic;">No data from last Workout ${letter}</p>`;
     }
 }
 
@@ -1566,14 +1553,18 @@ function updateSidebar() {
 function generateJourneyNarrative() {
     const sk = getSessionKey();
     const candidates = [];
+    const letter = getSessionLetter(currentPhase, currentSession);
 
-    // Priority 1: PR hit in last session
-    if (currentSession >= 2) {
-        const prevSk = `${currentPhase}-${currentSession - 1}`;
+    // Priority 1: PR hit in the last same-letter session
+    const prevSk = getPrevSameLetterKey(currentPhase, currentSession, 1);
+    if (prevSk) {
         const prevData = sessionData[prevSk];
         if (prevData) {
-            const exercises = workoutData[currentPhase].exercises;
+            const [pp, ps] = prevSk.split('-').map(Number);
+            const exercises = getSessionExercises(pp, ps);
+            const letterKeys = sessionKeysForLetter(letter);
             exercises.forEach((ex, exIdx) => {
+                if (ex.noLog) return;
                 let prevMax = 0;
                 Object.keys(prevData).forEach(key => {
                     if (key.startsWith(`${prevSk}-${exIdx}-`) && key.endsWith('-weight')) {
@@ -1583,10 +1574,12 @@ function generateJourneyNarrative() {
                 });
                 if (prevMax <= 0) return;
 
-                // Check all sessions before last
+                // Check all earlier same-letter sessions
                 let histMax = 0;
-                Object.entries(sessionData).forEach(([s, d]) => {
+                letterKeys.forEach(s => {
                     if (s === prevSk) return;
+                    const d = sessionData[s];
+                    if (!d) return;
                     Object.keys(d).forEach(key => {
                         if (key.startsWith(`${s}-${exIdx}-`) && key.endsWith('-weight')) {
                             const w = parseFloat(d[key]);
@@ -1637,7 +1630,7 @@ function generateJourneyNarrative() {
     const sessionMilestones = [15, 10, 5];
     for (const m of sessionMilestones) {
         if (totalSessions >= m) {
-            const totalProgramSessions = workoutData[1].totalSessions + workoutData[2].totalSessions + workoutData[3].totalSessions;
+            const totalProgramSessions = Object.keys(workoutData).reduce((sum, p) => sum + workoutData[p].totalSessions, 0);
             candidates.push({
                 priority: 4,
                 text: `This is session ${totalSessions}+. ${totalSessions >= totalProgramSessions / 2 ? 'Past the halfway mark.' : 'Building momentum.'}`,
@@ -1649,19 +1642,19 @@ function generateJourneyNarrative() {
 
     // Priority 5: Phase transition
     if (currentSession === 1 && currentPhase > 1) {
-        const phaseNames = { 2: 'Intensification', 3: 'Strength / Hypertrophy' };
+        const isDeload = currentPhase === Math.max(...Object.keys(workoutData).map(Number));
         candidates.push({
             priority: 5,
-            text: `Welcome to Phase ${currentPhase} — ${phaseNames[currentPhase]}. Time to push heavier.`,
+            text: `Welcome to ${workoutData[currentPhase].name}. ${isDeload ? 'Ease off and let your body catch up.' : 'Time to push a little harder.'}`,
             icon: '⚡'
         });
     }
 
     // Priority 6: Weight increase streak
-    if (currentSession >= 3) {
-        const exercises = workoutData[currentPhase].exercises;
+    if (currentSession >= 1) {
+        const exercises = getCurrentExercises();
         exercises.forEach((ex, exIdx) => {
-            if (ex.work) return; // skip cardio
+            if (ex.noLog) return;
             const increases = getConsecutiveWeightIncreases(currentPhase, exIdx);
             if (increases >= 3) {
                 candidates.push({
@@ -1719,8 +1712,10 @@ function getTotalVolumeForPhase(phase) {
         const sk = `${phase}-${s}`;
         const d = sessionData[sk];
         if (!d) continue;
-        data.exercises.forEach((ex, exIdx) => {
-            const sets = getActualSets(ex, phase, s);
+        const exercises = getSessionExercises(phase, s);
+        exercises.forEach((ex, exIdx) => {
+            if (ex.noLog) return;
+            const sets = getActualSets(ex);
             for (let si = 0; si < sets; si++) {
                 const w = parseFloat(d[`${sk}-${exIdx}-${si}-weight`]);
                 const r = parseFloat(d[`${sk}-${exIdx}-${si}-reps`]);
@@ -1731,11 +1726,17 @@ function getTotalVolumeForPhase(phase) {
     return total;
 }
 
+// Walks backward through the same-letter session chain (crosses phase-block
+// boundaries) counting consecutive sessions where this exercise's max weight rose.
 function getConsecutiveWeightIncreases(phase, exIdx) {
+    const letter = getSessionLetter(phase, currentSession);
+    const keys   = sessionKeysForLetter(letter);
+    const idx    = keys.indexOf(`${phase}-${currentSession}`);
+    if (idx <= 0) return 0;
+
     let count = 0;
-    for (let s = currentSession - 1; s >= 2; s--) {
-        const sk = `${phase}-${s}`;
-        const prevSk = `${phase}-${s - 1}`;
+    for (let i = idx; i > 0; i--) {
+        const sk = keys[i], prevSk = keys[i - 1];
         const d = sessionData[sk];
         const pd = sessionData[prevSk];
         if (!d || !pd) break;
@@ -1874,38 +1875,44 @@ function clipboardShare(text) {
 }
 
 /* ════════════════ PROGRESS CHARTS ════════════════ */
-function getExerciseWeightHistory(phase, exIdx) {
-    const data = workoutData[phase];
+// History across same-letter sessions only (crosses phase-block boundaries).
+// `session` in the returned points is the letter ordinal (1st A, 2nd A, ...).
+function getExerciseWeightHistory(letter, exIdx) {
+    const keys = sessionKeysForLetter(letter);
     const points = [];
-    for (let s = 1; s <= data.totalSessions; s++) {
-        const sk = `${phase}-${s}`;
+    keys.forEach((sk, i) => {
         const d = sessionData[sk];
-        if (!d) continue;
+        if (!d) return;
+        const [p, s] = sk.split('-').map(Number);
+        const ex = workoutData[p].workouts[letter][exIdx];
         let maxWeight = 0;
-        const sets = getActualSets(data.exercises[exIdx], phase, s);
+        const sets = getActualSets(ex);
         for (let si = 0; si < sets; si++) {
             const w = parseFloat(d[`${sk}-${exIdx}-${si}-weight`]);
             if (!isNaN(w) && w > maxWeight) maxWeight = w;
         }
         if (maxWeight > 0) {
-            points.push({ session: s, value: maxWeight });
+            points.push({ session: i + 1, value: maxWeight });
         }
-    }
+    });
     return points;
 }
 
 function getVolumeHistory() {
     const points = [];
     let sessionCount = 0;
-    for (let phase = 1; phase <= 3; phase++) {
+    const phases = Object.keys(workoutData).map(Number).sort((a, b) => a - b);
+    phases.forEach(phase => {
         const data = workoutData[phase];
         for (let s = 1; s <= data.totalSessions; s++) {
             const sk = `${phase}-${s}`;
             const d = sessionData[sk];
             if (!d || Object.keys(d).length === 0) continue;
+            const exercises = getSessionExercises(phase, s);
             let vol = 0;
-            data.exercises.forEach((ex, exIdx) => {
-                const sets = getActualSets(ex, phase, s);
+            exercises.forEach((ex, exIdx) => {
+                if (ex.noLog) return;
+                const sets = getActualSets(ex);
                 for (let si = 0; si < sets; si++) {
                     const w = parseFloat(d[`${sk}-${exIdx}-${si}-weight`]);
                     const r = parseFloat(d[`${sk}-${exIdx}-${si}-reps`]);
@@ -1917,7 +1924,7 @@ function getVolumeHistory() {
                 points.push({ session: sessionCount, label: `P${phase}S${s}`, value: vol });
             }
         }
-    }
+    });
     return points;
 }
 
@@ -2003,22 +2010,24 @@ function renderProgressCharts() {
     const section = document.getElementById('chartSection');
     if (!section) return;
 
-    // Check if we have 2+ sessions with data
+    const letter = getSessionLetter(currentPhase, currentSession);
+    const letterKeys = sessionKeysForLetter(letter);
+
+    // Check if we have 2+ same-letter sessions with data
     let sessionsWithData = 0;
-    const data = workoutData[currentPhase];
-    for (let s = 1; s <= data.totalSessions; s++) {
-        const sk = `${currentPhase}-${s}`;
+    letterKeys.forEach(sk => {
         if (sessionData[sk] && Object.keys(sessionData[sk]).length > 0) sessionsWithData++;
-    }
+    });
 
     if (sessionsWithData < 2) { section.classList.add('hidden'); return; }
     section.classList.remove('hidden');
 
-    // Weight chart: per-exercise lines
+    // Weight chart: per-exercise lines, across all same-letter sessions
+    const exercises = getCurrentExercises();
     const weightSeries = [];
-    data.exercises.forEach((ex, exIdx) => {
-        if (ex.work) return; // skip cardio
-        const history = getExerciseWeightHistory(currentPhase, exIdx);
+    exercises.forEach((ex, exIdx) => {
+        if (ex.noLog) return;
+        const history = getExerciseWeightHistory(letter, exIdx);
         if (history.length > 0) {
             weightSeries.push({
                 label: ex.name,
@@ -2028,10 +2037,7 @@ function renderProgressCharts() {
         }
     });
 
-    const xLabels = [];
-    for (let s = 1; s <= data.totalSessions; s++) {
-        xLabels.push({ x: s, label: `S${s}` });
-    }
+    const xLabels = letterKeys.map((sk, i) => ({ x: i + 1, label: `${letter}${i + 1}` }));
 
     renderSVGLineChart('chartWeightContainer', weightSeries, {
         xLabels,
@@ -2072,29 +2078,32 @@ function showChartTab(tab) {
 
 /* ════════════════ MAIN RENDER ════════════════ */
 function updateWorkout() {
-    const data = workoutData[currentPhase];
+    const data   = workoutData[currentPhase];
+    const letter = getSessionLetter(currentPhase, currentSession);
 
     document.getElementById('pageTitle').innerHTML =
-        data.name + ' <span style="font-size:13px;color:var(--text-muted);font-weight:400;">v4</span>';
+        data.name + ' <span style="font-size:13px;color:var(--text-muted);font-weight:400;">v5</span>';
     document.getElementById('pageSubtitle').textContent = data.frequency;
 
     const prog = data.progression[currentSession - 1];
     document.getElementById('propSession').innerHTML =
-        `<span class="prop-tag">Session ${currentSession} of ${data.totalSessions}</span>`;
+        `<span class="prop-tag">Session ${currentSession} of ${data.totalSessions} · Workout ${letter}</span>`;
     document.getElementById('propFocus').textContent = prog.note;
+    const rirEl = document.getElementById('propRIR');
+    if (rirEl) rirEl.innerHTML = prog.rir ? `<span class="rir-pill">🔋 ${prog.rir}</span>` : '';
 
     const list = document.getElementById('exerciseList');
     list.innerHTML = '';
 
     let lastType = null;
+    const exercises = getCurrentExercises();
 
-    data.exercises.forEach((ex, idx) => {
-        const sk         = getSessionKey();
-        const isDone     = !!completedExercises[getExerciseKey(idx)];
-        const isOpen     = !cardCollapsed[idx];
-        const videoUrl   = exerciseVideos[ex.name];
-        const actualSets = getActualSets(ex, currentPhase, currentSession);
-        const setsChanged = actualSets !== ex.sets;
+    exercises.forEach((ex, idx) => {
+        const sk       = getSessionKey();
+        const isDone   = !!completedExercises[getExerciseKey(idx)];
+        const isOpen   = !cardCollapsed[idx];
+        const videoUrl = exerciseVideos[ex.name];
+        const actualSets = getActualSets(ex);
 
         // Section heading on block type change
         if (ex.type !== lastType) {
@@ -2105,8 +2114,38 @@ function updateWorkout() {
             lastType = ex.type;
         }
 
+        const block = document.createElement('div');
+        block.className = 'ex-block';
+        block.id        = `block-${idx}`;
+        if (isDone) block.style.opacity = '0.65';
+
+        if (ex.noLog) {
+            // Warm-up / conditioning card: no set tracking, just a single check-off
+            const setDone = !!completedSets[`${sk}-${idx}-0`];
+            block.innerHTML = `
+                <div class="ex-row">
+                    <div class="ex-toggle${isOpen ? ' open' : ''}" id="toggle-${idx}" onclick="toggleCard(${idx})">
+                        <span class="arr">▶</span>
+                    </div>
+                    <div class="ex-title">
+                        <span class="ex-name${isDone ? ' done' : ''}" id="name-${idx}">${ex.name}</span>
+                        <span class="ex-tag ${getTagClass(ex.type)}">${ex.type}</span>
+                    </div>
+                    <div class="ex-actions"></div>
+                </div>
+                <div class="ex-body${isOpen ? '' : ' hidden'}" id="body-${idx}">
+                    <div class="callout">
+                        <span class="callout-ico">💡</span>
+                        <span class="callout-txt">${ex.note}</span>
+                    </div>
+                    <button class="set-done-btn nolog-done-btn${setDone ? ' confirmed' : ''}" id="setbtn-${idx}-0"
+                            onclick="confirmSet(${idx}, 0)">${setDone ? '✓ Done' : 'Mark Done'}</button>
+                </div>`;
+            list.appendChild(block);
+            return;
+        }
+
         // Build set rows
-        const isCardio = !!ex.work;
         let setRowsHtml = '';
         for (let s = 0; s < actualSets; s++) {
             const wKey      = `${sk}-${idx}-${s}-weight`;
@@ -2116,8 +2155,8 @@ function updateWorkout() {
             // Show current session data as value; previous session data as placeholder
             const wVal      = curData[wKey] || '';
             const rVal      = curData[rKey] || '';
-            const wPlaceholder = isCardio ? 'm' : (prev && prev.weight !== '—' ? prev.weight : 'lbs');
-            const rPlaceholder = isCardio ? 'cals'   : (prev && prev.reps   !== '—' ? prev.reps   : 'reps');
+            const wPlaceholder = prev && prev.weight !== '—' ? prev.weight : 'lbs';
+            const rPlaceholder = prev && prev.reps   !== '—' ? prev.reps   : 'reps';
             const hasRest   = ex.rest !== '—' && ex.rest !== '0';
             const setDone   = !!completedSets[`${sk}-${idx}-${s}`];
             const cue       = getProgressionCue(idx, s);
@@ -2128,14 +2167,14 @@ function updateWorkout() {
             setRowsHtml += `
                 <tr class="set-row${setDone ? ' confirmed' : ''}" id="setrow-${idx}-${s}">
                     <td class="set-lbl">
-                        ${isCardio ? `Round ${s + 1}` : `Set ${s + 1}`}
+                        Set ${s + 1}
                         ${cue ? `<div class="prog-cue prog-cue-${cue.type}">${cue.text}</div>` : ''}
                     </td>
                     <td>
                         <input class="num-inp" id="winp-${idx}-${s}" type="number" placeholder="${wPlaceholder}" value="${wVal}"
-                               ${isCardio ? '' : `oninput="checkPR(${idx}, this.value, 'pr-${idx}-${s}')"`}
+                               oninput="checkPR(${idx}, this.value, 'pr-${idx}-${s}')"
                                onchange="updateWeight(${idx}, ${s}, this.value)">
-                        ${isCardio ? '' : `<span class="pr-badge" id="pr-${idx}-${s}" style="display:none">🏆 PR</span>`}
+                        <span class="pr-badge" id="pr-${idx}-${s}" style="display:none">🏆 PR</span>
                     </td>
                     <td><input class="num-inp" id="rinp-${idx}-${s}" type="number" placeholder="${rPlaceholder}" value="${rVal}"
                                onchange="updateReps(${idx}, ${s}, this.value)"></td>
@@ -2154,11 +2193,6 @@ function updateWorkout() {
                 </tr>`;
         }
 
-        const block = document.createElement('div');
-        block.className = 'ex-block';
-        block.id        = `block-${idx}`;
-        if (isDone) block.style.opacity = '0.65';
-
         block.innerHTML = `
             <div class="ex-row">
                 <div class="ex-toggle${isOpen ? ' open' : ''}" id="toggle-${idx}" onclick="toggleCard(${idx})">
@@ -2174,32 +2208,22 @@ function updateWorkout() {
             </div>
             <div class="ex-body${isOpen ? '' : ' hidden'}" id="body-${idx}">
                 <div class="ex-props">
-                    ${isCardio ? `
-                    <div class="xprop"><span class="xprop-lbl">Rounds</span><span class="xprop-val">${actualSets}</span></div>
-                    <div class="xprop"><span class="xprop-lbl">Work</span><span class="xprop-val">${ex.work}</span></div>
-                    <div class="xprop"><span class="xprop-lbl">Rest</span><span class="xprop-val">${ex.rest}s</span></div>
-                    ` : `
-                    <div class="xprop">
-                        <span class="xprop-lbl">Sets</span>
-                        <span class="xprop-val">${actualSets}</span>
-                        ${setsChanged ? `<span class="sets-changed">↑ from ${ex.sets}</span>` : ''}
-                    </div>
+                    <div class="xprop"><span class="xprop-lbl">Sets</span><span class="xprop-val">${actualSets}</span></div>
                     <div class="xprop"><span class="xprop-lbl">Reps</span><span class="xprop-val">${ex.reps}</span></div>
-                    <div class="xprop"><span class="xprop-lbl">Tempo</span><span class="xprop-val">${ex.tempo}</span></div>
+                    <div class="xprop"><span class="xprop-lbl">Cue</span><span class="xprop-val">${ex.cue || '—'}</span></div>
                     <div class="xprop"><span class="xprop-lbl">Rest</span><span class="xprop-val">${ex.rest}</span></div>
-                    `}
                 </div>
                 <div class="callout">
                     <span class="callout-ico">💡</span>
                     <span class="callout-txt">${ex.note}</span>
                 </div>
-                <div class="sets-lbl">${isCardio ? 'Round Tracking' : 'Set Tracking'}</div>
+                <div class="sets-lbl">Set Tracking</div>
                 <table class="sets-tbl">
                     <thead>
                         <tr>
                             <th></th>
-                            <th>${isCardio ? 'Distance (m)' : 'Weight'}</th>
-                            <th>${isCardio ? 'Calories' : 'Reps'}</th>
+                            <th>Weight</th>
+                            <th>Reps</th>
                             <th></th>
                             <th></th>
                         </tr>
@@ -2218,8 +2242,140 @@ function updateWorkout() {
     saveToStorage();
 }
 
+/* ════════════════ BODY COMP TRACKING ════════════════ */
+let bodyweightData = {}; // { 'YYYY-MM-DD': lbs }
+let waistData       = {}; // { 'YYYY-MM-DD': inches }
+
+function todayISO() { return new Date().toISOString().split('T')[0]; }
+
+function loadBodyComp() {
+    try {
+        const bw = localStorage.getItem('wt2-bodyweight');
+        const ws = localStorage.getItem('wt2-waist');
+        if (bw) bodyweightData = JSON.parse(bw);
+        if (ws) waistData = JSON.parse(ws);
+    } catch (e) { /* ignore parse errors */ }
+}
+
+function saveBodyCompStorage() {
+    try {
+        localStorage.setItem('wt2-bodyweight', JSON.stringify(bodyweightData));
+        localStorage.setItem('wt2-waist', JSON.stringify(waistData));
+    } catch (e) { /* ignore quota errors */ }
+}
+
+// Average of dataObj's values over the `days` calendar days ending on endDateStr.
+function rollingAvg(dataObj, endDateStr, days) {
+    const end = new Date(endDateStr);
+    let sum = 0, count = 0;
+    for (let i = 0; i < days; i++) {
+        const d = new Date(end);
+        d.setDate(d.getDate() - i);
+        const key = d.toISOString().split('T')[0];
+        if (dataObj[key] != null) { sum += dataObj[key]; count++; }
+    }
+    return count > 0 ? sum / count : null;
+}
+
+function saveBodyweight() {
+    const dateInp = document.getElementById('bwDate');
+    const valInp  = document.getElementById('bwInput');
+    const date = (dateInp && dateInp.value) || todayISO();
+    const val  = parseFloat(valInp.value);
+    if (isNaN(val) || val <= 0) return;
+    bodyweightData[date] = val;
+    saveBodyCompStorage();
+    valInp.value = '';
+    renderBodyComp();
+    showToast('Weight saved');
+}
+
+function saveWaist() {
+    const dateInp = document.getElementById('waistDate');
+    const valInp  = document.getElementById('waistInput');
+    const date = (dateInp && dateInp.value) || todayISO();
+    const val  = parseFloat(valInp.value);
+    if (isNaN(val) || val <= 0) return;
+    waistData[date] = val;
+    saveBodyCompStorage();
+    valInp.value = '';
+    renderBodyComp();
+    showToast('Waist saved');
+}
+
+function renderBodyComp() {
+    const section = document.getElementById('bodyCompSection');
+    if (!section) return;
+
+    const today = todayISO();
+    const dates = Object.keys(bodyweightData).sort();
+    const latestDate = dates.length ? dates[dates.length - 1] : null;
+    const todayVal = bodyweightData[today];
+
+    const todayEl = document.getElementById('bwToday');
+    const avgEl   = document.getElementById('bwAvg7');
+    const trendEl = document.getElementById('bwTrend');
+
+    if (todayEl) todayEl.textContent = todayVal != null ? `${todayVal} lbs` : '—';
+
+    const avgLatest = latestDate ? rollingAvg(bodyweightData, latestDate, 7) : null;
+    if (avgEl) avgEl.textContent = avgLatest != null ? `${avgLatest.toFixed(1)} lbs` : '—';
+
+    if (trendEl) {
+        if (latestDate && dates.length >= 8) {
+            const weekAgo = new Date(latestDate);
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            const avgPrior = rollingAvg(bodyweightData, weekAgo.toISOString().split('T')[0], 7);
+            if (avgLatest != null && avgPrior != null) {
+                const delta = avgLatest - avgPrior;
+                const arrow = delta < -0.05 ? '↓' : delta > 0.05 ? '↑' : '→';
+                trendEl.textContent = `${arrow} ${Math.abs(delta).toFixed(1)} lbs/wk`;
+            } else {
+                trendEl.textContent = 'Need more data';
+            }
+        } else {
+            trendEl.textContent = 'Need more data';
+        }
+    }
+
+    // Waist
+    const waistDates = Object.keys(waistData).sort();
+    const waistLatest = waistDates.length ? waistDates[waistDates.length - 1] : null;
+    const waistPrev   = waistDates.length > 1 ? waistDates[waistDates.length - 2] : null;
+    const waistEl      = document.getElementById('waistLatest');
+    const waistDeltaEl = document.getElementById('waistDelta');
+    if (waistEl) waistEl.textContent = waistLatest ? `${waistData[waistLatest]} in` : '—';
+    if (waistDeltaEl) {
+        if (waistLatest && waistPrev) {
+            const d = waistData[waistLatest] - waistData[waistPrev];
+            waistDeltaEl.textContent = `${d <= 0 ? '↓' : '↑'} ${Math.abs(d).toFixed(1)} in vs last entry`;
+        } else {
+            waistDeltaEl.textContent = '';
+        }
+    }
+
+    // Sparkline
+    if (dates.length >= 2) {
+        renderSVGLineChart('bwSparkline', [{
+            label: 'Weight',
+            color: '#2383e2',
+            points: dates.map((d, i) => ({ x: i + 1, y: bodyweightData[d] }))
+        }], { xLabels: [], formatY: v => v.toFixed(0) });
+    } else {
+        const sparkContainer = document.getElementById('bwSparkline');
+        if (sparkContainer) sparkContainer.innerHTML = '';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     loadFromStorage();
     updateWorkout();
     renderHeatmap();
+
+    loadBodyComp();
+    const bwDate = document.getElementById('bwDate');
+    const waistDate = document.getElementById('waistDate');
+    if (bwDate) bwDate.value = todayISO();
+    if (waistDate) waistDate.value = todayISO();
+    renderBodyComp();
 });

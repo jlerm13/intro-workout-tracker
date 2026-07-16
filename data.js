@@ -1,106 +1,231 @@
 /* ════════════════ DATA ════════════════ */
+// v2 program: 7 weeks, alternating full-body Workouts A/B, fixed set counts
+// per phase-block with double progression (reps -> load) instead of
+// escalating sets every session.
+//
+// INVARIANT: the exercise order inside workouts.A (and workouts.B) is
+// IDENTICAL across all 4 phase-blocks below. All logged data is keyed by
+// exIdx (position in the array), and history lookups match sessions by
+// workout letter + exIdx across the whole program. Reordering an exercise
+// within one block's A/B list corrupts prev-data, PRs, and charts for
+// every other block.
 const workoutData = {
     1: {
-        name: "Phase 1 — Accumulation",
-        frequency: "2x per week for 2 weeks",
+        name: "Weeks 1-2 — Foundation",
+        frequency: "2x per week · 2 sets per exercise · 3 reps in reserve",
         totalSessions: 4,
+        sessionsPlan: ['A', 'B', 'A', 'B'],
         progression: [
-            { session: 1, note: "Baseline — Learn the movements" },
-            { session: 2, note: "Add +1 set to all exercises" },
-            { session: 3, note: "Add +1 more set (up to 4 sets on main lifts)" },
-            { session: 4, note: "Taper — Keep mains at 4 sets, accessories at 3" }
+            { session: 1, workout: 'A', rir: '3 RIR', note: "Workout A baseline — learn the movements, stop 3 reps shy of failure" },
+            { session: 2, workout: 'B', rir: '3 RIR', note: "Workout B baseline — same rule: leave 3 solid reps in the tank on every set" },
+            { session: 3, workout: 'A', rir: '3 RIR', note: "Repeat Workout A — same sets, add a rep or two where form allows" },
+            { session: 4, workout: 'B', rir: '3 RIR', note: "Repeat Workout B — same sets, push toward the top of each rep range" }
         ],
-        exercises: [
-            { name: "Air Dyne / Assault Bike",          type: "Warm-Up",  sets: 1, reps: "5",             work: "30s",   rest: "30",      note: "Max effort sprint for 30s" },
-            { name: "DB Goblet Squat",                  type: "Block A",  sets: 2, reps: "8-12",          tempo: "4010", rest: "60",      note: "Hold at chest, squat to comfortable depth" },
-            { name: "DB Bench Press",                   type: "Block A",  sets: 2, reps: "8-12",          tempo: "3010", rest: "60",      note: "Control on the way down" },
-            { name: "Ring Rows",                        type: "Block B",  sets: 2, reps: "8-12",          tempo: "3010", rest: "45",      note: "Start easy angle, pull chest to rings" },
-            { name: "Single Leg Glute Bridge",          type: "Block B",  sets: 2, reps: "10-12/leg",     tempo: "3011", rest: "45",      note: "Shoulders on Bench. Non-working leg extended straight" },
-            { name: "Reverse Lunge",                    type: "Block C",  sets: 2, reps: "10/leg",        tempo: "3010", rest: "30",      note: "Step back, knee to 90°, drive through front heel" },
-            { name: "DB Overhead Press",                type: "Block C",  sets: 2, reps: "8-12",          tempo: "3010", rest: "30",      note: "Back supported against wall if possible" },
-            { name: "DB RDL + Row",                     type: "Block D",  sets: 2, reps: "8-12",          tempo: "3011", rest: "30",      note: "Hinge at hips, pull to lower ribs" },
-            { name: "Sit Up",                           type: "Block D",  sets: 2, reps: "12-15/side",    tempo: "3011", rest: "0",       note: "Keep lower back pressed to floor" },
-            { name: "Band Pull-Apart",                  type: "Block E",  sets: 2, reps: "12-15",         tempo: "3011", rest: "0",       note: "Arms straight, squeeze shoulder blades" },
-            { name: "Side Lying Lateral Leg Raise",     type: "Block E",  sets: 2, reps: "15-20",         tempo: "2010", rest: "0",       note: "Keep front slightly behind body, lead with heel" }
-        ]
+        workouts: {
+            A: [
+                { name: "Warm-Up: Easy Cycling + Ramp-Up Sets", type: "Warm-Up", sets: 1, reps: "—", rest: "0", noLog: true,
+                  note: "3-5 min easy cycling, then 2-4 ramp-up sets on your first lift (light → working weight). No sprints." },
+                { name: "DB Goblet Squat → Leg Press", type: "Block A", sets: 2, priority: true, reps: "6-10", rest: "120-180",
+                  cue: "Controlled descent, drive up through the heels", note: "Start with goblet squat; move to leg press or barbell/hack squat once dumbbells feel limiting" },
+                { name: "DB Bench Press", type: "Block B", sets: 2, priority: true, reps: "6-10", rest: "120-180",
+                  cue: "Controlled lowering to the chest, press hard", note: "Slight arch, drive through the sticking point" },
+                { name: "Lat Pulldown", type: "Block C", sets: 2, reps: "8-12", rest: "90-120",
+                  cue: "Pull to upper chest, squeeze the lats", note: "Bands or ring rows work if no cable machine is available" },
+                { name: "Romanian Deadlift", type: "Block D", sets: 2, priority: true, reps: "6-10", rest: "120-180",
+                  cue: "Hinge at the hips, soft knees", note: "Feel the hamstring stretch, keep the bar/DBs close to the legs" },
+                { name: "DB Lateral Raise", type: "Block E", sets: 2, reps: "12-15", rest: "60-90",
+                  cue: "Lead with the elbows, no swing", note: "Raise to ear height, slow controlled descent" },
+                { name: "Pallof Press", type: "Block F", sets: 2, reps: "10/side", rest: "60",
+                  cue: "Press straight out, resist rotation", note: "Anchor at chest height, core stays square" },
+                { name: "Optional: Zone-2 Conditioning", type: "Conditioning", sets: 1, reps: "20-30 min", rest: "0", noLog: true,
+                  note: "Optional — after lifting or on an off day: easy bike/walk at a conversational pace" }
+            ],
+            B: [
+                { name: "Warm-Up: Easy Cycling + Ramp-Up Sets", type: "Warm-Up", sets: 1, reps: "—", rest: "0", noLog: true,
+                  note: "3-5 min easy cycling, then 2-4 ramp-up sets on your first lift (light → working weight). No sprints." },
+                { name: "Trap-Bar Deadlift", type: "Block A", sets: 2, priority: true, reps: "5-8", rest: "150-180",
+                  cue: "Push the floor away, flat back", note: "Hack squat or leg press if no trap bar is available" },
+                { name: "Incline DB Press", type: "Block B", sets: 2, priority: true, reps: "8-12", rest: "120-180",
+                  cue: "Elbows ~45° from the torso", note: "30-45° bench angle" },
+                { name: "Chest-Supported DB Row", type: "Block C", sets: 2, priority: true, reps: "8-12", rest: "90-120",
+                  cue: "Pull elbows back, squeeze at the top", note: "Chest on an incline bench, arms hang fully at the start" },
+                { name: "Bulgarian Split Squat", type: "Block D", sets: 2, reps: "8-12/leg", rest: "90-120",
+                  cue: "Front leg does the work", note: "Rear foot up on a bench" },
+                { name: "Lying/Seated Leg Curl", type: "Block E", sets: 2, reps: "10-15", rest: "60-90",
+                  cue: "Full stretch to full contraction", note: "Slider or stability-ball curl if no machine is available" },
+                { name: "Optional: DB Curl", type: "Block F", sets: 2, reps: "10-15", rest: "60",
+                  cue: "No swing, full range", note: "Optional finisher — skip if short on time" },
+                { name: "Optional: Standing Calf Raise", type: "Block F", sets: 2, reps: "12-20", rest: "60",
+                  cue: "Full stretch at the bottom, pause at the top", note: "Optional finisher — skip if short on time" },
+                { name: "Optional: Zone-2 Conditioning", type: "Conditioning", sets: 1, reps: "20-30 min", rest: "0", noLog: true,
+                  note: "Optional — after lifting or on an off day: easy bike/walk at a conversational pace" }
+            ]
+        }
     },
     2: {
-        name: "Phase 2 — Intensification",
-        frequency: "3x per week for 2 weeks",
+        name: "Weeks 3-4 — Build",
+        frequency: "3x per week · priority lifts get a 3rd set · 2-3 reps in reserve",
         totalSessions: 6,
+        sessionsPlan: ['A', 'B', 'A', 'B', 'A', 'B'],
         progression: [
-            { session: 1, note: "Introduction to higher intensity" },
-            { session: 2, note: "Main lifts to 4 sets, accessories stay at 3" },
-            { session: 3, note: "Accessories to 4 sets, core stays at base" },
-            { session: 4, note: "Maintain 4 sets all except core" },
-            { session: 5, note: "Peak — compounds to 5 sets, accessories 4" },
-            { session: 6, note: "Taper — accessories to 3, compounds to 4" }
+            { session: 1, workout: 'A', rir: '2-3 RIR', note: "New rep ranges, priority lifts add a 3rd set — same rule: stop 2-3 reps shy" },
+            { session: 2, workout: 'B', rir: '2-3 RIR', note: "Workout B gains its 3rd set on priority lifts too" },
+            { session: 3, workout: 'A', rir: '2-3 RIR', note: "Second week of Build — beat last Workout A's reps or load" },
+            { session: 4, workout: 'B', rir: '2-3 RIR', note: "Second week of Build — beat last Workout B's reps or load" },
+            { session: 5, workout: 'A', rir: '2-3 RIR', note: "Keep climbing — add load once every set hits the top of its rep range" },
+            { session: 6, workout: 'B', rir: '2-3 RIR', note: "Last session of Build — set up for a harder push next block" }
         ],
-        exercises: [
-            { name: "Air Dyne / Assault Bike",     type: "Warm-Up",  sets: 1, reps: "8",            work: "20s",    rest: "40",     note: "Max effort sprint for 20s" },
-            { name: "Bulgarian Split Squat",       type: "Block A",  sets: 3, reps: "5-8/leg",      tempo: "4010", rest: "60",      note: "Rear foot on bench, front leg does work" },
-            { name: "DB Bench Press (NG)",         type: "Block B",  sets: 3, reps: "5-8",          tempo: "3010", rest: "60",      note: "Palms face each other" },
-            { name: "Ring Rows",                   type: "Block B",  sets: 3, reps: "5-8",          tempo: "3010", rest: "60",      note: "Harder angle for strength focus" },
-            { name: "Single Leg Glute Bridge",     type: "Block C",  sets: 3, reps: "8-12/leg",     tempo: "3011", rest: "45",      note: "Add weight for progression" },
-            { name: "Romanian Deadlift",           type: "Block C",  sets: 3, reps: "8-12",         tempo: "3010", rest: "45",      note: "Hinge at hips, feel hamstring stretch" },
-            { name: "Single Arm DB Press",         type: "Block D",  sets: 3, reps: "8-12/arm",     tempo: "3010", rest: "30",      note: "Engage core for stability" },
-            { name: "Single Arm DB Row",           type: "Block D",  sets: 3, reps: "8-12/arm",     tempo: "3011", rest: "30",      note: "Opposite hand/knee on bench" },
-            { name: "Dead Bug",                    type: "Block E",  sets: 2, reps: "12-15/side",   tempo: "3011", rest: "0",       note: "Keep lower back pressed to floor" },
-            { name: "Band Pull-Apart",             type: "Block E",  sets: 2, reps: "12-15",        tempo: "3011", rest: "0",       note: "Arms straight, squeeze shoulder blades" },
-            { name: "Standing Lateral Leg Raise",  type: "Block E",  sets: 2, reps: "15-20",        tempo: "2010", rest: "0",       note: "Knee bent, squeeze at top" }
-        ]
+        workouts: {
+            A: [
+                { name: "Warm-Up: Easy Cycling + Ramp-Up Sets", type: "Warm-Up", sets: 1, reps: "—", rest: "0", noLog: true,
+                  note: "3-5 min easy cycling, then 2-4 ramp-up sets on your first lift (light → working weight). No sprints." },
+                { name: "DB Goblet Squat → Leg Press", type: "Block A", sets: 3, priority: true, reps: "6-10", rest: "120-180",
+                  cue: "Controlled descent, drive up through the heels", note: "Start with goblet squat; move to leg press or barbell/hack squat once dumbbells feel limiting" },
+                { name: "DB Bench Press", type: "Block B", sets: 3, priority: true, reps: "6-10", rest: "120-180",
+                  cue: "Controlled lowering to the chest, press hard", note: "Slight arch, drive through the sticking point" },
+                { name: "Lat Pulldown", type: "Block C", sets: 2, reps: "8-12", rest: "90-120",
+                  cue: "Pull to upper chest, squeeze the lats", note: "Bands or ring rows work if no cable machine is available" },
+                { name: "Romanian Deadlift", type: "Block D", sets: 3, priority: true, reps: "6-10", rest: "120-180",
+                  cue: "Hinge at the hips, soft knees", note: "Feel the hamstring stretch, keep the bar/DBs close to the legs" },
+                { name: "DB Lateral Raise", type: "Block E", sets: 2, reps: "12-15", rest: "60-90",
+                  cue: "Lead with the elbows, no swing", note: "Raise to ear height, slow controlled descent" },
+                { name: "Pallof Press", type: "Block F", sets: 2, reps: "10/side", rest: "60",
+                  cue: "Press straight out, resist rotation", note: "Anchor at chest height, core stays square" },
+                { name: "Optional: Zone-2 Conditioning", type: "Conditioning", sets: 1, reps: "20-30 min", rest: "0", noLog: true,
+                  note: "Optional — after lifting or on an off day: easy bike/walk at a conversational pace" }
+            ],
+            B: [
+                { name: "Warm-Up: Easy Cycling + Ramp-Up Sets", type: "Warm-Up", sets: 1, reps: "—", rest: "0", noLog: true,
+                  note: "3-5 min easy cycling, then 2-4 ramp-up sets on your first lift (light → working weight). No sprints." },
+                { name: "Trap-Bar Deadlift", type: "Block A", sets: 3, priority: true, reps: "5-8", rest: "150-180",
+                  cue: "Push the floor away, flat back", note: "Hack squat or leg press if no trap bar is available" },
+                { name: "Incline DB Press", type: "Block B", sets: 3, priority: true, reps: "8-12", rest: "120-180",
+                  cue: "Elbows ~45° from the torso", note: "30-45° bench angle" },
+                { name: "Chest-Supported DB Row", type: "Block C", sets: 3, priority: true, reps: "8-12", rest: "90-120",
+                  cue: "Pull elbows back, squeeze at the top", note: "Chest on an incline bench, arms hang fully at the start" },
+                { name: "Bulgarian Split Squat", type: "Block D", sets: 2, reps: "8-12/leg", rest: "90-120",
+                  cue: "Front leg does the work", note: "Rear foot up on a bench" },
+                { name: "Lying/Seated Leg Curl", type: "Block E", sets: 2, reps: "10-15", rest: "60-90",
+                  cue: "Full stretch to full contraction", note: "Slider or stability-ball curl if no machine is available" },
+                { name: "Optional: DB Curl", type: "Block F", sets: 2, reps: "10-15", rest: "60",
+                  cue: "No swing, full range", note: "Optional finisher — skip if short on time" },
+                { name: "Optional: Standing Calf Raise", type: "Block F", sets: 2, reps: "12-20", rest: "60",
+                  cue: "Full stretch at the bottom, pause at the top", note: "Optional finisher — skip if short on time" },
+                { name: "Optional: Zone-2 Conditioning", type: "Conditioning", sets: 1, reps: "20-30 min", rest: "0", noLog: true,
+                  note: "Optional — after lifting or on an off day: easy bike/walk at a conversational pace" }
+            ]
+        }
     },
     3: {
-        name: "Phase 3 — Strength / Hypertrophy",
-        frequency: "3x per week for 3 weeks",
-        totalSessions: 9,
+        name: "Weeks 5-6 — Progress",
+        frequency: "3x per week · same sets, push load & reps · 1-2 reps in reserve on final sets",
+        totalSessions: 6,
+        sessionsPlan: ['A', 'B', 'A', 'B', 'A', 'B'],
         progression: [
-            { session: 1, note: "New movements — establish form at heavier loads, 3 sets all" },
-            { session: 2, note: "Strength lifts (Block A) to 4 sets — quality reps over weight" },
-            { session: 3, note: "All compounds to 4 sets — note your target weights for next week" },
-            { session: 4, note: "Maintain 4 sets — add weight where form allows" },
-            { session: 5, note: "Strength lifts peak to 5 sets — hypertrophy work at 4 sets" },
-            { session: 6, note: "Maintain peak sets — push for PR effort on Block A" },
-            { session: 7, note: "Max volume week — all compounds at 5 sets. Push hard" },
-            { session: 8, note: "Peak intensity — 5 sets Block A, 4 sets B/C. Go heavier" },
-            { session: 9, note: "Taper — reduce volume, maintain intensity. Program complete!" }
+            { session: 1, workout: 'A', rir: '2-3 RIR', note: "Sets hold steady — keep pushing load and reps on priority lifts" },
+            { session: 2, workout: 'B', rir: '2-3 RIR', note: "Sets hold steady — keep pushing load and reps on priority lifts" },
+            { session: 3, workout: 'A', rir: '1-2 RIR (final set)', note: "Take the last set of each priority lift closer to failure" },
+            { session: 4, workout: 'B', rir: '1-2 RIR (final set)', note: "Take the last set of each priority lift closer to failure" },
+            { session: 5, workout: 'A', rir: '1-2 RIR (final set)', note: "Peak week — push for a rep or load PR on priority lifts" },
+            { session: 6, workout: 'B', rir: '1-2 RIR (final set)', note: "Peak week — push for a rep or load PR on priority lifts" }
         ],
-        exercises: [
-            { name: "Air Dyne / Assault Bike",    type: "Warm-Up",  sets: 1, reps: "10",           work: "10s",   rest: "50",      note: "Max effort sprint for 10s" },
-            { name: "Heel-Elevated DB Squat",     type: "Block A",  sets: 3, reps: "4-6",          tempo: "4010", rest: "60",      note: "Heels elevated 1-2 inches on a plate. Knees track over toes, drive through full range" },
-            { name: "Weighted Ring Row",          type: "Block A",  sets: 3, reps: "4-6",          tempo: "3011", rest: "120",     note: "Use weight vest or hold DB on chest. Body parallel to floor — full scapular retraction at top" },
-            { name: "DB Bench Press",             type: "Block B",  sets: 3, reps: "6-10",         tempo: "3010", rest: "60",      note: "Controlled descent to chest, slight arch. Drive through sticking point" },
-            { name: "Single Leg Hip Thrust",      type: "Block B",  sets: 3, reps: "8-12/leg",     tempo: "3011", rest: "120",     note: "Shoulders on bench, DB across hip. Full extension at top — pause and squeeze glute" },
-            { name: "DB Deadlift",                type: "Block C",  sets: 3, reps: "5-8",          tempo: "3010", rest: "60",      note: "Push floor away, keep DBs close to legs. Full hip extension at top, control descent" },
-            { name: "Chest-Supported DB Row",     type: "Block C",  sets: 3, reps: "8-12",         tempo: "3011", rest: "120",     note: "Chest on incline bench, arms hang. Pull elbows back, squeeze shoulder blades hard at top" },
-            { name: "DB Overhead Press",          type: "Block D",  sets: 3, reps: "8-10",         tempo: "3010", rest: "60",      note: "Strict press — no leg drive. Core braced, press directly overhead" },
-            { name: "DB Lateral Raise",           type: "Block D",  sets: 3, reps: "12-15",        tempo: "2010", rest: "60",      note: "Slight forward lean, lead with elbows to ear height. Slow controlled descent" },
-            { name: "Pallof Press",               type: "Block E",  sets: 3, reps: "10/side",      tempo: "3010", rest: "0",       note: "Anchor band at chest height. Press straight out and resist rotation — core stays square" },
-            { name: "Band Pull-Apart",            type: "Block E",  sets: 3, reps: "12-15",        tempo: "3011", rest: "0",       note: "Arms straight, squeeze shoulder blades at full extension" },
-            { name: "Side Lying Hip Abduction",   type: "Block E",  sets: 3, reps: "15-20",        tempo: "2010", rest: "0",       note: "Keep top hip slightly forward, lead with heel. Squeeze glute at top" }
-        ]
+        workouts: {
+            A: [
+                { name: "Warm-Up: Easy Cycling + Ramp-Up Sets", type: "Warm-Up", sets: 1, reps: "—", rest: "0", noLog: true,
+                  note: "3-5 min easy cycling, then 2-4 ramp-up sets on your first lift (light → working weight). No sprints." },
+                { name: "DB Goblet Squat → Leg Press", type: "Block A", sets: 3, priority: true, reps: "6-10", rest: "120-180",
+                  cue: "Controlled descent, drive up through the heels", note: "Start with goblet squat; move to leg press or barbell/hack squat once dumbbells feel limiting" },
+                { name: "DB Bench Press", type: "Block B", sets: 3, priority: true, reps: "6-10", rest: "120-180",
+                  cue: "Controlled lowering to the chest, press hard", note: "Slight arch, drive through the sticking point" },
+                { name: "Lat Pulldown", type: "Block C", sets: 2, reps: "8-12", rest: "90-120",
+                  cue: "Pull to upper chest, squeeze the lats", note: "Bands or ring rows work if no cable machine is available" },
+                { name: "Romanian Deadlift", type: "Block D", sets: 3, priority: true, reps: "6-10", rest: "120-180",
+                  cue: "Hinge at the hips, soft knees", note: "Feel the hamstring stretch, keep the bar/DBs close to the legs" },
+                { name: "DB Lateral Raise", type: "Block E", sets: 2, reps: "12-15", rest: "60-90",
+                  cue: "Lead with the elbows, no swing", note: "Raise to ear height, slow controlled descent" },
+                { name: "Pallof Press", type: "Block F", sets: 2, reps: "10/side", rest: "60",
+                  cue: "Press straight out, resist rotation", note: "Anchor at chest height, core stays square" },
+                { name: "Optional: Zone-2 Conditioning", type: "Conditioning", sets: 1, reps: "20-30 min", rest: "0", noLog: true,
+                  note: "Optional — after lifting or on an off day: easy bike/walk at a conversational pace" }
+            ],
+            B: [
+                { name: "Warm-Up: Easy Cycling + Ramp-Up Sets", type: "Warm-Up", sets: 1, reps: "—", rest: "0", noLog: true,
+                  note: "3-5 min easy cycling, then 2-4 ramp-up sets on your first lift (light → working weight). No sprints." },
+                { name: "Trap-Bar Deadlift", type: "Block A", sets: 3, priority: true, reps: "5-8", rest: "150-180",
+                  cue: "Push the floor away, flat back", note: "Hack squat or leg press if no trap bar is available" },
+                { name: "Incline DB Press", type: "Block B", sets: 3, priority: true, reps: "8-12", rest: "120-180",
+                  cue: "Elbows ~45° from the torso", note: "30-45° bench angle" },
+                { name: "Chest-Supported DB Row", type: "Block C", sets: 3, priority: true, reps: "8-12", rest: "90-120",
+                  cue: "Pull elbows back, squeeze at the top", note: "Chest on an incline bench, arms hang fully at the start" },
+                { name: "Bulgarian Split Squat", type: "Block D", sets: 2, reps: "8-12/leg", rest: "90-120",
+                  cue: "Front leg does the work", note: "Rear foot up on a bench" },
+                { name: "Lying/Seated Leg Curl", type: "Block E", sets: 2, reps: "10-15", rest: "60-90",
+                  cue: "Full stretch to full contraction", note: "Slider or stability-ball curl if no machine is available" },
+                { name: "Optional: DB Curl", type: "Block F", sets: 2, reps: "10-15", rest: "60",
+                  cue: "No swing, full range", note: "Optional finisher — skip if short on time" },
+                { name: "Optional: Standing Calf Raise", type: "Block F", sets: 2, reps: "12-20", rest: "60",
+                  cue: "Full stretch at the bottom, pause at the top", note: "Optional finisher — skip if short on time" },
+                { name: "Optional: Zone-2 Conditioning", type: "Conditioning", sets: 1, reps: "20-30 min", rest: "0", noLog: true,
+                  note: "Optional — after lifting or on an off day: easy bike/walk at a conversational pace" }
+            ]
+        }
+    },
+    4: {
+        name: "Week 7 — Deload",
+        frequency: "3 easy sessions · sets cut roughly in half · 3-4 reps in reserve",
+        totalSessions: 3,
+        sessionsPlan: ['A', 'B', 'A'],
+        progression: [
+            { session: 1, workout: 'A', rir: '3-4 RIR', note: "Deload — sets cut roughly in half, moderate load, focus on crisp technique" },
+            { session: 2, workout: 'B', rir: '3-4 RIR', note: "Deload — same easy effort, let the joints and nervous system recover" },
+            { session: 3, workout: 'A', rir: '3-4 RIR', note: "Final session — program complete after this. Finish feeling fresh, not fried" }
+        ],
+        workouts: {
+            A: [
+                { name: "Warm-Up: Easy Cycling + Ramp-Up Sets", type: "Warm-Up", sets: 1, reps: "—", rest: "0", noLog: true,
+                  note: "3-5 min easy cycling, then 2-4 ramp-up sets on your first lift (light → working weight). No sprints." },
+                { name: "DB Goblet Squat → Leg Press", type: "Block A", sets: 2, priority: true, reps: "6-10", rest: "120-180",
+                  cue: "Controlled descent, drive up through the heels", note: "Moderate load — about 80% of last week's top set" },
+                { name: "DB Bench Press", type: "Block B", sets: 2, priority: true, reps: "6-10", rest: "120-180",
+                  cue: "Controlled lowering to the chest, press hard", note: "Moderate load — about 80% of last week's top set" },
+                { name: "Lat Pulldown", type: "Block C", sets: 1, reps: "8-12", rest: "90-120",
+                  cue: "Pull to upper chest, squeeze the lats", note: "Bands or ring rows work if no cable machine is available" },
+                { name: "Romanian Deadlift", type: "Block D", sets: 2, priority: true, reps: "6-10", rest: "120-180",
+                  cue: "Hinge at the hips, soft knees", note: "Moderate load — about 80% of last week's top set" },
+                { name: "DB Lateral Raise", type: "Block E", sets: 1, reps: "12-15", rest: "60-90",
+                  cue: "Lead with the elbows, no swing", note: "Raise to ear height, slow controlled descent" },
+                { name: "Pallof Press", type: "Block F", sets: 1, reps: "10/side", rest: "60",
+                  cue: "Press straight out, resist rotation", note: "Anchor at chest height, core stays square" },
+                { name: "Optional: Zone-2 Conditioning", type: "Conditioning", sets: 1, reps: "20-30 min", rest: "0", noLog: true,
+                  note: "Optional — easy bike/walk at a conversational pace" }
+            ],
+            B: [
+                { name: "Warm-Up: Easy Cycling + Ramp-Up Sets", type: "Warm-Up", sets: 1, reps: "—", rest: "0", noLog: true,
+                  note: "3-5 min easy cycling, then 2-4 ramp-up sets on your first lift (light → working weight). No sprints." },
+                { name: "Trap-Bar Deadlift", type: "Block A", sets: 2, priority: true, reps: "5-8", rest: "150-180",
+                  cue: "Push the floor away, flat back", note: "Moderate load — about 80% of last week's top set" },
+                { name: "Incline DB Press", type: "Block B", sets: 2, priority: true, reps: "8-12", rest: "120-180",
+                  cue: "Elbows ~45° from the torso", note: "Moderate load — about 80% of last week's top set" },
+                { name: "Chest-Supported DB Row", type: "Block C", sets: 2, priority: true, reps: "8-12", rest: "90-120",
+                  cue: "Pull elbows back, squeeze at the top", note: "Moderate load — about 80% of last week's top set" },
+                { name: "Bulgarian Split Squat", type: "Block D", sets: 1, reps: "8-12/leg", rest: "90-120",
+                  cue: "Front leg does the work", note: "Rear foot up on a bench" },
+                { name: "Lying/Seated Leg Curl", type: "Block E", sets: 1, reps: "10-15", rest: "60-90",
+                  cue: "Full stretch to full contraction", note: "Slider or stability-ball curl if no machine is available" },
+                { name: "Optional: DB Curl", type: "Block F", sets: 1, reps: "10-15", rest: "60",
+                  cue: "No swing, full range", note: "Optional finisher — skip if short on time" },
+                { name: "Optional: Standing Calf Raise", type: "Block F", sets: 1, reps: "12-20", rest: "60",
+                  cue: "Full stretch at the bottom, pause at the top", note: "Optional finisher — skip if short on time" },
+                { name: "Optional: Zone-2 Conditioning", type: "Conditioning", sets: 1, reps: "20-30 min", rest: "0", noLog: true,
+                  note: "Optional — easy bike/walk at a conversational pace" }
+            ]
+        }
     }
 };
 
 const exerciseVideos = {
-    'Air Dyne / Assault Bike':          'https://www.youtube.com/watch?v=YSrkGWpYnpo',
-    'DB Goblet Squat':                  'https://www.youtube.com/watch?v=XY8p9ijlsSQ',
+    'DB Goblet Squat → Leg Press':      'https://www.youtube.com/watch?v=XY8p9ijlsSQ',
     'DB Bench Press':                   'https://www.youtube.com/watch?v=vfcYF6_yFAs',
-    'DB Bench Press (NG)':              'https://www.youtube.com/watch?v=KeUF3cx1n_o',
-    'Ring Rows':                        'https://www.youtube.com/watch?v=DTtdIfsh9lE',
-    'Single Leg Glute Bridge':          'https://www.youtube.com/shorts/319p9SfAIco',
-    'Reverse Lunge':                    'https://www.youtube.com/watch?v=Q2k3kYbtOcI',
-    'DB Overhead Press':                'https://www.youtube.com/watch?v=qEwKCR5JCog',
-    'DB Bent Over Row':                 'https://www.youtube.com/watch?v=pYcpY20QaE8',
-    'Dead Bug':                         'https://www.youtube.com/watch?v=hGeKSiZReiE',
-    'Band Pull-Apart':                  'https://www.youtube.com/watch?v=JTCBVbeWYP4',
-    'Side Lying Lateral Leg Raise':     'https://www.youtube.com/watch?v=v7VmrcipWGk',
-    'Standing Lateral Leg Raise':       'https://www.youtube.com/watch?v=rW5yoJqclEg',
-    'Bulgarian Split Squat':            'https://www.youtube.com/watch?v=2C-uNgKwPLE',
     'Romanian Deadlift':                'https://www.youtube.com/watch?v=jEy_czb3RKA',
-    'Single Arm DB Press':              'https://www.youtube.com/watch?v=B-aVuyhvLHU',
-    'Single Arm DB Row':                'https://www.youtube.com/watch?v=dFzUjzfih7k',
-    'Sit Up':                           'https://www.youtube.com/watch?v=OmJXA7nIR2I',
-    'DB RDL + Row':                     'https://www.youtube.com/shorts/2ZGw_a5dowM',
+    'Bulgarian Split Squat':            'https://www.youtube.com/watch?v=2C-uNgKwPLE',
 };
-
