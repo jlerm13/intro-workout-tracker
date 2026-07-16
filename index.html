@@ -7,6 +7,36 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <script>
+        // Apply saved theme before paint to avoid a flash of the wrong skin
+        (function () {
+            try {
+                if (localStorage.getItem('wt-theme') === 'ferrari') {
+                    document.documentElement.setAttribute('data-theme', 'ferrari');
+                }
+            } catch (e) {}
+        })();
+        function toggleTheme() {
+            var root = document.documentElement;
+            var isFerrari = root.getAttribute('data-theme') === 'ferrari';
+            if (isFerrari) {
+                root.removeAttribute('data-theme');
+                try { localStorage.setItem('wt-theme', 'default'); } catch (e) {}
+            } else {
+                root.setAttribute('data-theme', 'ferrari');
+                try { localStorage.setItem('wt-theme', 'ferrari'); } catch (e) {}
+            }
+            var btn = document.getElementById('themeToggleLabel');
+            if (btn) btn.textContent = isFerrari ? 'Ferrari theme' : 'Classic theme';
+        }
+        // Set correct label once the DOM is ready
+        document.addEventListener('DOMContentLoaded', function () {
+            var btn = document.getElementById('themeToggleLabel');
+            if (btn && document.documentElement.getAttribute('data-theme') === 'ferrari') {
+                btn.textContent = 'Classic theme';
+            }
+        });
+    </script>
 </head>
 <body>
 <div class="app">
@@ -18,6 +48,9 @@
                 <div class="ws-icon">🏋️</div>
                 <span class="ws-name">Workout Tracker - 1.0 </span>
             </div>
+            <button class="theme-toggle" onclick="toggleTheme()" title="Switch visual design">
+                🎨 <span id="themeToggleLabel">Ferrari theme</span>
+            </button>
         </div>
 
         <div class="sb-body">
